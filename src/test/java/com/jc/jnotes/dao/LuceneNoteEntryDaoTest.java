@@ -27,7 +27,6 @@ public class LuceneNoteEntryDaoTest {
         dao = new LuceneNoteEntryDao("JNotesTest");
     }
     
-    
     @Test
     void addEntryNoteTest() throws IOException {
         String id1 = UUID.randomUUID().toString();
@@ -49,7 +48,6 @@ public class LuceneNoteEntryDaoTest {
                 () -> assertEquals("info1", noteEntries.get(0).getInfo()),
                 () -> assertEquals("key2", noteEntries.get(1).getKey())
             );
-        
     }
     
     @Test
@@ -108,7 +106,29 @@ public class LuceneNoteEntryDaoTest {
         
     }
     
-    
-    
+    @Test
+    void searchNotesTest() throws IOException {
+        String id1 = UUID.randomUUID().toString();
+        String id2 = UUID.randomUUID().toString();
+        String id3 = UUID.randomUUID().toString();
+        NoteEntry noteEntry1 = new NoteEntry(id1, "key1", "value1", "infoy3");//has - e1, y3-info
+        NoteEntry noteEntry2 = new NoteEntry(id2, "key2", "value2", "infoe1");//has - e1-info
+        NoteEntry noteEntry3 = new NoteEntry(id3, "key3", "value3", "info3");//has - y3
+        dao.addNoteEntry(noteEntry1);
+        dao.addNoteEntry(noteEntry2);
+        dao.addNoteEntry(noteEntry3);
+        
+        List<NoteEntry> noteEntries = dao.getAll();
+        assertEquals(3, noteEntries.size());
+        
+        noteEntries = dao.searchNotes("e1", false);
+        assertEquals(1, noteEntries.size());
+        assertEquals("key1", noteEntries.get(0).getKey());
+        
+        noteEntries = dao.searchNotes("y3", true);
+        assertEquals(2, noteEntries.size());
+        assertEquals("key3", noteEntries.get(0).getKey());
+        assertEquals("key1", noteEntries.get(1).getKey());
+    }
 
 }
