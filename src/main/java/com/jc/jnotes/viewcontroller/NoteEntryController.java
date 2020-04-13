@@ -1,24 +1,28 @@
 package com.jc.jnotes.viewcontroller;
 
+import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
-import javafx.fxml.Initializable;
-import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TextArea;
-import javafx.stage.Stage;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.jc.jnotes.dao.NoteEntryDaoFactory;
 import com.jc.jnotes.model.NoteEntry;
+
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
+import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
+import javafx.stage.Stage;
 
 /**
  * 
@@ -26,23 +30,29 @@ import javafx.scene.input.KeyEvent;
  */
 public class NoteEntryController implements Initializable {
 
+    public static final String MODE_ADD = "MODE_ADD";
+    public static final String MODE_EDIT = "MODE_EDIT";
+
     private NoteEntry noteEntry;
     private Stage parentStage;
     private ObservableList<NoteEntry> noteEntryList;
-    
+    private String mode;
+
+    private final AlertHelper alertHelper = new AlertHelper();
+
     @FXML
     private TextField keyField;
     @FXML
     private TextField valueField;
     @FXML
     private TextArea infoField;
-    
+
     @FXML
     private Button saveButton;
-    
+
     @FXML
     private Button cancelButton;
-    
+
     /**
      * Initializes the controller class.
      */
@@ -50,7 +60,7 @@ public class NoteEntryController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         addAccelerators();
     }
-    
+
     private void addAccelerators() {
         Platform.runLater(() -> {
             saveButton.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.S, KeyCombination.SHORTCUT_DOWN), () -> {
@@ -71,11 +81,11 @@ public class NoteEntryController implements Initializable {
         });
 
     }
-    
-    public void setParentStage(Stage parentStage){
+
+    public void setParentStage(Stage parentStage) {
         this.parentStage = parentStage;
     }
-    
+
     public void setNoteEntry(NoteEntry noteEntry) {
         this.noteEntry = noteEntry;
 
@@ -83,41 +93,45 @@ public class NoteEntryController implements Initializable {
         valueField.setText(noteEntry.getValue());
         infoField.setText(noteEntry.getInfo());
     }
-    
-    public void setNoteEntryList(ObservableList<NoteEntry> noteEntryList){
+
+    public void setNoteEntryList(ObservableList<NoteEntry> noteEntryList) {
         this.noteEntryList = noteEntryList;
     }
-    
+
+    public void setMode(String mode) {
+        this.mode = mode;
+    }
+
     @FXML
     private void saveNoteEntry() {
         if (isInputValid()) {
             noteEntry.setKey(keyField.getText());
             noteEntry.setValue(valueField.getText());
             noteEntry.setInfo(infoField.getText());
-            
-            noteEntryList.add(noteEntry);
+            if (MODE_ADD.equals(mode)) {
+                noteEntryList.add(noteEntry);
+            }
+            try {
+                NoteEntryDaoFactory.getNoteEntryDao().addNoteEntry(noteEntry);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to save", "");
+            }
             parentStage.close();
         }
     }
-    
+
     @FXML
     private void cancel() {
         parentStage.close();
     }
 
     private boolean isInputValid() {
-        if (keyField.getText() == null || keyField.getText().length() == 0) {
-            Alert alert = new Alert(AlertType.ERROR);
-            alert.initOwner(parentStage);
-            alert.setTitle("Invalid NoteEntry");
-            alert.setHeaderText("Key is blank");
-            //alert.setContentText("Key cannot be empty");
-
-            alert.showAndWait();
-            
-            return false; 
-        }else{
+        if (StringUtils.isBlank(keyField.getText())) {
+            alertHelper.showErrorAlert(parentStage, "Key cannot be blank", "");
+            return false;
+        } else {
             return true;
-        }   
+        }
     }
 }

@@ -15,7 +15,7 @@
 
 <BorderPane prefHeight="408.0" prefWidth="601.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.jc.jnotes.viewcontroller.NotesController">
    <center>
-      <TableView fx:id="notesTable" editable="true" onMouseClicked="#selectNoteEntry" prefHeight="255.0" prefWidth="601.0">
+      <TableView fx:id="notesTable" editable="true" prefHeight="255.0" prefWidth="601.0">
         <columns>
           <TableColumn fx:id="keyColumn" prefWidth="301.0" text="Key" />
           <TableColumn fx:id="valueColumn" prefWidth="298.0" text="Value" />
@@ -28,7 +28,7 @@
    <top>
       <ToolBar prefHeight="40.0" prefWidth="200.0" BorderPane.alignment="CENTER">
          <items>
-            <MenuButton mnemonicParsing="false" text="Menu">
+            <MenuButton fx:id="menuButton" mnemonicParsing="false" text="Menu">
               <items>
                 <MenuItem mnemonicParsing="false" onAction="#showAbout" text="About" />
                 <MenuItem mnemonicParsing="false" onAction="#exitJNote" text="Exit">
@@ -38,15 +38,16 @@
               </items>
             </MenuButton>
             <HBox prefHeight="28.0" prefWidth="284.0" />
-            <TextField prefHeight="27.0" prefWidth="223.0" />
+            <TextField fx:id="searchField" prefHeight="27.0" prefWidth="223.0" />
          </items>
       </ToolBar>
    </top>
    <bottom>
       <AnchorPane prefHeight="101.0" prefWidth="601.0" BorderPane.alignment="CENTER">
          <children>
-            <TextArea fx:id="infoField" layoutX="4.0" layoutY="3.0" prefHeight="96.0" prefWidth="461.0" />
-            <Button fx:id="newButton" layoutX="475.0" layoutY="68.0" onAction="#addNewNoteEntry" text="New" />
+            <TextArea fx:id="infoField" editable="false" layoutX="4.0" layoutY="3.0" prefHeight="96.0" prefWidth="495.0" />
+            <Button fx:id="newButton" layoutX="534.0" layoutY="1.0" onAction="#addNewNoteEntry" text="New" />
+            <Button layoutX="536.0" layoutY="37.0" mnemonicParsing="false" text="Edit" />
             <Button fx:id="deleteButton" layoutX="528.0" layoutY="68.0" onAction="#deleteNoteEntry" text="Delete" />
          </children>
       </AnchorPane>
