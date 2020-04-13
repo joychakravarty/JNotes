@@ -3,10 +3,12 @@ package com.jc.jnotes.viewcontroller;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexNotFoundException;
 
 import com.jc.jnotes.JNotesApplication;
@@ -73,6 +75,8 @@ public class NotesController {
 
     NoteEntry selectedNoteEntry = null;
 
+    boolean showingSearchedResults = false;
+
     public void setParentStage(Stage parentStage) {
         this.parentStage = parentStage;
     }
@@ -127,6 +131,46 @@ public class NotesController {
             }
         });
 
+        searchField.addEventFilter(KeyEvent.KEY_RELEASED, event -> {
+            String searchTxt = searchField.getText();
+
+            if (showingSearchedResults && (event.getCode() == KeyCode.ESCAPE || StringUtils.isBlank(searchTxt))) {
+                event.consume();
+                loadAllNoteEntries();
+                showingSearchedResults = false;
+            } else if (event.getCode() == KeyCode.BACK_SPACE) {
+                if (showingSearchedResults && StringUtils.isBlank(searchTxt)) {
+                    event.consume();
+                    loadAllNoteEntries();
+                    showingSearchedResults = false;
+                } else if (StringUtils.isBlank(searchTxt)) {
+                    // do nothing
+                } else {
+                    event.consume();
+                    List<NoteEntry> noteEntries;
+                    try {
+                        noteEntries = NoteEntryDaoFactory.getNoteEntryDao().searchNotes(searchTxt, false);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        noteEntries = Collections.emptyList();
+                    }
+                    loadNoteEntries(noteEntries);
+                    showingSearchedResults = true;
+                }
+            } else if (StringUtils.isNotBlank(searchTxt)) {
+                event.consume();
+                List<NoteEntry> noteEntries;
+                try {
+                    noteEntries = NoteEntryDaoFactory.getNoteEntryDao().searchNotes(searchTxt, false);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    noteEntries = Collections.emptyList();
+                }
+                loadNoteEntries(noteEntries);
+                showingSearchedResults = true;
+            }
+        });
+
         searchField.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
             if (event.getCode() == KeyCode.TAB) {
                 event.consume();
@@ -137,7 +181,6 @@ public class NotesController {
                 }
             }
         });
-
     }
 
     private void addAccelerators() {
@@ -150,6 +193,9 @@ public class NotesController {
             });
             deleteButton.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.D, KeyCombination.SHORTCUT_DOWN), () -> {
                 deleteButton.fire();
+            });
+            searchField.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.F, KeyCombination.SHORTCUT_DOWN), () -> {
+                searchField.requestFocus();
             });
         });
     }
@@ -175,6 +221,7 @@ public class NotesController {
         observableNoteEntryList.addAll(noteEntries);
 
         notesTable.setItems(observableNoteEntryList);
+        notesTable.refresh();
     }
 
     @FXML
@@ -227,8 +274,8 @@ public class NotesController {
             controller.setRunAfter(() -> {
                 observableNoteEntryList.add(newNoteEntry);
                 notesTable.refresh();
-//                infoField.requestFocus();
-//                infoField.setText("Note added successfully");
+                // infoField.requestFocus();
+                // infoField.setText("Note added successfully");
             });
 
             try (FileInputStream fis = new FileInputStream("src/main/resources/images/edit.png")) {
