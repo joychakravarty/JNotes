@@ -65,6 +65,8 @@ public class NotesController {
     @FXML
     private Button newButton;
     @FXML
+    private Button editButton;
+    @FXML
     private Button deleteButton;
     @FXML
     private MenuButton menuButton;
@@ -93,13 +95,14 @@ public class NotesController {
         // When the selected NoteEntry in notesTable we set its info in the infoField
         notesTable.getSelectionModel().selectedItemProperty().addListener((obs, prevNoteEntry, selectedNoteEntry) -> {
             this.selectedNoteEntry = selectedNoteEntry;
+            System.out.println("xxxxxxx "+selectedNoteEntry);
             if (selectedNoteEntry != null) { // When the JNotes start no NoteEntry is selected. This is to handle that
                 infoField.setText(selectedNoteEntry.getInfo());
             } else {
                 infoField.setText("");
             }
         });
-
+        
         addAccelerators();
 
         notesTable.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
@@ -143,6 +146,9 @@ public class NotesController {
             newButton.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.N, KeyCombination.SHORTCUT_DOWN), () -> {
                 newButton.fire();
             });
+            editButton.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.E, KeyCombination.SHORTCUT_DOWN), () -> {
+                editButton.fire();
+            });
             deleteButton.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.D, KeyCombination.SHORTCUT_DOWN), () -> {
                 deleteButton.fire();
             });
@@ -174,20 +180,28 @@ public class NotesController {
 
     @FXML
     protected void deleteNoteEntry() {
-        NoteEntry toBeDeletedNoteEntry = notesTable.getSelectionModel().getSelectedItem();
-        System.out.println(toBeDeletedNoteEntry);
-        if (toBeDeletedNoteEntry != null) {
+        try {
+            NoteEntry toBeDeletedNoteEntry = notesTable.getSelectionModel().getSelectedItem();
+            System.out.println(toBeDeletedNoteEntry);
+            if (toBeDeletedNoteEntry != null) {
 
-            Alert alert = new Alert(AlertType.CONFIRMATION);
-            alert.setTitle("Confirm Delete");
-            alert.setHeaderText("Delete this Note Entry?");
-            alert.setContentText("Key:" + toBeDeletedNoteEntry.getKey());
+                Alert alert = new Alert(AlertType.CONFIRMATION);
+                alert.setTitle("Confirm Delete");
+                alert.setHeaderText("Delete this Note Entry?");
+                alert.setContentText("Key:" + toBeDeletedNoteEntry.getKey());
 
-            Optional<ButtonType> result = alert.showAndWait();
-            if (result.get() == ButtonType.OK) {
-                observableNoteEntryList.remove(toBeDeletedNoteEntry);
-                infoField.setText("");
+                Optional<ButtonType> result = alert.showAndWait();
+                if (result.get() == ButtonType.OK) {
+                    observableNoteEntryList.remove(toBeDeletedNoteEntry);
+                    infoField.setText("");
+                    this.selectedNoteEntry = null;
+                    NoteEntryDaoFactory.getNoteEntryDao().deleteNoteEntry(toBeDeletedNoteEntry);
+                    notesTable.refresh();
+                }
             }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to delete NoteEntry", "");
         }
     }
 
@@ -209,8 +223,14 @@ public class NotesController {
             NoteEntryController controller = loader.getController();
             controller.setParentStage(noteEntryStage);
             controller.setNoteEntry(newNoteEntry);
-            controller.setNoteEntryList(observableNoteEntryList);
+            //controller.setNoteEntryList(observableNoteEntryList);
             controller.setMode(NoteEntryController.MODE_ADD);
+            controller.setRunAfter(()->{
+                observableNoteEntryList.add(newNoteEntry);
+                notesTable.refresh();
+                infoField.requestFocus();
+                infoField.setText("Note added successfully");
+            });
 
             try (FileInputStream fis = new FileInputStream("src/main/resources/images/edit.png")) {
                 noteEntryStage.getIcons().add(new Image(fis));
@@ -221,7 +241,48 @@ public class NotesController {
             noteEntryStage.show();
         } catch (IOException ex) {
             ex.printStackTrace();
-            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to open new NoteEntry Dialog", "");
+            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to open NoteEntry Dialog", "");
+        }
+    }
+
+    @FXML
+    protected void editNewNoteEntry() {
+        if (this.selectedNoteEntry == null) {
+            return;
+        }
+        try {
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(JNotesApplication.class.getResource("viewcontroller/NoteEntry.fxml"));
+            AnchorPane page = (AnchorPane) loader.load();
+
+            noteEntryStage = new Stage();
+            noteEntryStage.setTitle("Edit Note Entry");
+            noteEntryStage.initModality(Modality.WINDOW_MODAL);
+            noteEntryStage.initOwner(parentStage);
+            Scene scene = new Scene(page);
+            noteEntryStage.setScene(scene);
+
+            NoteEntryController controller = loader.getController();
+            controller.setParentStage(noteEntryStage);
+            controller.setNoteEntry(selectedNoteEntry);
+            //controller.setNoteEntryList(observableNoteEntryList);
+            controller.setMode(NoteEntryController.MODE_EDIT);
+            controller.setRunAfter(()->{
+                notesTable.refresh();
+                infoField.requestFocus();
+                infoField.setText("Note edited successfully");
+            });
+
+            try (FileInputStream fis = new FileInputStream("src/main/resources/images/edit.png")) {
+                noteEntryStage.getIcons().add(new Image(fis));
+            } catch (IOException ioEx) {
+                ioEx.printStackTrace();
+            }
+
+            noteEntryStage.show();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to open NoteEntry Dialog", "");
         }
     }
 

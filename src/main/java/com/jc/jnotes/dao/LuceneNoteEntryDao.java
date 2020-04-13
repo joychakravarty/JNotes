@@ -78,6 +78,33 @@ public class LuceneNoteEntryDao implements NoteEntryDao {
     }
     
     @Override
+    public long editNoteEntry(NoteEntry noteEntry) throws IOException {
+        IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
+        IndexWriter writer = new IndexWriter(indexDir, indexWriterConfig);
+        Document document = new Document();
+        document.add(new TextField("id", noteEntry.getId(), Field.Store.YES));
+        document.add(new TextField("key", noteEntry.getKey(), Field.Store.YES));
+        document.add(new TextField("value", noteEntry.getValue(), Field.Store.YES));
+        document.add(new TextField("info", noteEntry.getInfo(), Field.Store.YES));
+         
+        long docId = writer.updateDocument(new Term("id", noteEntry.getId()), document);
+        writer.commit();
+        writer.close();
+        return docId;
+    }
+    
+    @Override
+    public void deleteNoteEntry(NoteEntry noteEntry) throws IOException {
+        IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
+        IndexWriter writer = new IndexWriter(indexDir, indexWriterConfig);
+        writer.deleteDocuments(new Term("id", noteEntry.getId()));
+        writer.forceMergeDeletes();
+        writer.commit();
+        writer.close();
+    }
+
+    
+    @Override
     public List<NoteEntry> searchNotes(String searchParam, boolean searchInfo) throws IOException {
         initializeSearcher();
         Set<NoteEntry> searchedEntries = new LinkedHashSet<>(); 

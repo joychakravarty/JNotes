@@ -35,8 +35,10 @@ public class NoteEntryController implements Initializable {
 
     private NoteEntry noteEntry;
     private Stage parentStage;
-    private ObservableList<NoteEntry> noteEntryList;
+    //private ObservableList<NoteEntry> noteEntryList;
     private String mode;
+    
+    private Runnable runAfter;
 
     private final AlertHelper alertHelper = new AlertHelper();
 
@@ -85,6 +87,10 @@ public class NoteEntryController implements Initializable {
     public void setParentStage(Stage parentStage) {
         this.parentStage = parentStage;
     }
+    
+    public void setRunAfter(Runnable runAfter) {
+        this.runAfter = runAfter;
+    }
 
     public void setNoteEntry(NoteEntry noteEntry) {
         this.noteEntry = noteEntry;
@@ -94,9 +100,9 @@ public class NoteEntryController implements Initializable {
         infoField.setText(noteEntry.getInfo());
     }
 
-    public void setNoteEntryList(ObservableList<NoteEntry> noteEntryList) {
-        this.noteEntryList = noteEntryList;
-    }
+//    public void setNoteEntryList(ObservableList<NoteEntry> noteEntryList) {
+//        this.noteEntryList = noteEntryList;
+//    }
 
     public void setMode(String mode) {
         this.mode = mode;
@@ -108,14 +114,20 @@ public class NoteEntryController implements Initializable {
             noteEntry.setKey(keyField.getText());
             noteEntry.setValue(valueField.getText());
             noteEntry.setInfo(infoField.getText());
-            if (MODE_ADD.equals(mode)) {
-                noteEntryList.add(noteEntry);
-            }
+//            if (MODE_ADD.equals(mode)) {
+//                noteEntryList.add(noteEntry);
+//            }
             try {
-                NoteEntryDaoFactory.getNoteEntryDao().addNoteEntry(noteEntry);
+                if (MODE_ADD.equals(mode)) {
+                    NoteEntryDaoFactory.getNoteEntryDao().addNoteEntry(noteEntry);
+                }else {
+                    NoteEntryDaoFactory.getNoteEntryDao().editNoteEntry(noteEntry);
+                }
+                runAfter.run();
             } catch (IOException ex) {
                 ex.printStackTrace();
                 alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to save", "");
+                
             }
             parentStage.close();
         }

@@ -18,4 +18,8 @@ public interface NoteEntryDao {
 
     long addNoteEntry(NoteEntry noteEntry) throws IOException;
 
+    long editNoteEntry(NoteEntry noteEntry) throws IOException;
+
+    void deleteNoteEntry(NoteEntry noteEntry) throws IOException;
+
 }
