@@ -5,6 +5,7 @@ import java.util.prefs.Preferences;
 public class JNotesPreferences {
 
 	private static final Preferences USER_PREFERENCES  = Preferences.userNodeForPackage(JNotesPreferences.class);
+	private static final String APP_NAME = "JNotes";
 	
 	public static String getBasePath() {
         return USER_PREFERENCES.get("basePath", System.getProperty("user.home"));
@@ -20,6 +21,10 @@ public class JNotesPreferences {
 	
 	public static void setCurrentProfile(String currentProfile) { 
 		USER_PREFERENCES.put("currentProfile", currentProfile);
+	}
+	
+	public static String getAppName() {
+	    return APP_NAME;
 	}
 	
 	

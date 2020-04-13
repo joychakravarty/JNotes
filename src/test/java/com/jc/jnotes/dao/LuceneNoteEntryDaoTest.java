@@ -1,0 +1,114 @@
+package com.jc.jnotes.dao;
+
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.UUID;
+
+import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import com.jc.jnotes.JNotesPreferences;
+import com.jc.jnotes.model.NoteEntry;
+
+public class LuceneNoteEntryDaoTest {
+    
+    private NoteEntryDao dao;
+    
+    @BeforeEach
+    void clearIndexes() throws IOException {
+        Path pathToBeDeleted = Paths.get(JNotesPreferences.getBasePath(), "JNotesTest");
+        FileUtils.deleteDirectory(pathToBeDeleted.toFile());
+        dao = new LuceneNoteEntryDao("JNotesTest");
+    }
+    
+    
+    @Test
+    void addEntryNoteTest() throws IOException {
+        String id1 = UUID.randomUUID().toString();
+        String id2 = UUID.randomUUID().toString();
+        NoteEntry noteEntry1 = new NoteEntry(id1, "key1", "value1", "info1");
+        NoteEntry noteEntry2 = new NoteEntry(id2, "key2", "value2", "info2");
+        dao.addNoteEntry(noteEntry1);
+        dao.addNoteEntry(noteEntry2);
+        
+        dao.getAll().stream().forEach((ne) -> System.out.println("addEntrNoteTest: "+ne));
+        
+        List<NoteEntry> noteEntries = dao.getAll();
+        assertEquals(2, noteEntries.size());
+        
+        assertAll("noteEntries",
+                () -> assertEquals(id1, noteEntries.get(0).getId()),
+                () -> assertEquals("key1", noteEntries.get(0).getKey()),
+                () -> assertEquals("value1", noteEntries.get(0).getValue()),
+                () -> assertEquals("info1", noteEntries.get(0).getInfo()),
+                () -> assertEquals("key2", noteEntries.get(1).getKey())
+            );
+        
+    }
+    
+    @Test
+    void deleteNoteEntryTest() throws IOException {
+        String id1 = UUID.randomUUID().toString();
+        String id2 = UUID.randomUUID().toString();
+        NoteEntry noteEntry1 = new NoteEntry(id1, "key1", "value1", "info1");
+        NoteEntry noteEntry2 = new NoteEntry(id2, "key2", "value2", "info2");
+        dao.addNoteEntry(noteEntry1);
+        dao.addNoteEntry(noteEntry2);
+        
+        dao.getAll().stream().forEach((ne) -> System.out.println("deleteNoteEntryTest before: "+ne));
+        
+        dao.deleteNoteEntry(noteEntry1);
+        
+        dao.getAll().stream().forEach((ne) -> System.out.println("deleteNoteEntryTest after: "+ne));
+        
+        List<NoteEntry> noteEntries = dao.getAll();
+        assertEquals(1, noteEntries.size());
+        
+        assertAll("noteEntries",
+                () -> assertEquals(id2, noteEntries.get(0).getId()),
+                () -> assertEquals("key2", noteEntries.get(0).getKey()),
+                () -> assertEquals("value2", noteEntries.get(0).getValue()),
+                () -> assertEquals("info2", noteEntries.get(0).getInfo())
+            );
+    }
+    
+    @Test
+    void editEntryNoteTest() throws IOException {
+        String id1 = UUID.randomUUID().toString();
+        String id2 = UUID.randomUUID().toString();
+        NoteEntry noteEntry1 = new NoteEntry(id1, "key1", "value1", "info1");
+        NoteEntry noteEntry2 = new NoteEntry(id2, "key2", "value2", "info2");
+        dao.addNoteEntry(noteEntry1);
+        dao.addNoteEntry(noteEntry2);
+        
+        dao.getAll().stream().forEach((ne) -> System.out.println("editEntryNoteTest before: "+ne));
+        
+        noteEntry2.setKey("key3");
+        dao.editNoteEntry(noteEntry2);
+        
+        dao.getAll().stream().forEach((ne) -> System.out.println("editEntryNoteTest after: "+ne));
+        
+        List<NoteEntry> noteEntries = dao.getAll();
+        assertEquals(2, noteEntries.size());
+        
+        assertAll("noteEntries",
+                () -> assertEquals(id1, noteEntries.get(0).getId()),
+                () -> assertEquals("key1", noteEntries.get(0).getKey()),
+                () -> assertEquals("value1", noteEntries.get(0).getValue()),
+                () -> assertEquals(id2, noteEntries.get(1).getId()),
+                () -> assertEquals("info2", noteEntries.get(1).getInfo()),
+                () -> assertEquals("key3", noteEntries.get(1).getKey())
+            );
+        
+    }
+    
+    
+    
+
+}

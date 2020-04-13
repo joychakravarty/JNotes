@@ -17,8 +17,8 @@
    <center>
       <TableView fx:id="notesTable" editable="true" prefHeight="255.0" prefWidth="601.0">
         <columns>
-          <TableColumn fx:id="keyColumn" prefWidth="301.0" text="Key" />
-          <TableColumn fx:id="valueColumn" prefWidth="298.0" text="Value" />
+          <TableColumn fx:id="keyColumn" prefWidth="301.0" />
+          <TableColumn fx:id="valueColumn" prefWidth="298.0" />
         </columns>
          <columnResizePolicy>
             <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />

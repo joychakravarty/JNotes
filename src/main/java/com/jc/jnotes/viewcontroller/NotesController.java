@@ -95,14 +95,13 @@ public class NotesController {
         // When the selected NoteEntry in notesTable we set its info in the infoField
         notesTable.getSelectionModel().selectedItemProperty().addListener((obs, prevNoteEntry, selectedNoteEntry) -> {
             this.selectedNoteEntry = selectedNoteEntry;
-            System.out.println("xxxxxxx "+selectedNoteEntry);
             if (selectedNoteEntry != null) { // When the JNotes start no NoteEntry is selected. This is to handle that
                 infoField.setText(selectedNoteEntry.getInfo());
             } else {
                 infoField.setText("");
             }
         });
-        
+
         addAccelerators();
 
         notesTable.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
@@ -223,13 +222,13 @@ public class NotesController {
             NoteEntryController controller = loader.getController();
             controller.setParentStage(noteEntryStage);
             controller.setNoteEntry(newNoteEntry);
-            //controller.setNoteEntryList(observableNoteEntryList);
+            // controller.setNoteEntryList(observableNoteEntryList);
             controller.setMode(NoteEntryController.MODE_ADD);
-            controller.setRunAfter(()->{
+            controller.setRunAfter(() -> {
                 observableNoteEntryList.add(newNoteEntry);
                 notesTable.refresh();
-                infoField.requestFocus();
-                infoField.setText("Note added successfully");
+//                infoField.requestFocus();
+//                infoField.setText("Note added successfully");
             });
 
             try (FileInputStream fis = new FileInputStream("src/main/resources/images/edit.png")) {
@@ -265,12 +264,11 @@ public class NotesController {
             NoteEntryController controller = loader.getController();
             controller.setParentStage(noteEntryStage);
             controller.setNoteEntry(selectedNoteEntry);
-            //controller.setNoteEntryList(observableNoteEntryList);
+            // controller.setNoteEntryList(observableNoteEntryList);
             controller.setMode(NoteEntryController.MODE_EDIT);
-            controller.setRunAfter(()->{
+            controller.setRunAfter(() -> {
                 notesTable.refresh();
                 infoField.requestFocus();
-                infoField.setText("Note edited successfully");
             });
 
             try (FileInputStream fis = new FileInputStream("src/main/resources/images/edit.png")) {
