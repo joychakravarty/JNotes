@@ -25,13 +25,14 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
@@ -72,6 +73,8 @@ public class NotesController {
     private Button deleteButton;
     @FXML
     private MenuButton menuButton;
+    @FXML
+    private CheckBox searchAllCheckBox;
 
     NoteEntry selectedNoteEntry = null;
 
@@ -91,10 +94,10 @@ public class NotesController {
         notesTable.getSelectionModel().cellSelectionEnabledProperty().set(true);
 
         keyColumn.setCellValueFactory(new PropertyValueFactory<>("key"));
-        keyColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        keyColumn.setCellFactory((tabCol) -> new NonEditableTableCell());
 
         valueColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
-        valueColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        valueColumn.setCellFactory((tabCol) -> new NonEditableTableCell());
 
         // When the selected NoteEntry in notesTable we set its info in the infoField
         notesTable.getSelectionModel().selectedItemProperty().addListener((obs, prevNoteEntry, selectedNoteEntry) -> {
@@ -133,10 +136,10 @@ public class NotesController {
 
         searchField.addEventFilter(KeyEvent.KEY_RELEASED, event -> {
             String searchTxt = searchField.getText();
-
             if (showingSearchedResults && (event.getCode() == KeyCode.ESCAPE || StringUtils.isBlank(searchTxt))) {
                 event.consume();
                 loadAllNoteEntries();
+                searchField.setText("");
                 showingSearchedResults = false;
             } else if (event.getCode() == KeyCode.BACK_SPACE) {
                 if (showingSearchedResults && StringUtils.isBlank(searchTxt)) {
@@ -147,27 +150,15 @@ public class NotesController {
                     // do nothing
                 } else {
                     event.consume();
-                    List<NoteEntry> noteEntries;
-                    try {
-                        noteEntries = NoteEntryDaoFactory.getNoteEntryDao().searchNotes(searchTxt, false);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        noteEntries = Collections.emptyList();
-                    }
-                    loadNoteEntries(noteEntries);
+                    loadSearchedNoteEntries(searchTxt);
                     showingSearchedResults = true;
                 }
             } else if (StringUtils.isNotBlank(searchTxt)) {
                 event.consume();
-                List<NoteEntry> noteEntries;
-                try {
-                    noteEntries = NoteEntryDaoFactory.getNoteEntryDao().searchNotes(searchTxt, false);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    noteEntries = Collections.emptyList();
-                }
-                loadNoteEntries(noteEntries);
+                loadSearchedNoteEntries(searchTxt);
                 showingSearchedResults = true;
+            } else {
+                // do nothing
             }
         });
 
@@ -181,6 +172,8 @@ public class NotesController {
                 }
             }
         });
+        
+        searchAllCheckBox.setTooltip(new Tooltip("Search all fields"));
     }
 
     private void addAccelerators() {
@@ -216,7 +209,19 @@ public class NotesController {
         loadNoteEntries(allNoteEntries);
     }
 
-    protected void loadNoteEntries(List<NoteEntry> noteEntries) {
+    protected void loadSearchedNoteEntries(String searchTxt) {
+        List<NoteEntry> noteEntries;
+        try {
+            boolean searchInfoAlso = searchAllCheckBox.isSelected();
+            noteEntries = NoteEntryDaoFactory.getNoteEntryDao().searchNotes(searchTxt, searchInfoAlso);
+        } catch (IOException e) {
+            e.printStackTrace();
+            noteEntries = Collections.emptyList();
+        }
+        loadNoteEntries(noteEntries);
+    }
+
+    private void loadNoteEntries(List<NoteEntry> noteEntries) {
         observableNoteEntryList = FXCollections.observableArrayList();
         observableNoteEntryList.addAll(noteEntries);
 

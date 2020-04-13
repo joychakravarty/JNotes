@@ -11,7 +11,12 @@ import com.jc.jnotes.model.NoteEntry;
  *
  */
 public interface NoteEntryDao {
-
+    
+    /**
+     * 
+     * @return lists all entries with latest modified on top (ls -lt)
+     * @throws IOException
+     */
     List<NoteEntry> getAll() throws IOException;
 
     List<NoteEntry> searchNotes(String searchParam, boolean searchInfo) throws IOException;

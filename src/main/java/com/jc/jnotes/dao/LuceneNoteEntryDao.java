@@ -30,6 +30,7 @@ import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.WildcardQuery;
+import org.apache.lucene.search.SortField.Type;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
@@ -60,7 +61,7 @@ public class LuceneNoteEntryDao implements NoteEntryDao {
         }
         indexDir = FSDirectory.open(indexPath);
     }
-
+    
     @Override
     public List<NoteEntry> getAll() throws IOException {
         List<NoteEntry> noteEntries;
@@ -72,7 +73,7 @@ public class LuceneNoteEntryDao implements NoteEntryDao {
         }
         try {
             IndexSearcher searcher = new IndexSearcher(indexReader);
-            Sort sort = new Sort(new SortField[] { SortField.FIELD_DOC });// Sort based on order of last modified
+            Sort sort = new Sort(new SortField[] { new SortField(null, Type.DOC, true) });// Sort based on order of last modified
             TopDocs topDocs = searcher.search(getAllQuery, 10000, sort);
             noteEntries = getNoteEntries(topDocs, searcher);
         } finally {

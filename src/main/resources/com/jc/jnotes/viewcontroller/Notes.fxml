@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.MenuButton?>
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.TableColumn?>
@@ -37,8 +38,9 @@
                      </accelerator></MenuItem>
               </items>
             </MenuButton>
-            <HBox prefHeight="28.0" prefWidth="284.0" />
+            <HBox prefHeight="28.0" prefWidth="254.0" />
             <TextField fx:id="searchField" prefHeight="27.0" prefWidth="223.0" />
+            <CheckBox fx:id="searchAllCheckBox" mnemonicParsing="false" />
          </items>
       </ToolBar>
    </top>

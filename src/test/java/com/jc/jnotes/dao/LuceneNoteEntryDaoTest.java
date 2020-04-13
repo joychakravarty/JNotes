@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -18,13 +19,23 @@ import com.jc.jnotes.model.NoteEntry;
 
 public class LuceneNoteEntryDaoTest {
     
+    private static final String TEST_INDX_DIR = "JNotesTest";
     private NoteEntryDao dao;
     
     @BeforeEach
     void clearIndexes() throws IOException {
-        Path pathToBeDeleted = Paths.get(JNotesPreferences.getBasePath(), "JNotesTest");
+        deleteIndexDirectory();
+        dao = new LuceneNoteEntryDao(TEST_INDX_DIR);
+    }
+    
+    @AfterAll
+    static void clearIndexesAfterTests() throws IOException {
+        deleteIndexDirectory();
+    }
+    
+    private static void deleteIndexDirectory() throws IOException {
+        Path pathToBeDeleted = Paths.get(JNotesPreferences.getBasePath(), TEST_INDX_DIR);
         FileUtils.deleteDirectory(pathToBeDeleted.toFile());
-        dao = new LuceneNoteEntryDao("JNotesTest");
     }
     
     @Test
@@ -42,11 +53,11 @@ public class LuceneNoteEntryDaoTest {
         assertEquals(2, noteEntries.size());
         
         assertAll("noteEntries",
-                () -> assertEquals(id1, noteEntries.get(0).getId()),
-                () -> assertEquals("key1", noteEntries.get(0).getKey()),
-                () -> assertEquals("value1", noteEntries.get(0).getValue()),
-                () -> assertEquals("info1", noteEntries.get(0).getInfo()),
-                () -> assertEquals("key2", noteEntries.get(1).getKey())
+                () -> assertEquals(id2, noteEntries.get(0).getId()),
+                () -> assertEquals("key2", noteEntries.get(0).getKey()),
+                () -> assertEquals("value2", noteEntries.get(0).getValue()),
+                () -> assertEquals("info1", noteEntries.get(1).getInfo()),
+                () -> assertEquals("key1", noteEntries.get(1).getKey())
             );
     }
     
@@ -96,12 +107,12 @@ public class LuceneNoteEntryDaoTest {
         assertEquals(2, noteEntries.size());
         
         assertAll("noteEntries",
-                () -> assertEquals(id1, noteEntries.get(0).getId()),
-                () -> assertEquals("key1", noteEntries.get(0).getKey()),
-                () -> assertEquals("value1", noteEntries.get(0).getValue()),
-                () -> assertEquals(id2, noteEntries.get(1).getId()),
-                () -> assertEquals("info2", noteEntries.get(1).getInfo()),
-                () -> assertEquals("key3", noteEntries.get(1).getKey())
+                () -> assertEquals(id2, noteEntries.get(0).getId()),
+                () -> assertEquals("key3", noteEntries.get(0).getKey()),/*Verify the edit*/
+                () -> assertEquals("value2", noteEntries.get(0).getValue()),
+                () -> assertEquals(id1, noteEntries.get(1).getId()),
+                () -> assertEquals("info1", noteEntries.get(1).getInfo()),
+                () -> assertEquals("key1", noteEntries.get(1).getKey())
             );
         
     }
