@@ -1,5 +1,9 @@
 package com.jc.jnotes.model;
 
+import java.util.Comparator;
+
+import org.apache.commons.lang3.StringUtils;
+
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
@@ -9,7 +13,13 @@ import javafx.beans.property.StringProperty;
  * @author Joy C
  *
  */
-public class NoteEntry {
+public class NoteEntry implements Comparable<NoteEntry> {
+    
+    private static Comparator<String> nullSafeStringComparator = Comparator
+            .nullsFirst(String::compareToIgnoreCase); 
+
+    private static Comparator<NoteEntry> keyComparator = Comparator
+            .comparing(NoteEntry::getKey, nullSafeStringComparator);
 
     private final String id;
     private StringProperty key;
@@ -22,9 +32,9 @@ public class NoteEntry {
             throw new IllegalArgumentException("NoteEntry id cannot be null");
         }
         this.id=id;
-        this.key = new SimpleStringProperty(key);
-        this.value = new SimpleStringProperty(value);
-        this.info = new SimpleStringProperty(info);
+        this.key = new SimpleStringProperty(key==null?StringUtils.EMPTY:key);
+        this.value = new SimpleStringProperty(value==null?StringUtils.EMPTY:value);
+        this.info = new SimpleStringProperty(info==null?StringUtils.EMPTY:info);
     }
     
     public String getId(){
@@ -95,6 +105,11 @@ public class NoteEntry {
     @Override
     public String toString(){
         return String.format("ID: [%s] Key: [%s] Value: [%s] Info[%s]", id, key, value, info);
+    }
+
+    @Override
+    public int compareTo(NoteEntry other) {
+        return keyComparator.compare(this, other);
     }
     
 }
