@@ -18,7 +18,7 @@ public class NoteEntry implements Comparable<NoteEntry> {
     private static Comparator<String> nullSafeStringComparator = Comparator
             .nullsFirst(String::compareToIgnoreCase); 
 
-    private static Comparator<NoteEntry> noteEntryComparator = Comparator
+    private static Comparator<NoteEntry> keyComparator = Comparator
             .comparing(NoteEntry::getKey, nullSafeStringComparator);
 
     private final String id;
@@ -109,7 +109,7 @@ public class NoteEntry implements Comparable<NoteEntry> {
 
     @Override
     public int compareTo(NoteEntry other) {
-        return noteEntryComparator.compare(this, other);
+        return keyComparator.compare(this, other);
     }
     
 }

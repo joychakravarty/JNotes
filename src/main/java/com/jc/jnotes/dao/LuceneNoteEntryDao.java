@@ -119,6 +119,7 @@ public class LuceneNoteEntryDao implements NoteEntryDao {
     
     @Override
     public List<NoteEntry> searchNotes(String searchParam, boolean searchInfo) throws IOException {
+        searchParam = searchParam.toLowerCase();
         IndexReader indexReader = DirectoryReader.open(indexDir);
         IndexSearcher searcher = new IndexSearcher(indexReader);
         Set<NoteEntry> searchedEntries = new LinkedHashSet<>(); 

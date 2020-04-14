@@ -12,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexNotFoundException;
 
 import com.jc.jnotes.JNotesApplication;
+import com.jc.jnotes.JNotesPreferences;
 import com.jc.jnotes.dao.NoteEntryDaoFactory;
 import com.jc.jnotes.model.NoteEntry;
 
@@ -23,22 +24,24 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
-import javafx.scene.control.MenuButton;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TablePosition;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -66,15 +69,9 @@ public class NotesController {
     @FXML
     private TextField searchField;
     @FXML
-    private Button newButton;
-    @FXML
-    private Button editButton;
-    @FXML
-    private Button deleteButton;
-    @FXML
-    private MenuButton menuButton;
-    @FXML
     private CheckBox searchAllCheckBox;
+    @FXML
+    private Text text;
 
     NoteEntry selectedNoteEntry = null;
 
@@ -122,12 +119,29 @@ public class NotesController {
                 }
             }
         });
+        final KeyCodeCombination keyCodeCopy = new KeyCodeCombination(KeyCode.C, KeyCombination.SHORTCUT_DOWN);
+        notesTable.setOnKeyPressed(event -> {
+            if (keyCodeCopy.match(event) && this.selectedNoteEntry != null) {
+                @SuppressWarnings("rawtypes")
+                ObservableList<TablePosition> tablePositions = notesTable.getSelectionModel().getSelectedCells();
+                if (tablePositions != null && tablePositions.size() > 0) {
+                    @SuppressWarnings("unchecked")
+                    TablePosition<NoteEntry, ?> tablePosition = tablePositions.get(0);
+                    Object cellData = tablePosition.getTableColumn().getCellData(tablePosition.getRow());
+                    if (cellData != null) {
+                        final ClipboardContent clipboardContent = new ClipboardContent();
+                        clipboardContent.putString(cellData.toString());
+                        Clipboard.getSystemClipboard().setContent(clipboardContent);
+                    }
+                }
+            }
+        });
 
         infoField.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
             if (event.getCode() == KeyCode.TAB) {
                 event.consume();
                 if (!event.isShiftDown()) {
-                    newButton.requestFocus();
+                    // menuButton.requestFocus();
                 } else {
                     notesTable.requestFocus();
                 }
@@ -168,25 +182,16 @@ public class NotesController {
                 if (!event.isShiftDown()) {
                     notesTable.requestFocus();
                 } else {
-                    menuButton.requestFocus();
+                    // menuButton.requestFocus();
                 }
             }
         });
-        
+
         searchAllCheckBox.setTooltip(new Tooltip("Search all fields"));
     }
 
     private void addAccelerators() {
         Platform.runLater(() -> {
-            newButton.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.N, KeyCombination.SHORTCUT_DOWN), () -> {
-                newButton.fire();
-            });
-            editButton.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.E, KeyCombination.SHORTCUT_DOWN), () -> {
-                editButton.fire();
-            });
-            deleteButton.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.D, KeyCombination.SHORTCUT_DOWN), () -> {
-                deleteButton.fire();
-            });
             searchField.getScene().getAccelerators().put(new KeyCodeCombination(KeyCode.F, KeyCombination.SHORTCUT_DOWN), () -> {
                 searchField.requestFocus();
             });
@@ -236,12 +241,8 @@ public class NotesController {
             System.out.println(toBeDeletedNoteEntry);
             if (toBeDeletedNoteEntry != null) {
 
-                Alert alert = new Alert(AlertType.CONFIRMATION);
-                alert.setTitle("Confirm Delete");
-                alert.setHeaderText("Delete this Note Entry?");
-                alert.setContentText("Key:" + toBeDeletedNoteEntry.getKey());
-
-                Optional<ButtonType> result = alert.showAndWait();
+                Optional<ButtonType> result = alertHelper.showDefaultConfirmation(parentStage, "Delete selected note entry?",
+                        "Key:" + toBeDeletedNoteEntry.getKey());
                 if (result.get() == ButtonType.OK) {
                     observableNoteEntryList.remove(toBeDeletedNoteEntry);
                     infoField.setText("");
@@ -297,7 +298,7 @@ public class NotesController {
     }
 
     @FXML
-    protected void editNewNoteEntry() {
+    protected void editNoteEntry() {
         if (this.selectedNoteEntry == null) {
             return;
         }
@@ -339,7 +340,7 @@ public class NotesController {
     @FXML
     private void showAbout() {
         Alert alert = new Alert(AlertType.INFORMATION);
-        alert.setTitle("About JNote");
+        alert.setTitle("About "+JNotesPreferences.getAppName());
         alert.setHeaderText("Author - Joy Chakravarty");
 
         alert.showAndWait();

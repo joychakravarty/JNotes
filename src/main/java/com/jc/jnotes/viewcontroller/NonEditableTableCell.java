@@ -44,23 +44,13 @@ public class NonEditableTableCell extends TableCell<NoteEntry, String> {
                 setText(null);
                 setGraphic(null);
             } else {
-                if (isEditing()) {
-                    if (textField != null) {
-                        textField.setText(getString());
-                    }
-                    setText(null);
-                    setGraphic(textField);
-                } else {
-                    setText(getString());
-                    setGraphic(null);
-                }
+                setText(item.toString());
             }
         }
  
         private void createTextField() {
             textField = new TextField(getString());
             textField.setMinWidth(this.getWidth() - this.getGraphicTextGap()* 2);
-            textField.setEditable(false);
         }
  
         private String getString() {

@@ -2,8 +2,10 @@ package com.jc.jnotes.viewcontroller;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Optional;
 
 import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -62,5 +64,16 @@ public class AlertHelper {
 
         alert.showAndWait();
     }
+    
+    public Optional<ButtonType> showDefaultConfirmation(Stage parentStage, String headerText, String contentText) {
+        Alert alert = new Alert(AlertType.CONFIRMATION);
+        alert.setTitle("Confirmation Dialog");
+        alert.setHeaderText(headerText);
+        alert.setContentText(contentText);
+
+        return alert.showAndWait();
+    }
+    
+    
 
 }
