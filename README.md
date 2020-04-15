@@ -22,8 +22,8 @@
  
  ## Run JNotes
   - Install Java 11 or above (verify using java -version)  
-  - Download JNotes.jar uber jar from the milestone folder based on your OS.  
-  - Double click it or run java -jar JNotes.jar  
+  - Download the uber jar JNotes-<YourOS>.jar from the milestone folder based on your OS.  
+  - Double click it or run java -jar JNotes-<YourOS>.jar  
    
  ## Build and run (for Developers)
     mvn clean install  
@@ -53,7 +53,7 @@
   
  ## Features in progress
   Profiles switching  
-  Display info at the bottom  
+  Display info at the bottom - Done
   Import/Export profiles from/to csv  
   Choice to select base folder for Jnotes  
   
