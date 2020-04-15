@@ -61,7 +61,7 @@
                   </MenuItem>
               </items>
                <graphic>
-                  <ImageView fx:id="menuButton" fitHeight="19.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+                  <ImageView fitHeight="19.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
                      <image>
                         <Image url="@../../../../images/menu-24.png" />
                      </image>
@@ -78,7 +78,7 @@
       <AnchorPane prefHeight="150.0" prefWidth="500.0" BorderPane.alignment="CENTER">
          <children>
             <TextArea fx:id="infoField" editable="false" layoutX="4.0" layoutY="-7.0" prefHeight="83.0" prefWidth="476.0" AnchorPane.bottomAnchor="25.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0" />
-            <Text fx:id="text" layoutX="5.0" layoutY="141.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Text" wrappingWidth="264.2060546875" />
+            <Text fx:id="notificationText" layoutX="5.0" layoutY="141.0" strokeType="OUTSIDE" strokeWidth="0.0" wrappingWidth="600.0" />
          </children>
       </AnchorPane>
    </bottom>

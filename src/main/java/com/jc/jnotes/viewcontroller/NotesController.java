@@ -1,7 +1,7 @@
 package com.jc.jnotes.viewcontroller;
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -51,6 +51,10 @@ import javafx.stage.Stage;
  *
  */
 public class NotesController {
+    
+    private static final String ADD_STATUS_NOTIFICATION = "Added.";
+    private static final String EDIT_STATUS_NOTIFICATION = "Saved.";
+    private static final String DELETE_STATUS_NOTIFICATION = "Deleted.";
 
     private final AlertHelper alertHelper = new AlertHelper();
 
@@ -71,7 +75,7 @@ public class NotesController {
     @FXML
     private CheckBox searchAllCheckBox;
     @FXML
-    private Text text;
+    private Text notificationText;
 
     NoteEntry selectedNoteEntry = null;
 
@@ -188,6 +192,7 @@ public class NotesController {
         });
 
         searchAllCheckBox.setTooltip(new Tooltip("Search all fields"));
+      
     }
 
     private void addAccelerators() {
@@ -229,9 +234,9 @@ public class NotesController {
     private void loadNoteEntries(List<NoteEntry> noteEntries) {
         observableNoteEntryList = FXCollections.observableArrayList();
         observableNoteEntryList.addAll(noteEntries);
-
         notesTable.setItems(observableNoteEntryList);
         notesTable.refresh();
+        notificationText.setText("Profile: "+ JNotesPreferences.getCurrentProfile() + " | Count: "+observableNoteEntryList.size());
     }
 
     @FXML
@@ -249,6 +254,7 @@ public class NotesController {
                     this.selectedNoteEntry = null;
                     NoteEntryDaoFactory.getNoteEntryDao().deleteNoteEntry(toBeDeletedNoteEntry);
                     notesTable.refresh();
+                    notificationText.setText(DELETE_STATUS_NOTIFICATION);
                 }
             }
         } catch (IOException ex) {
@@ -280,14 +286,12 @@ public class NotesController {
             controller.setRunAfter(() -> {
                 observableNoteEntryList.add(newNoteEntry);
                 notesTable.refresh();
-                // infoField.requestFocus();
-                // infoField.setText("Note added successfully");
+                notificationText.setText(ADD_STATUS_NOTIFICATION);
             });
 
-            try (FileInputStream fis = new FileInputStream("src/main/resources/images/edit.png")) {
-                noteEntryStage.getIcons().add(new Image(fis));
-            } catch (IOException ioEx) {
-                ioEx.printStackTrace();
+            InputStream iconInputStream = JNotesApplication.class.getResourceAsStream("/images/edit.png");
+            if (iconInputStream != null) {
+                noteEntryStage.getIcons().add(new Image(iconInputStream));
             }
 
             noteEntryStage.show();
@@ -321,13 +325,13 @@ public class NotesController {
             controller.setMode(NoteEntryController.MODE_EDIT);
             controller.setRunAfter(() -> {
                 notesTable.refresh();
+                notificationText.setText(EDIT_STATUS_NOTIFICATION);
                 infoField.requestFocus();
             });
 
-            try (FileInputStream fis = new FileInputStream("src/main/resources/images/edit.png")) {
-                noteEntryStage.getIcons().add(new Image(fis));
-            } catch (IOException ioEx) {
-                ioEx.printStackTrace();
+            InputStream iconInputStream = JNotesApplication.class.getResourceAsStream("/images/edit.png");
+            if (iconInputStream != null) {
+                noteEntryStage.getIcons().add(new Image(iconInputStream));
             }
 
             noteEntryStage.show();

@@ -1,7 +1,6 @@
 package com.jc.jnotes;
 
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.InputStream;
 
 import com.jc.jnotes.viewcontroller.AlertHelper;
 import com.jc.jnotes.viewcontroller.NotesController;
@@ -15,20 +14,19 @@ import javafx.stage.Stage;
 
 /**
  * 
- * @author Joy 
+ * @author Joy
  */
 public class JNotesApplication extends Application {
-    
-    private final AlertHelper alertHelper = new AlertHelper(); 
+
+    private final AlertHelper alertHelper = new AlertHelper();
 
     @Override
     public void start(Stage stage) {
         stage.setTitle(JNotesPreferences.getAppName());
-        
-        try(FileInputStream fis = new FileInputStream("src/main/resources/images/spiral-booklet.png")){
-            stage.getIcons().add(new Image(fis));
-        }catch(IOException ioEx) {
-            ioEx.printStackTrace();
+
+        InputStream iconInputStream = JNotesApplication.class.getResourceAsStream("/images/spiral-booklet.png");
+        if (iconInputStream != null) {
+            stage.getIcons().add(new Image(iconInputStream));
         }
 
         loadNotes(stage);
