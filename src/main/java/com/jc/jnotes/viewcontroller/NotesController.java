@@ -2,12 +2,19 @@ package com.jc.jnotes.viewcontroller;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexNotFoundException;
 
@@ -26,11 +33,14 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.SplitMenuButton;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TablePosition;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
@@ -51,16 +61,20 @@ import javafx.stage.Stage;
  *
  */
 public class NotesController {
-    
-    private static final String ADD_STATUS_NOTIFICATION = "Added.";
-    private static final String EDIT_STATUS_NOTIFICATION = "Saved.";
-    private static final String DELETE_STATUS_NOTIFICATION = "Deleted.";
 
+    private static final String ADD_STATUS_NOTIFICATION = "Success: Note Added.";
+    private static final String EDIT_STATUS_NOTIFICATION = "Success: Note Saved.";
+    private static final String DELETE_STATUS_NOTIFICATION = "Success: Note Deleted.";
+    private static final String PROFILE_DELETE_STATUS_NOTIFICATION = "Success: Profile Deleted.";
+    
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
     private final AlertHelper alertHelper = new AlertHelper();
 
     private ObservableList<NoteEntry> observableNoteEntryList;
     private Stage parentStage;
     private Stage noteEntryStage;
+    private NoteEntry selectedNoteEntry = null;
+    private boolean showingSearchedResults = false;
 
     @FXML
     private TableView<NoteEntry> notesTable;
@@ -76,10 +90,10 @@ public class NotesController {
     private CheckBox searchAllCheckBox;
     @FXML
     private Text notificationText;
-
-    NoteEntry selectedNoteEntry = null;
-
-    boolean showingSearchedResults = false;
+    @FXML
+    private ComboBox<String> profileComboBox;
+    @FXML
+    private SplitMenuButton splitMenuButton;
 
     public void setParentStage(Stage parentStage) {
         this.parentStage = parentStage;
@@ -105,6 +119,7 @@ public class NotesController {
             this.selectedNoteEntry = selectedNoteEntry;
             if (selectedNoteEntry != null) { // When the JNotes start no NoteEntry is selected. This is to handle that
                 infoField.setText(selectedNoteEntry.getInfo());
+                notificationText.setText("Last modified on: "+selectedNoteEntry.getLastModifiedTime().format(formatter));
             } else {
                 infoField.setText("");
             }
@@ -145,7 +160,7 @@ public class NotesController {
             if (event.getCode() == KeyCode.TAB) {
                 event.consume();
                 if (!event.isShiftDown()) {
-                    // menuButton.requestFocus();
+                    splitMenuButton.requestFocus();
                 } else {
                     notesTable.requestFocus();
                 }
@@ -185,14 +200,54 @@ public class NotesController {
                 event.consume();
                 if (!event.isShiftDown()) {
                     notesTable.requestFocus();
+                    if(selectedNoteEntry==null) {
+                        if(observableNoteEntryList!=null && !observableNoteEntryList.isEmpty()) {
+                            notesTable.getSelectionModel().select(0);
+                        }
+                    }
                 } else {
-                    // menuButton.requestFocus();
+                    profileComboBox.requestFocus();
+                }
+            }
+        });
+
+        splitMenuButton.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (event.getCode() == KeyCode.TAB) {
+                event.consume();
+                if (!event.isShiftDown()) {
+                    profileComboBox.requestFocus();
+                } else {
+                    infoField.requestFocus();
                 }
             }
         });
 
         searchAllCheckBox.setTooltip(new Tooltip("Search all fields"));
-      
+
+        profileComboBox.setTooltip(new Tooltip("Select Profile"));
+        loadProfiles();
+        profileComboBox.setEditable(false);
+        profileComboBox.getSelectionModel().selectedItemProperty().addListener((obs, prevProfile, selectedProfile) -> {
+            if (StringUtils.isNotBlank(selectedProfile)) {
+                JNotesPreferences.setCurrentProfile(selectedProfile);
+                loadAllNoteEntries();
+            }
+        });
+    }
+
+    private void loadProfiles() {
+        Path directory = Paths.get(JNotesPreferences.getBasePath(), JNotesPreferences.getAppName());
+        List<String> directories;
+        try {
+            directories = Files.walk(directory).filter(Files::isDirectory).map((path) -> path.getName(path.getNameCount() - 1))
+                    .map(Path::toString).filter((name) -> !name.equals(JNotesPreferences.getAppName())).collect(Collectors.toList());
+        } catch (IOException e) {
+            directories = new ArrayList<>();
+            directories.add(JNotesPreferences.DEFAULT_PROFILE);
+        }
+        profileComboBox.getItems().addAll(directories);
+        profileComboBox.getSelectionModel().select(JNotesPreferences.getCurrentProfile());
+
     }
 
     private void addAccelerators() {
@@ -236,7 +291,7 @@ public class NotesController {
         observableNoteEntryList.addAll(noteEntries);
         notesTable.setItems(observableNoteEntryList);
         notesTable.refresh();
-        notificationText.setText("Profile: "+ JNotesPreferences.getCurrentProfile() + " | Count: "+observableNoteEntryList.size());
+        notificationText.setText("Total Notes : " + observableNoteEntryList.size());
     }
 
     @FXML
@@ -342,9 +397,84 @@ public class NotesController {
     }
 
     @FXML
+    protected void deleteProfile() {
+        try {
+            if (profileComboBox.getItems().size() == 1) {
+                alertHelper.showErrorAlert(parentStage, "Invalid Operation", "Cannot delete the only Profile");
+
+            } else {
+                String profileToBeDeleted = profileComboBox.getSelectionModel().getSelectedItem();
+                Optional<ButtonType> result = alertHelper.showDefaultConfirmation(parentStage,
+                        "Delete profile: " + profileToBeDeleted + "?", "Note: This is will delete all the data within this profile!");
+
+                if (result.get() == ButtonType.OK) {
+                    profileComboBox.getItems().remove(profileToBeDeleted);
+                    profileComboBox.getSelectionModel().select(0);
+                    Path pathToBeDeleted = Paths.get(JNotesPreferences.getBasePath(), JNotesPreferences.getAppName(), profileToBeDeleted);
+                    FileUtils.deleteDirectory(pathToBeDeleted.toFile());
+                    notificationText.setText(PROFILE_DELETE_STATUS_NOTIFICATION);
+                }
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to delete Profile", "");
+        }
+    }
+
+    @FXML
+    protected void renameProfile() {
+        String profileToBeRenamed = profileComboBox.getSelectionModel().getSelectedItem();
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setHeaderText("Rename Profile: " + profileToBeRenamed);
+        dialog.setContentText("New Profile Name");
+        dialog.showAndWait().ifPresent(text -> {
+            if (StringUtils.isNotBlank(text) && profileComboBox.getItems().indexOf(text) == -1) {
+                try {
+                    Path source = Paths.get(JNotesPreferences.getBasePath(), JNotesPreferences.getAppName(), profileToBeRenamed);
+                    Files.move(source, source.resolveSibling(text));
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                    alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to Rename Profile", "");
+                    return;
+                }
+
+                int index = profileComboBox.getItems().indexOf(profileToBeRenamed);
+                profileComboBox.getItems().add(index, text);
+                profileComboBox.getItems().remove(profileToBeRenamed);
+                profileComboBox.getSelectionModel().select(index);
+            } else {
+                alertHelper.showErrorAlert(parentStage, "Invalid operation", "Please enter a valid Profile name");
+            }
+        });
+    }
+
+    @FXML
+    protected void addNewProfile() {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setHeaderText("Add New Profile");
+        dialog.setContentText("New Profile Name");
+        dialog.showAndWait().ifPresent(text -> {
+            if (StringUtils.isNotBlank(text) && profileComboBox.getItems().indexOf(text) == -1) {
+                try {
+                    Paths.get(JNotesPreferences.getBasePath(), JNotesPreferences.getAppName(), text);
+                } catch (InvalidPathException ex) {
+                    ex.printStackTrace();
+                    alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to Add Profile", "");
+                    return;
+                }
+                int index = profileComboBox.getItems().size() - 1;
+                profileComboBox.getItems().add(index, text);
+                profileComboBox.getSelectionModel().select(index);
+            } else {
+                alertHelper.showErrorAlert(parentStage, "Invalid operation", "Please enter a valid Profile name");
+            }
+        });
+    }
+
+    @FXML
     private void showAbout() {
         Alert alert = new Alert(AlertType.INFORMATION);
-        alert.setTitle("About "+JNotesPreferences.getAppName());
+        alert.setTitle("About " + JNotesPreferences.getAppName());
         alert.setHeaderText("Author - Joy Chakravarty");
 
         alert.showAndWait();

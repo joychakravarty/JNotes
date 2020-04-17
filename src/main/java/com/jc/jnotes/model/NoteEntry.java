@@ -1,9 +1,12 @@
 package com.jc.jnotes.model;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 
 import org.apache.commons.lang3.StringUtils;
 
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
@@ -25,7 +28,7 @@ public class NoteEntry implements Comparable<NoteEntry> {
     private StringProperty key;
     private StringProperty value;
     private StringProperty info;
-    //private final ObjectProperty<LocalDateTime> lastModifiedTime;
+    private ObjectProperty<LocalDateTime> lastModifiedTime;
     
     public NoteEntry(String id, String key, String value, String info){
         if(id==null){
@@ -35,6 +38,7 @@ public class NoteEntry implements Comparable<NoteEntry> {
         this.key = new SimpleStringProperty(key==null?StringUtils.EMPTY:key);
         this.value = new SimpleStringProperty(value==null?StringUtils.EMPTY:value);
         this.info = new SimpleStringProperty(info==null?StringUtils.EMPTY:info);
+        this.lastModifiedTime = new SimpleObjectProperty<LocalDateTime>(LocalDateTime.now());
     }
     
     public String getId(){
@@ -47,6 +51,7 @@ public class NoteEntry implements Comparable<NoteEntry> {
     
     public void setKey(String key) {
         this.key.set(key);
+        this.lastModifiedTime.set(LocalDateTime.now());
     }
 
     public StringProperty keyProperty() {
@@ -59,6 +64,7 @@ public class NoteEntry implements Comparable<NoteEntry> {
 
     public void setValue(String value) {
         this.value.set(value);
+        this.lastModifiedTime.set(LocalDateTime.now());
     }
 
     public StringProperty valueProperty() {
@@ -71,10 +77,23 @@ public class NoteEntry implements Comparable<NoteEntry> {
 
     public void setInfo(String info) {
         this.info.set(info);
+        this.lastModifiedTime.set(LocalDateTime.now());
     }
     
     public StringProperty infoProperty() {
         return info;
+    }
+
+    public LocalDateTime getLastModifiedTime() {
+        return lastModifiedTime.get();
+    }
+    
+    public ObjectProperty<LocalDateTime>  lastModifiedTimeProperty(){
+        return lastModifiedTime;
+    }
+    
+    public void setLastModifiedTime(LocalDateTime lastModifiedTime) {
+        this.lastModifiedTime.set(lastModifiedTime);
     }
 
     @Override
