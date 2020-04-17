@@ -163,6 +163,11 @@ public class NotesController {
                     splitMenuButton.requestFocus();
                 } else {
                     notesTable.requestFocus();
+                    if(selectedNoteEntry==null) {
+                        if(observableNoteEntryList!=null && !observableNoteEntryList.isEmpty()) {
+                            notesTable.getSelectionModel().select(0);
+                        }
+                    }
                 }
             }
         });
