@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -47,6 +49,7 @@ public class LuceneNoteEntryDao implements NoteEntryDao {
     private final Directory indexDir;
     private final Query getAllQuery = new MatchAllDocsQuery();
     private final StandardAnalyzer analyzer = new StandardAnalyzer();
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     MultiFieldQueryParser multiFieldQueryParser = new MultiFieldQueryParser(new String[]{"key", "value", "info"}, analyzer);
     
     public LuceneNoteEntryDao() throws IOException {
@@ -154,6 +157,7 @@ public class LuceneNoteEntryDao implements NoteEntryDao {
         for (ScoreDoc scoreDoc : sDocs) {
             Document dd = searcher.doc(scoreDoc.doc);
             NoteEntry noteEntry = new NoteEntry(dd.get("id"), dd.get("key"), dd.get("value"), dd.get("info"));
+            noteEntry.setLastModifiedTime(LocalDateTime.parse(dd.get("lastModifiedTime"), formatter));
             noteEntries.add(noteEntry);
         }
         return noteEntries;
@@ -165,6 +169,7 @@ public class LuceneNoteEntryDao implements NoteEntryDao {
         document.add(new TextField("key", noteEntry.getKey(), Field.Store.YES));
         document.add(new TextField("value", noteEntry.getValue(), Field.Store.YES));
         document.add(new TextField("info", noteEntry.getInfo(), Field.Store.YES));
+        document.add(new StringField("lastModifiedTime", noteEntry.getLastModifiedTime().format(formatter), Field.Store.YES));
         return document;
         
     }

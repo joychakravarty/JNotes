@@ -3,13 +3,14 @@ package com.jc.jnotes;
 import java.util.prefs.Preferences;
 
 public class JNotesPreferences {
+    
+    public static final String DEFAULT_PROFILE = "default";
 
 	private static final Preferences USER_PREFERENCES  = Preferences.userNodeForPackage(JNotesPreferences.class);
 	private static final String APP_NAME = "JNotes";
 	private static final String USER_PREF_BASEPATH = "basePath";
 	private static final String USER_HOME = "user.home";
 	private static final String USER_PREF_CURRENT_PROFILE = "currentProfile";
-	private static final String DEFAULT_PROFILE = "default";
 	
 	
 	public static String getBasePath() {
