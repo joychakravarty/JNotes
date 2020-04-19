@@ -54,7 +54,9 @@
   - Profiles switching (done)  
   - Display info at the bottom (done)
   - Import/Export profiles from/to csv  (done)
-  - Choice to select base folder for Jnotes (Pending) 
+  - Choice to select base folder for Jnotes (Pending)  
+  - Hide password fields from table (Pending)  
+  - Add flashcard feature (Pending)  
   
  ## Developer: Joy Chakravarty  
     joy.chakravarty84@gmail.com | https://www.linkedin.com/in/joychak/ 
