@@ -13,18 +13,18 @@
   
 ## Why JNotes:
   - It's keyboard friendly. TIP: Use shortcuts as much as possible, I built it for Keyboard poeple like me. 
-  - Lookup table without fast search is no fun, so JNotes is quick. try it.  
-  - It's a Java based application so yes you can run the .jar on your machine without much hassle.  
+  - Lookup table without fast search is no fun, so JNotes is quick. Try it.  
+  - It's a Java based application, so if you have Java 11 or higher you can simply run the .jar without any installation.  
   - Its open source - https://github.com/joychakravarty/JNotes/edit/master/README.md - so fork it and customize it.  
  
  ## Run JNotes
   - Install Java 11 or above (verify using java -version)  
-  - Download the uber jar JNotes-<YourOS>.jar from the milestone folder based on your OS.  
-  - Run java -jar JNotes-<YourOS>.jar  
+  - Download the uber jar JNotes-YourOS.jar from the milestone folder based on your OS.  
+  - Run java -jar JNotes-YourOS.jar  
    
  ## Build and run (for Developers)
     mvn clean install  
-    java -jar JNotes.jar  
+    java -jar JNotes.jar   
     OR  
     mvn clean javafx:run (For this, its good to have javafx sdk installed)
      
@@ -48,7 +48,7 @@
   - SceneBuilder 8.5.0 (Design UI)  
   - Maven 3.5.0 (Build)  
   - Eclipse Oxygen 4.7.3a (IDE)  
-  - macOS Mojave 10.14.6 (Dev OS)
+  - macOS Mojave 10.14.6 (Dev OS - also tested on Windows 10)  
   
  ## Features in progress
   - Profiles switching (done)  
