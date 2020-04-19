@@ -7,10 +7,10 @@ import java.util.ResourceBundle;
 import org.apache.commons.lang3.StringUtils;
 
 import com.jc.jnotes.dao.NoteEntryDaoFactory;
+import com.jc.jnotes.helper.AlertHelper;
 import com.jc.jnotes.model.NoteEntry;
 
 import javafx.application.Platform;
-import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -100,10 +100,6 @@ public class NoteEntryController implements Initializable {
         infoField.setText(noteEntry.getInfo());
     }
 
-//    public void setNoteEntryList(ObservableList<NoteEntry> noteEntryList) {
-//        this.noteEntryList = noteEntryList;
-//    }
-
     public void setMode(String mode) {
         this.mode = mode;
     }
@@ -114,9 +110,6 @@ public class NoteEntryController implements Initializable {
             noteEntry.setKey(keyField.getText());
             noteEntry.setValue(valueField.getText());
             noteEntry.setInfo(infoField.getText());
-//            if (MODE_ADD.equals(mode)) {
-//                noteEntryList.add(noteEntry);
-//            }
             try {
                 if (MODE_ADD.equals(mode)) {
                     NoteEntryDaoFactory.getNoteEntryDao().addNoteEntry(noteEntry);

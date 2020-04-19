@@ -1,17 +1,23 @@
 package com.jc.jnotes.viewcontroller;
 
+import static com.jc.jnotes.JNotesPreferences.DEFAULT_APP_NAME;
+import static com.jc.jnotes.JNotesPreferences.DEFAULT_DATETIME_DISPLAY_FORMAT;
+import static com.jc.jnotes.JNotesPreferences.getBasePath;
+import static com.jc.jnotes.JNotesPreferences.getCurrentProfile;
+import static com.jc.jnotes.model.NoteEntry.KEY_COL_NAME;
+import static com.jc.jnotes.model.NoteEntry.VALUE_COL_NAME;
+
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -21,6 +27,8 @@ import org.apache.lucene.index.IndexNotFoundException;
 import com.jc.jnotes.JNotesApplication;
 import com.jc.jnotes.JNotesPreferences;
 import com.jc.jnotes.dao.NoteEntryDaoFactory;
+import com.jc.jnotes.helper.AlertHelper;
+import com.jc.jnotes.helper.ImportExportHelper;
 import com.jc.jnotes.model.NoteEntry;
 
 import javafx.application.Platform;
@@ -52,6 +60,7 @@ import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -66,9 +75,15 @@ public class NotesController {
     private static final String EDIT_STATUS_NOTIFICATION = "Success: Note Saved.";
     private static final String DELETE_STATUS_NOTIFICATION = "Success: Note Deleted.";
     private static final String PROFILE_DELETE_STATUS_NOTIFICATION = "Success: Profile Deleted.";
-    
-    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+
+    private static final String EXPORT_SUCCESS_STATUS_NOTIFICATION = "Exported successfully. File: %s";
+    private static final String EXPORT_FAILURE_STATUS_NOTIFICATION = "Export failed.";
+
+    private static final String IMPORT_SUCCESS_STATUS_NOTIFICATION = "Imported Notes count: %d";
+    private static final String IMPORT_FAILURE_STATUS_NOTIFICATION = "Import failed.";
+
     private final AlertHelper alertHelper = new AlertHelper();
+    private final ImportExportHelper importExportHelper = new ImportExportHelper();
 
     private ObservableList<NoteEntry> observableNoteEntryList;
     private Stage parentStage;
@@ -108,10 +123,10 @@ public class NotesController {
         notesTable.setEditable(true);
         notesTable.getSelectionModel().cellSelectionEnabledProperty().set(true);
 
-        keyColumn.setCellValueFactory(new PropertyValueFactory<>("key"));
+        keyColumn.setCellValueFactory(new PropertyValueFactory<>(KEY_COL_NAME));
         keyColumn.setCellFactory((tabCol) -> new NonEditableTableCell());
 
-        valueColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
+        valueColumn.setCellValueFactory(new PropertyValueFactory<>(VALUE_COL_NAME));
         valueColumn.setCellFactory((tabCol) -> new NonEditableTableCell());
 
         // When the selected NoteEntry in notesTable we set its info in the infoField
@@ -119,7 +134,8 @@ public class NotesController {
             this.selectedNoteEntry = selectedNoteEntry;
             if (selectedNoteEntry != null) { // When the JNotes start no NoteEntry is selected. This is to handle that
                 infoField.setText(selectedNoteEntry.getInfo());
-                notificationText.setText("Last modified on: "+selectedNoteEntry.getLastModifiedTime().format(formatter));
+                notificationText
+                        .setText("Last modified on: " + selectedNoteEntry.getLastModifiedTime().format(DEFAULT_DATETIME_DISPLAY_FORMAT));
             } else {
                 infoField.setText("");
             }
@@ -163,8 +179,8 @@ public class NotesController {
                     splitMenuButton.requestFocus();
                 } else {
                     notesTable.requestFocus();
-                    if(selectedNoteEntry==null) {
-                        if(observableNoteEntryList!=null && !observableNoteEntryList.isEmpty()) {
+                    if (selectedNoteEntry == null) {
+                        if (observableNoteEntryList != null && !observableNoteEntryList.isEmpty()) {
                             notesTable.getSelectionModel().select(0);
                         }
                     }
@@ -205,8 +221,8 @@ public class NotesController {
                 event.consume();
                 if (!event.isShiftDown()) {
                     notesTable.requestFocus();
-                    if(selectedNoteEntry==null) {
-                        if(observableNoteEntryList!=null && !observableNoteEntryList.isEmpty()) {
+                    if (selectedNoteEntry == null) {
+                        if (observableNoteEntryList != null && !observableNoteEntryList.isEmpty()) {
                             notesTable.getSelectionModel().select(0);
                         }
                     }
@@ -241,17 +257,17 @@ public class NotesController {
     }
 
     private void loadProfiles() {
-        Path directory = Paths.get(JNotesPreferences.getBasePath(), JNotesPreferences.getAppName());
+        Path directory = Paths.get(getBasePath(), DEFAULT_APP_NAME);
         List<String> directories;
         try {
-            directories = Files.walk(directory).filter(Files::isDirectory).map((path) -> path.getName(path.getNameCount() - 1))
-                    .map(Path::toString).filter((name) -> !name.equals(JNotesPreferences.getAppName())).collect(Collectors.toList());
+            directories = Files.walk(directory).filter(Files::isDirectory).map((path) -> path.getFileName()).map(Path::toString)
+                    .filter((name) -> !name.equals(DEFAULT_APP_NAME)).collect(Collectors.toList());
         } catch (IOException e) {
             directories = new ArrayList<>();
             directories.add(JNotesPreferences.DEFAULT_PROFILE);
         }
         profileComboBox.getItems().addAll(directories);
-        profileComboBox.getSelectionModel().select(JNotesPreferences.getCurrentProfile());
+        profileComboBox.getSelectionModel().select(getCurrentProfile());
 
     }
 
@@ -270,7 +286,6 @@ public class NotesController {
         } catch (IndexNotFoundException inEx) {
             allNoteEntries = new ArrayList<>();
             System.err.println("Exception in loadAllNoteEntries - IndexNotfound. " + inEx.getMessage());
-            // inEx.printStackTrace();
         } catch (IOException ex) {
             allNoteEntries = new ArrayList<>();
             ex.printStackTrace();
@@ -325,7 +340,7 @@ public class NotesController {
 
     @FXML
     protected void addNewNoteEntry() {
-        NoteEntry newNoteEntry = new NoteEntry(UUID.randomUUID().toString(), "", "", "");
+        NoteEntry newNoteEntry = new NoteEntry(NoteEntry.generateID(), "", "", "");
         try {
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(JNotesApplication.class.getResource("viewcontroller/NoteEntry.fxml"));
@@ -415,7 +430,7 @@ public class NotesController {
                 if (result.get() == ButtonType.OK) {
                     profileComboBox.getItems().remove(profileToBeDeleted);
                     profileComboBox.getSelectionModel().select(0);
-                    Path pathToBeDeleted = Paths.get(JNotesPreferences.getBasePath(), JNotesPreferences.getAppName(), profileToBeDeleted);
+                    Path pathToBeDeleted = Paths.get(getBasePath(), DEFAULT_APP_NAME, profileToBeDeleted);
                     FileUtils.deleteDirectory(pathToBeDeleted.toFile());
                     notificationText.setText(PROFILE_DELETE_STATUS_NOTIFICATION);
                 }
@@ -435,7 +450,7 @@ public class NotesController {
         dialog.showAndWait().ifPresent(text -> {
             if (StringUtils.isNotBlank(text) && profileComboBox.getItems().indexOf(text) == -1) {
                 try {
-                    Path source = Paths.get(JNotesPreferences.getBasePath(), JNotesPreferences.getAppName(), profileToBeRenamed);
+                    Path source = Paths.get(getBasePath(), DEFAULT_APP_NAME, profileToBeRenamed);
                     Files.move(source, source.resolveSibling(text));
                 } catch (IOException ex) {
                     ex.printStackTrace();
@@ -461,7 +476,7 @@ public class NotesController {
         dialog.showAndWait().ifPresent(text -> {
             if (StringUtils.isNotBlank(text) && profileComboBox.getItems().indexOf(text) == -1) {
                 try {
-                    Paths.get(JNotesPreferences.getBasePath(), JNotesPreferences.getAppName(), text);
+                    Paths.get(getBasePath(), DEFAULT_APP_NAME, text);
                 } catch (InvalidPathException ex) {
                     ex.printStackTrace();
                     alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to Add Profile", "");
@@ -477,9 +492,46 @@ public class NotesController {
     }
 
     @FXML
+    protected void exportProfile() {
+        boolean exprtStatus = importExportHelper.exportProfile(observableNoteEntryList);
+        if (exprtStatus) {
+            notificationText.setText(String.format(EXPORT_SUCCESS_STATUS_NOTIFICATION, importExportHelper.getExportFilePath().toString()));
+        } else {
+            notificationText.setText(EXPORT_FAILURE_STATUS_NOTIFICATION);
+        }
+    }
+
+    @FXML
+    protected void importProfile() {
+        FileChooser fileChooser = new FileChooser();
+        File selectedFile = fileChooser.showOpenDialog(parentStage);
+        fileChooser.setInitialDirectory(Paths.get(JNotesPreferences.getBasePath()).toFile());
+
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Text Files", "*.csv"),
+                new FileChooser.ExtensionFilter("Properties Files", "*.properties"));
+
+        List<NoteEntry> noteEntries = importExportHelper.importProfile(selectedFile);
+        if (noteEntries == null) {
+            notificationText.setText(IMPORT_FAILURE_STATUS_NOTIFICATION);
+        } else {
+            try {
+                for (NoteEntry nEntry : noteEntries) {
+                    NoteEntryDaoFactory.getNoteEntryDao().addNoteEntry(nEntry);
+                    observableNoteEntryList.add(nEntry);
+                }
+                notificationText.setText(String.format(IMPORT_SUCCESS_STATUS_NOTIFICATION, noteEntries.size()));
+                notesTable.refresh();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                notificationText.setText(IMPORT_FAILURE_STATUS_NOTIFICATION);
+            }
+        }
+    }
+
+    @FXML
     private void showAbout() {
         Alert alert = new Alert(AlertType.INFORMATION);
-        alert.setTitle("About " + JNotesPreferences.getAppName());
+        alert.setTitle("About " + DEFAULT_APP_NAME);
         alert.setHeaderText("Author - Joy Chakravarty");
 
         alert.showAndWait();

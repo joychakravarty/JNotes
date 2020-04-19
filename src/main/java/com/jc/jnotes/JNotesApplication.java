@@ -2,7 +2,7 @@ package com.jc.jnotes;
 
 import java.io.InputStream;
 
-import com.jc.jnotes.viewcontroller.AlertHelper;
+import com.jc.jnotes.helper.AlertHelper;
 import com.jc.jnotes.viewcontroller.NotesController;
 
 import javafx.application.Application;
@@ -22,7 +22,7 @@ public class JNotesApplication extends Application {
 
     @Override
     public void start(Stage stage) {
-        stage.setTitle(JNotesPreferences.getAppName());
+        stage.setTitle(JNotesPreferences.DEFAULT_APP_NAME);
 
         InputStream iconInputStream = JNotesApplication.class.getResourceAsStream("/images/spiral-booklet.png");
         if (iconInputStream != null) {

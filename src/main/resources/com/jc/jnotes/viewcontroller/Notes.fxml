@@ -59,6 +59,16 @@
                         <MenuItem mnemonicParsing="false" onAction="#addNewProfile" text="New" />
                         <MenuItem mnemonicParsing="false" onAction="#renameProfile" text="Rename" />
                         <MenuItem mnemonicParsing="false" onAction="#deleteProfile" text="Delete" />
+                        <MenuItem mnemonicParsing="false" onAction="#importProfile" text="Import" >
+                        	<accelerator>
+                              <KeyCodeCombination alt="UP" code="I" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                           </accelerator>
+                        </MenuItem>
+                        <MenuItem mnemonicParsing="false" onAction="#exportProfile" text="Export" >
+                            <accelerator>
+                              <KeyCodeCombination alt="UP" code="X" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                           	</accelerator>
+                        </MenuItem>
                      </items>
                   </Menu>
                 <MenuItem mnemonicParsing="false" onAction="#showAbout" text="About" />

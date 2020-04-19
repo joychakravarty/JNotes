@@ -1,11 +1,20 @@
 package com.jc.jnotes.dao;
 
+import static com.jc.jnotes.JNotesPreferences.DEFAULT_APP_NAME;
+import static com.jc.jnotes.JNotesPreferences.DEFAULT_DATETIME_DISPLAY_FORMAT;
+import static com.jc.jnotes.JNotesPreferences.getBasePath;
+import static com.jc.jnotes.JNotesPreferences.getCurrentProfile;
+import static com.jc.jnotes.model.NoteEntry.ID_COL_NAME;
+import static com.jc.jnotes.model.NoteEntry.INFO_COL_NAME;
+import static com.jc.jnotes.model.NoteEntry.KEY_COL_NAME;
+import static com.jc.jnotes.model.NoteEntry.LAST_MODIFIED_TIME_COL_NAME;
+import static com.jc.jnotes.model.NoteEntry.VALUE_COL_NAME;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -23,20 +32,18 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.Sort;
 import org.apache.lucene.search.SortField;
+import org.apache.lucene.search.SortField.Type;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.WildcardQuery;
-import org.apache.lucene.search.SortField.Type;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
-import com.jc.jnotes.JNotesPreferences;
 import com.jc.jnotes.model.NoteEntry;
 
 /**
@@ -45,26 +52,26 @@ import com.jc.jnotes.model.NoteEntry;
  *
  */
 public class LuceneNoteEntryDao implements NoteEntryDao {
-    
+
     private final Directory indexDir;
     private final Query getAllQuery = new MatchAllDocsQuery();
     private final StandardAnalyzer analyzer = new StandardAnalyzer();
-    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    MultiFieldQueryParser multiFieldQueryParser = new MultiFieldQueryParser(new String[]{"key", "value", "info"}, analyzer);
-    
+    // private final MultiFieldQueryParser multiFieldQueryParser = new MultiFieldQueryParser(new String[]{"key", "value",
+    // "info"}, analyzer);
+
     public LuceneNoteEntryDao() throws IOException {
-        this(JNotesPreferences.getAppName());
+        this(DEFAULT_APP_NAME);
     }
-    
+
     public LuceneNoteEntryDao(String pathAppender) throws IOException {
-        Path indexPath = Paths.get(JNotesPreferences.getBasePath(), pathAppender, JNotesPreferences.getCurrentProfile()); 
+        Path indexPath = Paths.get(getBasePath(), pathAppender, getCurrentProfile());
         File file = indexPath.toFile();
-        if(!file.exists()) {
+        if (!file.exists()) {
             file.mkdirs();
         }
         indexDir = FSDirectory.open(indexPath);
     }
-    
+
     @Override
     public List<NoteEntry> getAll() throws IOException {
         List<NoteEntry> noteEntries;
@@ -84,94 +91,94 @@ public class LuceneNoteEntryDao implements NoteEntryDao {
         }
         return noteEntries;
     }
-    
+
     @Override
     public long addNoteEntry(NoteEntry noteEntry) throws IOException {
         IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
         IndexWriter writer = new IndexWriter(indexDir, indexWriterConfig);
-        Document document = fromNoteEntry(noteEntry); 
+        Document document = fromNoteEntry(noteEntry);
         long seqNo = writer.addDocument(document);
         writer.commit();
         writer.close();
         return seqNo;
     }
-    
+
     @Override
     public long editNoteEntry(NoteEntry noteEntry) throws IOException {
         IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
         IndexWriter writer = new IndexWriter(indexDir, indexWriterConfig);
         Document document = fromNoteEntry(noteEntry);
-        Term idTerm = new Term("id",noteEntry.getId());
+        Term idTerm = new Term(ID_COL_NAME, noteEntry.getId());
         long seqNo = writer.updateDocument(idTerm, document);
         writer.commit();
         writer.close();
         return seqNo;
     }
-    
+
     @Override
     public void deleteNoteEntry(NoteEntry noteEntry) throws IOException {
         IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
         IndexWriter writer = new IndexWriter(indexDir, indexWriterConfig);
-        writer.deleteDocuments(new Term("id", noteEntry.getId()));
+        writer.deleteDocuments(new Term(ID_COL_NAME, noteEntry.getId()));
         writer.flush();
-        //writer.forceMergeDeletes();
+        // writer.forceMergeDeletes();
         writer.commit();
         writer.close();
     }
 
-    
     @Override
     public List<NoteEntry> searchNotes(String searchParam, boolean searchInfo) throws IOException {
         searchParam = searchParam.toLowerCase();
         IndexReader indexReader = DirectoryReader.open(indexDir);
         IndexSearcher searcher = new IndexSearcher(indexReader);
-        Set<NoteEntry> searchedEntries = new LinkedHashSet<>(); 
-        
-        Term keyTerm = new Term("key", "*"+searchParam+"*");
+        Set<NoteEntry> searchedEntries = new LinkedHashSet<>();
+
+        Term keyTerm = new Term(KEY_COL_NAME, "*" + searchParam + "*");
         Query keyQuery = new WildcardQuery(keyTerm);
         TopDocs keyTopDocs = searcher.search(keyQuery, 10000);
         searchedEntries.addAll(getNoteEntries(keyTopDocs, searcher));
-        
-        Term valueTerm = new Term("value", "*"+searchParam+"*");
+
+        Term valueTerm = new Term(VALUE_COL_NAME, "*" + searchParam + "*");
         Query valueQuery = new WildcardQuery(valueTerm);
         TopDocs valueTopDocs = searcher.search(valueQuery, 10000);
         searchedEntries.addAll(getNoteEntries(valueTopDocs, searcher));
-        
-        if(searchInfo) {
-            Term infoTerm = new Term("info", "*"+searchParam+"*");
+
+        if (searchInfo) {
+            Term infoTerm = new Term(INFO_COL_NAME, "*" + searchParam + "*");
             Query infoQuery = new WildcardQuery(infoTerm);
             TopDocs infoTopDocs = searcher.search(infoQuery, 10000);
             searchedEntries.addAll(getNoteEntries(infoTopDocs, searcher));
         }
-        
+
         List<NoteEntry> noteEntries = new ArrayList<>();
         noteEntries.addAll(searchedEntries);
         indexReader.close();
         return noteEntries;
-        
+
     }
-    
+
     protected List<NoteEntry> getNoteEntries(TopDocs topDocs, IndexSearcher searcher) throws IOException {
         List<NoteEntry> noteEntries = new ArrayList<>();
         ScoreDoc[] sDocs = topDocs.scoreDocs;
         for (ScoreDoc scoreDoc : sDocs) {
             Document dd = searcher.doc(scoreDoc.doc);
-            NoteEntry noteEntry = new NoteEntry(dd.get("id"), dd.get("key"), dd.get("value"), dd.get("info"));
-            noteEntry.setLastModifiedTime(LocalDateTime.parse(dd.get("lastModifiedTime"), formatter));
+            NoteEntry noteEntry = new NoteEntry(dd.get(ID_COL_NAME), dd.get(KEY_COL_NAME), dd.get(VALUE_COL_NAME), dd.get(INFO_COL_NAME));
+            noteEntry.setLastModifiedTime(LocalDateTime.parse(dd.get(LAST_MODIFIED_TIME_COL_NAME), DEFAULT_DATETIME_DISPLAY_FORMAT));
             noteEntries.add(noteEntry);
         }
         return noteEntries;
     }
-    
+
     private Document fromNoteEntry(NoteEntry noteEntry) {
         Document document = new Document();
-        document.add(new StringField("id", noteEntry.getId(), Field.Store.YES));//id is not to be tokenized
-        document.add(new TextField("key", noteEntry.getKey(), Field.Store.YES));
-        document.add(new TextField("value", noteEntry.getValue(), Field.Store.YES));
-        document.add(new TextField("info", noteEntry.getInfo(), Field.Store.YES));
-        document.add(new StringField("lastModifiedTime", noteEntry.getLastModifiedTime().format(formatter), Field.Store.YES));
+        document.add(new StringField(ID_COL_NAME, noteEntry.getId(), Field.Store.YES));// id is not to be tokenized
+        document.add(new TextField(KEY_COL_NAME, noteEntry.getKey(), Field.Store.YES));
+        document.add(new TextField(VALUE_COL_NAME, noteEntry.getValue(), Field.Store.YES));
+        document.add(new TextField(INFO_COL_NAME, noteEntry.getInfo(), Field.Store.YES));
+        document.add(new StringField(LAST_MODIFIED_TIME_COL_NAME, noteEntry.getLastModifiedTime().format(DEFAULT_DATETIME_DISPLAY_FORMAT),
+                Field.Store.YES));
         return document;
-        
+
     }
 
 }

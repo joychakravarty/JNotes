@@ -2,6 +2,7 @@ package com.jc.jnotes.model;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -18,6 +19,12 @@ import javafx.beans.property.StringProperty;
  */
 public class NoteEntry implements Comparable<NoteEntry> {
     
+    public static final String ID_COL_NAME = "id";
+    public static final String KEY_COL_NAME = "key";
+    public static final String VALUE_COL_NAME = "value";
+    public static final String INFO_COL_NAME = "info";
+    public static final String LAST_MODIFIED_TIME_COL_NAME = "lastModifiedTime";
+    
     private static Comparator<String> nullSafeStringComparator = Comparator
             .nullsFirst(String::compareToIgnoreCase); 
 
@@ -29,6 +36,10 @@ public class NoteEntry implements Comparable<NoteEntry> {
     private StringProperty value;
     private StringProperty info;
     private ObjectProperty<LocalDateTime> lastModifiedTime;
+    
+    public static String generateID() {
+        return UUID.randomUUID().toString();
+    }
     
     public NoteEntry(String id, String key, String value, String info){
         if(id==null){
