@@ -43,7 +43,7 @@
                     <Main-Class>com.jc.jnotes.JNotesMain</Main-Class>
                     <Developer>Joy Chakravarty</Developer>
                     <Contact>joy.chakravarty84@gmail.com</Contact>
-                    <Implementation-Version>${pom.version}</Implementation-Version>
+                    <Implementation-Version>${project.version}</Implementation-Version>
                   </manifestEntries>
                 </transformer>
               </transformers>
