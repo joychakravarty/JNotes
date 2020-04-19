@@ -17,19 +17,16 @@
   - It's a Java based application so yes you can run the .jar on your machine without much hassle.  
   - Its open source - https://github.com/joychakravarty/JNotes/edit/master/README.md - so fork it and customize it.  
  
- ## Developer: Joy Chakravarty  
- joy.chakravarty84@gmail.com | https://www.linkedin.com/in/joychak/   
- 
  ## Run JNotes
   - Install Java 11 or above (verify using java -version)  
   - Download the uber jar JNotes-<YourOS>.jar from the milestone folder based on your OS.  
-  - Double click it or run java -jar JNotes-<YourOS>.jar  
+  - Run java -jar JNotes-<YourOS>.jar  
    
  ## Build and run (for Developers)
     mvn clean install  
     java -jar JNotes.jar  
     OR  
-    mvn clean javafx:run  
+    mvn clean javafx:run (For this, its good to have javafx sdk installed)
      
  ## Shortcuts: 
   New note - Ctrl+N  
@@ -39,6 +36,9 @@
   Ctrl+F -> takes you to search field  
   Ctrl+C -> copies the selected cell value  
   ESC -> Closes diaglogs/popups, clears search  
+  
+  Export Profile to CSV - Ctrl+X
+  Import CSV/Properties to Profile - Ctrl+I 
   
   Quit JNotes - Ctrl+Q  
   
@@ -52,8 +52,10 @@
   - macOS Mojave 10.14.6 (Dev OS)
   
  ## Features in progress
-  Profiles switching  
-  Display info at the bottom - Done
-  Import/Export profiles from/to csv  
-  Choice to select base folder for Jnotes  
+  - Profiles switching (done)  
+  - Display info at the bottom (done)
+  - Import/Export profiles from/to csv  (done)
+  - Choice to select base folder for Jnotes (Pending) 
   
+ ## Developer: Joy Chakravarty  
+    joy.chakravarty84@gmail.com | https://www.linkedin.com/in/joychak/ 
