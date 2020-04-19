@@ -32,13 +32,12 @@
   New note - Ctrl+N  
   Edit note - Ctrl+E  
   Delete note - Ctrl+D  
+  Export Profile to CSV - Ctrl+X  
+  Import CSV/Properties to Profile - Ctrl+I  
   
   Ctrl+F -> takes you to search field  
   Ctrl+C -> copies the selected cell value  
   ESC -> Closes diaglogs/popups, clears search  
-  
-  Export Profile to CSV - Ctrl+X
-  Import CSV/Properties to Profile - Ctrl+I 
   
   Quit JNotes - Ctrl+Q  
   
