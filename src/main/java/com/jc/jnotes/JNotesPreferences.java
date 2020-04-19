@@ -21,6 +21,7 @@ public final class JNotesPreferences {
 	private static final String USER_PREF_BASEPATH = "basePath";
 	private static final String USER_HOME = "user.home";
 	private static final String USER_PREF_CURRENT_PROFILE = "currentProfile";
+	public final static String CURRENT_VERSION =  JNotesPreferences.class.getPackage().getImplementationVersion();
 	
 	
 	public static String getBasePath() {

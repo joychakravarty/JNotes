@@ -2,6 +2,7 @@ package com.jc.jnotes.viewcontroller;
 
 import static com.jc.jnotes.JNotesPreferences.DEFAULT_APP_NAME;
 import static com.jc.jnotes.JNotesPreferences.DEFAULT_DATETIME_DISPLAY_FORMAT;
+import static com.jc.jnotes.JNotesPreferences.CURRENT_VERSION;
 import static com.jc.jnotes.JNotesPreferences.getBasePath;
 import static com.jc.jnotes.JNotesPreferences.getCurrentProfile;
 import static com.jc.jnotes.model.NoteEntry.KEY_COL_NAME;
@@ -533,7 +534,9 @@ public class NotesController {
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle("About " + DEFAULT_APP_NAME);
         alert.setHeaderText("Author - Joy Chakravarty");
-
+        if(StringUtils.isNotBlank(CURRENT_VERSION)){
+            alert.setContentText("Version: "+CURRENT_VERSION);
+        }
         alert.showAndWait();
     }
 
