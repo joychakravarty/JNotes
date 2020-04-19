@@ -507,10 +507,11 @@ public class NotesController {
         FileChooser fileChooser = new FileChooser();
         File selectedFile = fileChooser.showOpenDialog(parentStage);
         fileChooser.setInitialDirectory(Paths.get(JNotesPreferences.getBasePath()).toFile());
-
         fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Text Files", "*.csv"),
                 new FileChooser.ExtensionFilter("Properties Files", "*.properties"));
-
+        if(selectedFile == null) {
+           return; 
+        }
         List<NoteEntry> noteEntries = importExportHelper.importProfile(selectedFile);
         if (noteEntries == null) {
             notificationText.setText(IMPORT_FAILURE_STATUS_NOTIFICATION);
