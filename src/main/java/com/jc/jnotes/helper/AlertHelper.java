@@ -1,4 +1,4 @@
-package com.jc.jnotes.viewcontroller;
+package com.jc.jnotes.helper;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

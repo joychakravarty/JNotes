@@ -1,16 +1,27 @@
 package com.jc.jnotes;
 
+import java.time.format.DateTimeFormatter;
 import java.util.prefs.Preferences;
 
-public class JNotesPreferences {
+public final class JNotesPreferences {
     
+    private JNotesPreferences() {
+        
+    }
+
+    public static final String DEFAULT_APP_NAME = "JNotes";
     public static final String DEFAULT_PROFILE = "default";
+    public static final DateTimeFormatter DEFAULT_DATETIME_DISPLAY_FORMAT = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+    public static final String DEFAULT_LINE_SEPARATOR = System.getProperty("line.separator");
+    public static final String DEFAULT_EXPORT_FILE_SUFFIX = "_export.csv";
+    public static final String DEFAULT_FIELD_SEPARATOR = ",";
+    public static final String EQUALS_FIELD_SEPARATOR = "=";
 
 	private static final Preferences USER_PREFERENCES  = Preferences.userNodeForPackage(JNotesPreferences.class);
-	private static final String APP_NAME = "JNotes";
 	private static final String USER_PREF_BASEPATH = "basePath";
 	private static final String USER_HOME = "user.home";
 	private static final String USER_PREF_CURRENT_PROFILE = "currentProfile";
+	public final static String CURRENT_VERSION =  JNotesPreferences.class.getPackage().getImplementationVersion();
 	
 	
 	public static String getBasePath() {
@@ -28,10 +39,5 @@ public class JNotesPreferences {
 	public static void setCurrentProfile(String currentProfile) { 
 		USER_PREFERENCES.put(USER_PREF_CURRENT_PROFILE, currentProfile);
 	}
-	
-	public static String getAppName() {
-	    return APP_NAME;
-	}
-	
 	
 }
