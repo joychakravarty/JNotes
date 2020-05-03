@@ -1,8 +1,8 @@
 package com.jc.jnotes.viewcontroller;
 
+import static com.jc.jnotes.JNotesPreferences.CURRENT_VERSION;
 import static com.jc.jnotes.JNotesPreferences.DEFAULT_APP_NAME;
 import static com.jc.jnotes.JNotesPreferences.DEFAULT_DATETIME_DISPLAY_FORMAT;
-import static com.jc.jnotes.JNotesPreferences.CURRENT_VERSION;
 import static com.jc.jnotes.JNotesPreferences.getBasePath;
 import static com.jc.jnotes.JNotesPreferences.getCurrentProfile;
 import static com.jc.jnotes.model.NoteEntry.KEY_COL_NAME;
@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -37,19 +38,22 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.SplitMenuButton;
+import javafx.scene.control.MenuButton;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TablePosition;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
@@ -59,6 +63,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
@@ -91,6 +96,8 @@ public class NotesController {
     private Stage noteEntryStage;
     private NoteEntry selectedNoteEntry = null;
     private boolean showingSearchedResults = false;
+    
+    private Comparator<NoteEntry> comparator = Comparator.comparing((noteEntry) -> noteEntry.getLastModifiedTime());
 
     @FXML
     private TableView<NoteEntry> notesTable;
@@ -109,7 +116,9 @@ public class NotesController {
     @FXML
     private ComboBox<String> profileComboBox;
     @FXML
-    private SplitMenuButton splitMenuButton;
+    private MenuButton menuButton;
+    @FXML
+    private ToggleButton sortToggleButton;
 
     public void setParentStage(Stage parentStage) {
         this.parentStage = parentStage;
@@ -155,6 +164,24 @@ public class NotesController {
                 }
             }
         });
+
+        notesTable.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+            Node source = event.getPickResult().getIntersectedNode();
+
+            // move up through the node hierarchy until a TableRow or scene root is found
+            while (source != null && !(source instanceof TableRow)) {
+                source = source.getParent();
+            }
+
+            // clear selection on click anywhere but on a filled row
+            if (source == null || (source instanceof TableRow && ((TableRow) source).isEmpty())) {
+                notesTable.getSelectionModel().clearSelection();
+                if (event.getClickCount() == 2 && source != null) {
+                    this.addNewNoteEntry();
+                }
+            }
+        });
+
         final KeyCodeCombination keyCodeCopy = new KeyCodeCombination(KeyCode.C, KeyCombination.SHORTCUT_DOWN);
         notesTable.setOnKeyPressed(event -> {
             if (keyCodeCopy.match(event) && this.selectedNoteEntry != null) {
@@ -177,7 +204,7 @@ public class NotesController {
             if (event.getCode() == KeyCode.TAB) {
                 event.consume();
                 if (!event.isShiftDown()) {
-                    splitMenuButton.requestFocus();
+                    menuButton.requestFocus();
                 } else {
                     notesTable.requestFocus();
                     if (selectedNoteEntry == null) {
@@ -233,7 +260,7 @@ public class NotesController {
             }
         });
 
-        splitMenuButton.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+        menuButton.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
             if (event.getCode() == KeyCode.TAB) {
                 event.consume();
                 if (!event.isShiftDown()) {
@@ -402,7 +429,8 @@ public class NotesController {
             controller.setRunAfter(() -> {
                 notesTable.refresh();
                 notificationText.setText(EDIT_STATUS_NOTIFICATION);
-                infoField.requestFocus();
+                infoField.setText(notesTable.getSelectionModel().getSelectedItem().getInfo());
+                // infoField.requestFocus();
             });
 
             InputStream iconInputStream = JNotesApplication.class.getResourceAsStream("/images/edit.png");
@@ -470,6 +498,17 @@ public class NotesController {
     }
 
     @FXML
+    protected void sortByModificationDate() {
+        boolean isSelected = sortToggleButton.isSelected();
+        if (isSelected) {
+            Collections.sort(observableNoteEntryList, comparator);
+        } else {
+            Collections.sort(observableNoteEntryList, comparator.reversed());
+        }
+        notesTable.refresh();
+    }
+
+    @FXML
     protected void addNewProfile() {
         TextInputDialog dialog = new TextInputDialog();
         dialog.setHeaderText("Add New Profile");
@@ -509,8 +548,8 @@ public class NotesController {
         fileChooser.setInitialDirectory(Paths.get(JNotesPreferences.getBasePath()).toFile());
         fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Text Files", "*.csv"),
                 new FileChooser.ExtensionFilter("Properties Files", "*.properties"));
-        if(selectedFile == null) {
-           return; 
+        if (selectedFile == null) {
+            return;
         }
         List<NoteEntry> noteEntries = importExportHelper.importProfile(selectedFile);
         if (noteEntries == null) {
@@ -535,8 +574,8 @@ public class NotesController {
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle("About " + DEFAULT_APP_NAME);
         alert.setHeaderText("Author - Joy Chakravarty");
-        if(StringUtils.isNotBlank(CURRENT_VERSION)){
-            alert.setContentText("Version: "+CURRENT_VERSION);
+        if (StringUtils.isNotBlank(CURRENT_VERSION)) {
+            alert.setContentText("Version: " + CURRENT_VERSION);
         }
         alert.showAndWait();
     }
