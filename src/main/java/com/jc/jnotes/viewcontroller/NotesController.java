@@ -4,7 +4,7 @@ import static com.jc.jnotes.JNotesPreferences.CURRENT_VERSION;
 import static com.jc.jnotes.JNotesPreferences.DEFAULT_APP_NAME;
 import static com.jc.jnotes.JNotesPreferences.DEFAULT_DATETIME_DISPLAY_FORMAT;
 import static com.jc.jnotes.JNotesPreferences.getBasePath;
-import static com.jc.jnotes.JNotesPreferences.getCurrentProfile;
+import static com.jc.jnotes.JNotesPreferences.getCurrentNoteBook;
 import static com.jc.jnotes.model.NoteEntry.KEY_COL_NAME;
 import static com.jc.jnotes.model.NoteEntry.VALUE_COL_NAME;
 
@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
@@ -46,6 +47,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.MenuButton;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TablePosition;
 import javafx.scene.control.TableRow;
@@ -80,7 +82,11 @@ public class NotesController {
     private static final String ADD_STATUS_NOTIFICATION = "Success: Note Added.";
     private static final String EDIT_STATUS_NOTIFICATION = "Success: Note Saved.";
     private static final String DELETE_STATUS_NOTIFICATION = "Success: Note Deleted.";
-    private static final String PROFILE_DELETE_STATUS_NOTIFICATION = "Success: Profile Deleted.";
+    
+    private static final String DELETE_NOTES_CONFIRMATION_HEADER = "Delete selected notes?";
+    private static final String DELETE_NOTES_CONFIRMATION_CONTENT = "%d note(s) will be deleted.";
+    
+    private static final String NOTEBOOK_DELETE_STATUS_NOTIFICATION = "Success: NoteBook Deleted.";
 
     private static final String EXPORT_SUCCESS_STATUS_NOTIFICATION = "Exported successfully. File: %s";
     private static final String EXPORT_FAILURE_STATUS_NOTIFICATION = "Export failed.";
@@ -96,7 +102,7 @@ public class NotesController {
     private Stage noteEntryStage;
     private NoteEntry selectedNoteEntry = null;
     private boolean showingSearchedResults = false;
-    
+
     private Comparator<NoteEntry> comparator = Comparator.comparing((noteEntry) -> noteEntry.getLastModifiedTime());
 
     @FXML
@@ -114,7 +120,7 @@ public class NotesController {
     @FXML
     private Text notificationText;
     @FXML
-    private ComboBox<String> profileComboBox;
+    private ComboBox<String> noteBookComboBox;
     @FXML
     private MenuButton menuButton;
     @FXML
@@ -129,93 +135,52 @@ public class NotesController {
      */
     @FXML
     private void initialize() {
+
         loadAllNoteEntries();
-        notesTable.setEditable(true);
-        notesTable.getSelectionModel().cellSelectionEnabledProperty().set(true);
 
-        keyColumn.setCellValueFactory(new PropertyValueFactory<>(KEY_COL_NAME));
-        keyColumn.setCellFactory((tabCol) -> new NonEditableTableCell());
+        initializeNotesTable();
 
-        valueColumn.setCellValueFactory(new PropertyValueFactory<>(VALUE_COL_NAME));
-        valueColumn.setCellFactory((tabCol) -> new NonEditableTableCell());
+        initializeNotesTableColumns();
 
-        // When the selected NoteEntry in notesTable we set its info in the infoField
-        notesTable.getSelectionModel().selectedItemProperty().addListener((obs, prevNoteEntry, selectedNoteEntry) -> {
-            this.selectedNoteEntry = selectedNoteEntry;
-            if (selectedNoteEntry != null) { // When the JNotes start no NoteEntry is selected. This is to handle that
-                infoField.setText(selectedNoteEntry.getInfo());
-                notificationText
-                        .setText("Last modified on: " + selectedNoteEntry.getLastModifiedTime().format(DEFAULT_DATETIME_DISPLAY_FORMAT));
-            } else {
-                infoField.setText("");
-            }
-        });
+        initializeInfoField();
 
+        initializeSearchField();
+
+        initilalizeMenuButton();
+
+        initializeNoteBooks();
+        
         addAccelerators();
 
-        notesTable.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+    }
+
+    private void initializeNoteBooks() {
+        noteBookComboBox.setTooltip(new Tooltip("Select NoteBook"));
+        loadNoteBooks();
+        noteBookComboBox.setEditable(false);
+        noteBookComboBox.getSelectionModel().selectedItemProperty().addListener((obs, prevNoteBook, selectedNoteBook) -> {
+            if (StringUtils.isNotBlank(selectedNoteBook)) {
+                JNotesPreferences.setCurrentNoteBook(selectedNoteBook);
+                loadAllNoteEntries();
+            }
+        });
+
+    }
+
+    private void initilalizeMenuButton() {
+        menuButton.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
             if (event.getCode() == KeyCode.TAB) {
                 event.consume();
                 if (!event.isShiftDown()) {
+                    noteBookComboBox.requestFocus();
+                } else {
                     infoField.requestFocus();
-                } else {
-                    searchField.requestFocus();
-                    searchField.end();
                 }
             }
         });
+    }
 
-        notesTable.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
-            Node source = event.getPickResult().getIntersectedNode();
-
-            // move up through the node hierarchy until a TableRow or scene root is found
-            while (source != null && !(source instanceof TableRow)) {
-                source = source.getParent();
-            }
-
-            // clear selection on click anywhere but on a filled row
-            if (source == null || (source instanceof TableRow && ((TableRow) source).isEmpty())) {
-                notesTable.getSelectionModel().clearSelection();
-                if (event.getClickCount() == 2 && source != null) {
-                    this.addNewNoteEntry();
-                }
-            }
-        });
-
-        final KeyCodeCombination keyCodeCopy = new KeyCodeCombination(KeyCode.C, KeyCombination.SHORTCUT_DOWN);
-        notesTable.setOnKeyPressed(event -> {
-            if (keyCodeCopy.match(event) && this.selectedNoteEntry != null) {
-                @SuppressWarnings("rawtypes")
-                ObservableList<TablePosition> tablePositions = notesTable.getSelectionModel().getSelectedCells();
-                if (tablePositions != null && tablePositions.size() > 0) {
-                    @SuppressWarnings("unchecked")
-                    TablePosition<NoteEntry, ?> tablePosition = tablePositions.get(0);
-                    Object cellData = tablePosition.getTableColumn().getCellData(tablePosition.getRow());
-                    if (cellData != null) {
-                        final ClipboardContent clipboardContent = new ClipboardContent();
-                        clipboardContent.putString(cellData.toString());
-                        Clipboard.getSystemClipboard().setContent(clipboardContent);
-                    }
-                }
-            }
-        });
-
-        infoField.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
-            if (event.getCode() == KeyCode.TAB) {
-                event.consume();
-                if (!event.isShiftDown()) {
-                    menuButton.requestFocus();
-                } else {
-                    notesTable.requestFocus();
-                    if (selectedNoteEntry == null) {
-                        if (observableNoteEntryList != null && !observableNoteEntryList.isEmpty()) {
-                            notesTable.getSelectionModel().select(0);
-                        }
-                    }
-                }
-            }
-        });
-
+    private void initializeSearchField() {
         searchField.addEventFilter(KeyEvent.KEY_RELEASED, event -> {
             String searchTxt = searchField.getText();
             if (showingSearchedResults && (event.getCode() == KeyCode.ESCAPE || StringUtils.isBlank(searchTxt))) {
@@ -255,36 +220,127 @@ public class NotesController {
                         }
                     }
                 } else {
-                    profileComboBox.requestFocus();
-                }
-            }
-        });
-
-        menuButton.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
-            if (event.getCode() == KeyCode.TAB) {
-                event.consume();
-                if (!event.isShiftDown()) {
-                    profileComboBox.requestFocus();
-                } else {
-                    infoField.requestFocus();
+                    noteBookComboBox.requestFocus();
                 }
             }
         });
 
         searchAllCheckBox.setTooltip(new Tooltip("Search all fields"));
+    }
 
-        profileComboBox.setTooltip(new Tooltip("Select Profile"));
-        loadProfiles();
-        profileComboBox.setEditable(false);
-        profileComboBox.getSelectionModel().selectedItemProperty().addListener((obs, prevProfile, selectedProfile) -> {
-            if (StringUtils.isNotBlank(selectedProfile)) {
-                JNotesPreferences.setCurrentProfile(selectedProfile);
-                loadAllNoteEntries();
+    private void initializeInfoField() {
+        infoField.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (event.getCode() == KeyCode.TAB) {
+                event.consume();
+                if (!event.isShiftDown()) {
+                    menuButton.requestFocus();
+                } else {
+                    notesTable.requestFocus();
+                    if (selectedNoteEntry == null) {
+                        if (observableNoteEntryList != null && !observableNoteEntryList.isEmpty()) {
+                            notesTable.getSelectionModel().select(0);
+                        }
+                    }
+                }
             }
         });
     }
 
-    private void loadProfiles() {
+    private void initializeNotesTableColumns() {
+        BiConsumer<String, Integer> saveOnEditBiConsumer = (editedText, colIndex) -> {
+            if (colIndex == 0) {
+                selectedNoteEntry.setKey(editedText);
+            } else {// colIndex == 1
+                selectedNoteEntry.setValue(editedText);
+            }
+            try {
+                NoteEntryDaoFactory.getNoteEntryDao().editNoteEntry(selectedNoteEntry);
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to save NoteEntry Dialog", "");
+            }
+            notesTable.getSelectionModel().clearSelection();
+            notificationText.setText(EDIT_STATUS_NOTIFICATION);
+            notesTable.refresh();
+        };
+
+        keyColumn.setCellValueFactory(new PropertyValueFactory<>(KEY_COL_NAME));
+        keyColumn.setCellFactory((tabCol) -> new NonEditableTableCell(saveOnEditBiConsumer, 0));
+
+        valueColumn.setCellValueFactory(new PropertyValueFactory<>(VALUE_COL_NAME));
+        valueColumn.setCellFactory((tabCol) -> new NonEditableTableCell(saveOnEditBiConsumer, 1));
+    }
+
+    private void initializeNotesTable() {
+        notesTable.setEditable(true);
+        notesTable.getSelectionModel().cellSelectionEnabledProperty().set(true);
+        notesTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+        // When the selected NoteEntry in notesTable we set its info in the infoField
+        notesTable.getSelectionModel().selectedItemProperty().addListener((obs, prevNoteEntry, selectedNoteEntry) -> {
+            this.selectedNoteEntry = selectedNoteEntry;
+            if (selectedNoteEntry != null) { // When the JNotes start no NoteEntry is selected. This is to handle that
+                infoField.setText(selectedNoteEntry.getInfo());
+                notificationText
+                        .setText("Last modified on: " + selectedNoteEntry.getLastModifiedTime().format(DEFAULT_DATETIME_DISPLAY_FORMAT));
+            } else {
+                infoField.setText("");
+            }
+        });
+
+        // For Navigation
+        notesTable.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (event.getCode() == KeyCode.TAB) {
+                event.consume();
+                if (!event.isShiftDown()) {
+                    infoField.requestFocus();
+                } else {
+                    searchField.requestFocus();
+                    searchField.end();
+                }
+            }
+        });
+
+        // Double click on empty area to open AddNewNoteEntry
+        // Single click elsewhere would clear the edit mode of the cell if thats the cell is in edit mode
+        notesTable.addEventFilter(MouseEvent.MOUSE_CLICKED, event -> {
+            Node source = event.getPickResult().getIntersectedNode();
+
+            // move up through the node hierarchy until a TableRow or scene root is found
+            while (source != null && !(source instanceof TableRow)) {
+                source = source.getParent();
+            }
+
+            // clear selection on click anywhere but on a filled row
+            if (source == null || (source instanceof TableRow && ((TableRow) source).isEmpty())) {
+                notesTable.getSelectionModel().clearSelection();
+                if (event.getClickCount() == 2 && source != null) {
+                    this.addNewNoteEntry();
+                }
+            }
+        });
+
+        // Lets user copy cell value directly without entering edit mode using Ctrl^C
+        final KeyCodeCombination keyCodeCopy = new KeyCodeCombination(KeyCode.C, KeyCombination.SHORTCUT_DOWN);
+        notesTable.setOnKeyPressed(event -> {
+            if (keyCodeCopy.match(event) && this.selectedNoteEntry != null) {
+                @SuppressWarnings("rawtypes")
+                ObservableList<TablePosition> tablePositions = notesTable.getSelectionModel().getSelectedCells();
+                if (tablePositions != null && tablePositions.size() > 0) {
+                    @SuppressWarnings("unchecked")
+                    TablePosition<NoteEntry, ?> tablePosition = tablePositions.get(0);
+                    Object cellData = tablePosition.getTableColumn().getCellData(tablePosition.getRow());
+                    if (cellData != null) {
+                        final ClipboardContent clipboardContent = new ClipboardContent();
+                        clipboardContent.putString(cellData.toString());
+                        Clipboard.getSystemClipboard().setContent(clipboardContent);
+                    }
+                }
+            }
+        });
+    }
+
+    private void loadNoteBooks() {
         Path directory = Paths.get(getBasePath(), DEFAULT_APP_NAME);
         List<String> directories;
         try {
@@ -292,10 +348,10 @@ public class NotesController {
                     .filter((name) -> !name.equals(DEFAULT_APP_NAME)).collect(Collectors.toList());
         } catch (IOException e) {
             directories = new ArrayList<>();
-            directories.add(JNotesPreferences.DEFAULT_PROFILE);
+            directories.add(JNotesPreferences.DEFAULT_NOTEBOOK);
         }
-        profileComboBox.getItems().addAll(directories);
-        profileComboBox.getSelectionModel().select(getCurrentProfile());
+        noteBookComboBox.getItems().addAll(directories);
+        noteBookComboBox.getSelectionModel().select(getCurrentNoteBook());
 
     }
 
@@ -317,7 +373,7 @@ public class NotesController {
         } catch (IOException ex) {
             allNoteEntries = new ArrayList<>();
             ex.printStackTrace();
-            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to get all Note Entries", "");
+            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to get all Notes", "");
         }
         loadNoteEntries(allNoteEntries);
     }
@@ -343,26 +399,28 @@ public class NotesController {
     }
 
     @FXML
-    protected void deleteNoteEntry() {
+    protected void deleteNoteEntries() {
         try {
-            NoteEntry toBeDeletedNoteEntry = notesTable.getSelectionModel().getSelectedItem();
-            System.out.println(toBeDeletedNoteEntry);
-            if (toBeDeletedNoteEntry != null) {
+            // NoteEntry toBeDeletedNoteEntry = notesTable.getSelectionModel().getSelectedItem();
+            List<NoteEntry> noteEntriesToBeDeleted = notesTable.getSelectionModel().getSelectedItems();
+            // System.out.println(listofEntriesToBeDeleted);
+            // System.out.println(toBeDeletedNoteEntry);
+            if (noteEntriesToBeDeleted != null) {
 
-                Optional<ButtonType> result = alertHelper.showDefaultConfirmation(parentStage, "Delete selected note entry?",
-                        "Key:" + toBeDeletedNoteEntry.getKey());
+                Optional<ButtonType> result = alertHelper.showDefaultConfirmation(parentStage, DELETE_NOTES_CONFIRMATION_HEADER,
+                        String.format(DELETE_NOTES_CONFIRMATION_CONTENT, noteEntriesToBeDeleted.size()));
                 if (result.get() == ButtonType.OK) {
-                    observableNoteEntryList.remove(toBeDeletedNoteEntry);
+                    NoteEntryDaoFactory.getNoteEntryDao().deleteNoteEntries(noteEntriesToBeDeleted);
+                    observableNoteEntryList.removeAll(noteEntriesToBeDeleted);
                     infoField.setText("");
                     this.selectedNoteEntry = null;
-                    NoteEntryDaoFactory.getNoteEntryDao().deleteNoteEntry(toBeDeletedNoteEntry);
                     notesTable.refresh();
                     notificationText.setText(DELETE_STATUS_NOTIFICATION);
                 }
             }
         } catch (IOException ex) {
             ex.printStackTrace();
-            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to delete NoteEntry", "");
+            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to delete Notes", "");
         }
     }
 
@@ -446,53 +504,53 @@ public class NotesController {
     }
 
     @FXML
-    protected void deleteProfile() {
+    protected void deleteNoteBook() {
         try {
-            if (profileComboBox.getItems().size() == 1) {
-                alertHelper.showErrorAlert(parentStage, "Invalid Operation", "Cannot delete the only Profile");
+            if (noteBookComboBox.getItems().size() == 1) {
+                alertHelper.showErrorAlert(parentStage, "Invalid Operation", "Cannot delete the only NoteBook");
 
             } else {
-                String profileToBeDeleted = profileComboBox.getSelectionModel().getSelectedItem();
+                String noteBookToBeDeleted = noteBookComboBox.getSelectionModel().getSelectedItem();
                 Optional<ButtonType> result = alertHelper.showDefaultConfirmation(parentStage,
-                        "Delete profile: " + profileToBeDeleted + "?", "Note: This is will delete all the data within this profile!");
+                        "Delete NoteBook: " + noteBookToBeDeleted + "?", "Note: This is will delete all the data within this noteBook!");
 
                 if (result.get() == ButtonType.OK) {
-                    profileComboBox.getItems().remove(profileToBeDeleted);
-                    profileComboBox.getSelectionModel().select(0);
-                    Path pathToBeDeleted = Paths.get(getBasePath(), DEFAULT_APP_NAME, profileToBeDeleted);
+                    noteBookComboBox.getItems().remove(noteBookToBeDeleted);
+                    noteBookComboBox.getSelectionModel().select(0);
+                    Path pathToBeDeleted = Paths.get(getBasePath(), DEFAULT_APP_NAME, noteBookToBeDeleted);
                     FileUtils.deleteDirectory(pathToBeDeleted.toFile());
-                    notificationText.setText(PROFILE_DELETE_STATUS_NOTIFICATION);
+                    notificationText.setText(NOTEBOOK_DELETE_STATUS_NOTIFICATION);
                 }
             }
         } catch (IOException ex) {
             ex.printStackTrace();
-            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to delete Profile", "");
+            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to delete NoteBook", "");
         }
     }
 
     @FXML
-    protected void renameProfile() {
-        String profileToBeRenamed = profileComboBox.getSelectionModel().getSelectedItem();
+    protected void renameNoteBook() {
+        String noteBookToBeRenamed = noteBookComboBox.getSelectionModel().getSelectedItem();
         TextInputDialog dialog = new TextInputDialog();
-        dialog.setHeaderText("Rename Profile: " + profileToBeRenamed);
-        dialog.setContentText("New Profile Name");
+        dialog.setHeaderText("Rename NoteBook: " + noteBookToBeRenamed);
+        dialog.setContentText("New NoteBook Name");
         dialog.showAndWait().ifPresent(text -> {
-            if (StringUtils.isNotBlank(text) && profileComboBox.getItems().indexOf(text) == -1) {
+            if (StringUtils.isNotBlank(text) && noteBookComboBox.getItems().indexOf(text) == -1) {
                 try {
-                    Path source = Paths.get(getBasePath(), DEFAULT_APP_NAME, profileToBeRenamed);
+                    Path source = Paths.get(getBasePath(), DEFAULT_APP_NAME, noteBookToBeRenamed);
                     Files.move(source, source.resolveSibling(text));
                 } catch (IOException ex) {
                     ex.printStackTrace();
-                    alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to Rename Profile", "");
+                    alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to Rename NoteBook", "");
                     return;
                 }
 
-                int index = profileComboBox.getItems().indexOf(profileToBeRenamed);
-                profileComboBox.getItems().add(index, text);
-                profileComboBox.getItems().remove(profileToBeRenamed);
-                profileComboBox.getSelectionModel().select(index);
+                int index = noteBookComboBox.getItems().indexOf(noteBookToBeRenamed);
+                noteBookComboBox.getItems().add(index, text);
+                noteBookComboBox.getItems().remove(noteBookToBeRenamed);
+                noteBookComboBox.getSelectionModel().select(index);
             } else {
-                alertHelper.showErrorAlert(parentStage, "Invalid operation", "Please enter a valid Profile name");
+                alertHelper.showErrorAlert(parentStage, "Invalid operation", "Please enter a valid NoteBook name");
             }
         });
     }
@@ -509,31 +567,31 @@ public class NotesController {
     }
 
     @FXML
-    protected void addNewProfile() {
+    protected void addNewNoteBook() {
         TextInputDialog dialog = new TextInputDialog();
-        dialog.setHeaderText("Add New Profile");
-        dialog.setContentText("New Profile Name");
+        dialog.setHeaderText("Add New NoteBook");
+        dialog.setContentText("New NoteBook Name");
         dialog.showAndWait().ifPresent(text -> {
-            if (StringUtils.isNotBlank(text) && profileComboBox.getItems().indexOf(text) == -1) {
+            if (StringUtils.isNotBlank(text) && noteBookComboBox.getItems().indexOf(text) == -1) {
                 try {
                     Paths.get(getBasePath(), DEFAULT_APP_NAME, text);
                 } catch (InvalidPathException ex) {
                     ex.printStackTrace();
-                    alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to Add Profile", "");
+                    alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to Add NoteBook", "");
                     return;
                 }
-                int index = profileComboBox.getItems().size() - 1;
-                profileComboBox.getItems().add(index, text);
-                profileComboBox.getSelectionModel().select(index);
+                int index = noteBookComboBox.getItems().size() - 1;
+                noteBookComboBox.getItems().add(index, text);
+                noteBookComboBox.getSelectionModel().select(index);
             } else {
-                alertHelper.showErrorAlert(parentStage, "Invalid operation", "Please enter a valid Profile name");
+                alertHelper.showErrorAlert(parentStage, "Invalid operation", "Please enter a valid NoteBook name");
             }
         });
     }
 
     @FXML
-    protected void exportProfile() {
-        boolean exprtStatus = importExportHelper.exportProfile(observableNoteEntryList);
+    protected void exportNoteBook() {
+        boolean exprtStatus = importExportHelper.exportNoteBook(observableNoteEntryList);
         if (exprtStatus) {
             notificationText.setText(String.format(EXPORT_SUCCESS_STATUS_NOTIFICATION, importExportHelper.getExportFilePath().toString()));
         } else {
@@ -542,7 +600,7 @@ public class NotesController {
     }
 
     @FXML
-    protected void importProfile() {
+    protected void importNoteBook() {
         FileChooser fileChooser = new FileChooser();
         File selectedFile = fileChooser.showOpenDialog(parentStage);
         fileChooser.setInitialDirectory(Paths.get(JNotesPreferences.getBasePath()).toFile());
@@ -551,7 +609,7 @@ public class NotesController {
         if (selectedFile == null) {
             return;
         }
-        List<NoteEntry> noteEntries = importExportHelper.importProfile(selectedFile);
+        List<NoteEntry> noteEntries = importExportHelper.importNoteBook(selectedFile);
         if (noteEntries == null) {
             notificationText.setText(IMPORT_FAILURE_STATUS_NOTIFICATION);
         } else {

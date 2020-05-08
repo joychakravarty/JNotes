@@ -15,11 +15,22 @@ import javafx.stage.Stage;
 
 /**
  * 
+ * Helper class to display Alert Dialogs
+ * 
  * @author Joy C
  *
  */
 public class AlertHelper {
 
+    /**
+     * Displays Error Alert Dialog with the exception details.
+     * Intended for displaying Exception details to the user. Not intended for user errors, like validation error.
+     * 
+     * @param parentStage
+     * @param ex
+     * @param headerText
+     * @param contextText
+     */
     public void showAlertWithExceptionDetails(Stage parentStage, Exception ex, String headerText, String contextText) {
         Alert alert = new Alert(AlertType.ERROR);
         alert.setTitle("Exception Dialog");
@@ -54,7 +65,15 @@ public class AlertHelper {
 
         alert.showAndWait();
     }
-
+    
+    /**
+     * 
+     * Displays Error Alert Dialog for User errors or Validation Errors not meant to be used in ExceptionHandling.
+     * 
+     * @param parentStage
+     * @param headerText
+     * @param contentText
+     */
     public void showErrorAlert(Stage parentStage, String headerText, String contentText) {
         Alert alert = new Alert(AlertType.ERROR);
         alert.initOwner(parentStage);
@@ -65,6 +84,14 @@ public class AlertHelper {
         alert.showAndWait();
     }
     
+    /**
+     * Displays confirmation type alert dialog
+     * 
+     * @param parentStage
+     * @param headerText
+     * @param contentText
+     * @return
+     */
     public Optional<ButtonType> showDefaultConfirmation(Stage parentStage, String headerText, String contentText) {
         Alert alert = new Alert(AlertType.CONFIRMATION);
         alert.setTitle("Confirmation Dialog");

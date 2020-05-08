@@ -5,7 +5,7 @@ import static com.jc.jnotes.JNotesPreferences.DEFAULT_EXPORT_FILE_SUFFIX;
 import static com.jc.jnotes.JNotesPreferences.DEFAULT_FIELD_SEPARATOR;
 import static com.jc.jnotes.JNotesPreferences.DEFAULT_LINE_SEPARATOR;
 import static com.jc.jnotes.JNotesPreferences.getBasePath;
-import static com.jc.jnotes.JNotesPreferences.getCurrentProfile;
+import static com.jc.jnotes.JNotesPreferences.getCurrentNoteBook;
 
 import java.io.File;
 import java.io.FileReader;
@@ -35,10 +35,10 @@ import javafx.collections.ObservableList;
 public class ImportExportHelper {
 
     public Path getExportFilePath() {
-        return Paths.get(getBasePath(), DEFAULT_APP_NAME, getCurrentProfile() + DEFAULT_EXPORT_FILE_SUFFIX);
+        return Paths.get(getBasePath(), DEFAULT_APP_NAME, getCurrentNoteBook() + DEFAULT_EXPORT_FILE_SUFFIX);
     }
 
-    public boolean exportProfile(final ObservableList<NoteEntry> observableNoteEntryList) {
+    public boolean exportNoteBook(final ObservableList<NoteEntry> observableNoteEntryList) {
         boolean exportStatus = true;
         final Path exportPath = getExportFilePath();
         final File csvOutputFile = exportPath.toFile();
@@ -75,7 +75,7 @@ public class ImportExportHelper {
      * @return null -> invalid fileType selected
      * 
      */
-    public List<NoteEntry> importProfile(File importFile) {
+    public List<NoteEntry> importNoteBook(File importFile) {
         System.out.println(importFile.getPath());
         List<NoteEntry> noteEntries;
         Path filePath = importFile.toPath();

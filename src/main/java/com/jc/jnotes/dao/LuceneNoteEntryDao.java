@@ -3,7 +3,7 @@ package com.jc.jnotes.dao;
 import static com.jc.jnotes.JNotesPreferences.DEFAULT_APP_NAME;
 import static com.jc.jnotes.JNotesPreferences.DEFAULT_DATETIME_DISPLAY_FORMAT;
 import static com.jc.jnotes.JNotesPreferences.getBasePath;
-import static com.jc.jnotes.JNotesPreferences.getCurrentProfile;
+import static com.jc.jnotes.JNotesPreferences.getCurrentNoteBook;
 import static com.jc.jnotes.model.NoteEntry.ID_COL_NAME;
 import static com.jc.jnotes.model.NoteEntry.INFO_COL_NAME;
 import static com.jc.jnotes.model.NoteEntry.KEY_COL_NAME;
@@ -64,7 +64,7 @@ public class LuceneNoteEntryDao implements NoteEntryDao {
     }
 
     public LuceneNoteEntryDao(String pathAppender) throws IOException {
-        Path indexPath = Paths.get(getBasePath(), pathAppender, getCurrentProfile());
+        Path indexPath = Paths.get(getBasePath(), pathAppender, getCurrentNoteBook());
         File file = indexPath.toFile();
         if (!file.exists()) {
             file.mkdirs();
@@ -120,6 +120,32 @@ public class LuceneNoteEntryDao implements NoteEntryDao {
         IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
         IndexWriter writer = new IndexWriter(indexDir, indexWriterConfig);
         writer.deleteDocuments(new Term(ID_COL_NAME, noteEntry.getId()));
+        writer.flush();
+        // writer.forceMergeDeletes();
+        writer.commit();
+        writer.close();
+    }
+    
+    @Override
+    public void deleteNoteEntries(List<NoteEntry> noteEntries) throws IOException {
+        if(noteEntries==null) {
+            throw new IllegalArgumentException("deleteNoteEntries: Cannot pass null as argument.");
+        }
+        IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
+        IndexWriter writer = new IndexWriter(indexDir, indexWriterConfig);
+//        final int noteEntriesToBeDeleted = noteEntries.size();
+//        Term[] terms = new Term[noteEntriesToBeDeleted];
+//        for (int i=0; i<noteEntriesToBeDeleted; i++) {
+//          Term term = new Term(ID_COL_NAME, noteEntries.get(i).getId());    
+//          terms[i] = term;
+//        }
+        Term[] terms = noteEntries.stream().map((noteEntry)->{
+            Term term = new Term(ID_COL_NAME, noteEntry.getId());
+            return term;
+            }).toArray(Term[]::new);
+                
+        
+        writer.deleteDocuments(terms);
         writer.flush();
         // writer.forceMergeDeletes();
         writer.commit();

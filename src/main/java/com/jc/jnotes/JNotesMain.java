@@ -3,6 +3,7 @@ package com.jc.jnotes;
 /**
  * 
  * Main class which doesn't extend javafx specific class.
+ * This is needed for running the uber jar created by maven shade plugin.
  * 
  * @author Joy C
  *

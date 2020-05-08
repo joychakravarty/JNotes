@@ -49,24 +49,24 @@
                               <KeyCodeCombination alt="UP" code="E" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                            </accelerator>
                         </MenuItem>
-                        <MenuItem mnemonicParsing="false" onAction="#deleteNoteEntry" text="Delete">
+                        <MenuItem mnemonicParsing="false" onAction="#deleteNoteEntries" text="Delete">
                            <accelerator>
                               <KeyCodeCombination alt="UP" code="D" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                            </accelerator>
                         </MenuItem>
                     </items>
                   </Menu>
-                  <Menu mnemonicParsing="false" text="Profile">
+                  <Menu mnemonicParsing="false" text="NoteBook">
                      <items>
-                        <MenuItem mnemonicParsing="false" onAction="#addNewProfile" text="New" />
-                        <MenuItem mnemonicParsing="false" onAction="#renameProfile" text="Rename" />
-                        <MenuItem mnemonicParsing="false" onAction="#deleteProfile" text="Delete" />
-                        <MenuItem mnemonicParsing="false" onAction="#importProfile" text="Import">
+                        <MenuItem mnemonicParsing="false" onAction="#addNewNoteBook" text="New" />
+                        <MenuItem mnemonicParsing="false" onAction="#renameNoteBook" text="Rename" />
+                        <MenuItem mnemonicParsing="false" onAction="#deleteNoteBook" text="Delete" />
+                        <MenuItem mnemonicParsing="false" onAction="#importNoteBook" text="Import">
                         	<accelerator>
                               <KeyCodeCombination alt="UP" code="I" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                            </accelerator>
                         </MenuItem>
-                        <MenuItem mnemonicParsing="false" onAction="#exportProfile" text="Export">
+                        <MenuItem mnemonicParsing="false" onAction="#exportNoteBook" text="Export">
                             <accelerator>
                               <KeyCodeCombination alt="UP" code="X" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                            	</accelerator>
@@ -88,7 +88,7 @@
                   </ImageView>
                </graphic>
             </MenuButton>
-            <ComboBox fx:id="profileComboBox" prefHeight="27.0" prefWidth="214.0" />
+            <ComboBox fx:id="noteBookComboBox" prefHeight="27.0" prefWidth="214.0" />
             <HBox prefHeight="29.0" prefWidth="110.0">
                <children>
                   <ToggleButton fx:id="sortToggleButton" mnemonicParsing="false" onAction="#sortByModificationDate" prefHeight="27.0" prefWidth="25.0">

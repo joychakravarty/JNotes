@@ -27,4 +27,6 @@ public interface NoteEntryDao {
 
     void deleteNoteEntry(NoteEntry noteEntry) throws IOException;
 
+    void deleteNoteEntries(List<NoteEntry> noteEntries) throws IOException;
+
 }
