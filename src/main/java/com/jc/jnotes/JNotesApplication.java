@@ -13,6 +13,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
 /**
+ * This class launches the JavaFX UI for JNotes 
  * 
  * @author Joy
  */
@@ -32,6 +33,10 @@ public class JNotesApplication extends Application {
         loadNotes(stage);
     }
 
+    /**
+     * This main method is NOT the starting point for the jar file. @see JNotesMain
+     * @param args
+     */
     public static void main(String[] args) {
         launch(args);
     }

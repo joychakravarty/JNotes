@@ -6,10 +6,10 @@
   Key: "Prd hostname"  Value: "yxz123"  Info: ""    
   Key: "Acceptance Webapp url"  Value: "https://accServer:8445/mywebapp"  Info: "notEncryptedNotImportantPassword". 
   
-  (Or you may want to have a profile for learning Dutch language like word-meaning-setences). 
+  (Or you may want to have a notebook for learning Dutch language like word-meaning-setences). 
   Key: "snel"  Value: "fast"  Info: "JNotes is fast \n JNotes is snel". 
 
-  Usually I use OneNote and have a table to store this kind of data but I use OneNote for other daily activity as well like   jotting down my analysis of a Prod Issue, during this time I do not wish to move away from that page to find my "Acceptance Webapp url", this is why I built JNotes, its my lookup table!  
+  Usually I use OneNote and have a table to store this kind of data but I use OneNote for other daily activity as well like jotting down my analysis of a Prod Issue, during this time I do not wish to move away from that page to find my "Acceptance Webapp url", this is why I built JNotes, its my lookup table! There are other application to store Notes but they are more like title-body or content with multiple tags. JNotes offers: key-value-content  
   
 ## Why JNotes:
   - It's keyboard friendly. TIP: Use shortcuts as much as possible, I built it for Keyboard poeple like me. 
@@ -30,10 +30,11 @@
      
  ## Shortcuts: 
   New note - Ctrl+N  
-  Edit note - Ctrl+E  
+  Edit note - Ctrl+E
+  Edit note in-line - Ctrl+S (after editing a note)  
   Delete note - Ctrl+D  
-  Export Profile to CSV - Ctrl+X  
-  Import CSV/Properties to Profile - Ctrl+I  
+  Export NoteBook to CSV - Ctrl+X  
+  Import CSV/Properties to NoteBook - Ctrl+I  
   
   Ctrl+F -> takes you to search field  
   Ctrl+C -> copies the selected cell value  
@@ -51,12 +52,14 @@
   - macOS Mojave 10.14.6 (Dev OS - also tested on Windows 10)  
   
  ## Features in progress
-  - Profiles switching (done)  
+  - NoteBook switching (done)  
   - Display info at the bottom (done)
-  - Import/Export profiles from/to csv  (done)
+  - Import/Export noteBooks from/to csv  (done)
   - Choice to select base folder for Jnotes (Pending)  
   - Hide password fields from table (Pending)  
-  - Add flashcard feature (Pending)  
+  - Add flashcard feature (Pending)
+  - Delete multiple notes (Done)
+  - Edit and save in-line (Done)  
   
  ## Developer: Joy Chakravarty  
     joy.chakravarty84@gmail.com | https://www.linkedin.com/in/joychak/ 

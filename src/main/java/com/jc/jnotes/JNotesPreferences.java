@@ -10,7 +10,7 @@ public final class JNotesPreferences {
     }
 
     public static final String DEFAULT_APP_NAME = "JNotes";
-    public static final String DEFAULT_PROFILE = "default";
+    public static final String DEFAULT_NOTEBOOK = "default";
     public static final DateTimeFormatter DEFAULT_DATETIME_DISPLAY_FORMAT = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
     public static final String DEFAULT_LINE_SEPARATOR = System.getProperty("line.separator");
     public static final String DEFAULT_EXPORT_FILE_SUFFIX = "_export.csv";
@@ -20,7 +20,7 @@ public final class JNotesPreferences {
 	private static final Preferences USER_PREFERENCES  = Preferences.userNodeForPackage(JNotesPreferences.class);
 	private static final String USER_PREF_BASEPATH = "basePath";
 	private static final String USER_HOME = "user.home";
-	private static final String USER_PREF_CURRENT_PROFILE = "currentProfile";
+	private static final String USER_PREF_CURRENT_NOTEBOOK = "currentNoteBook";
 	public final static String CURRENT_VERSION =  JNotesPreferences.class.getPackage().getImplementationVersion();
 	
 	
@@ -32,12 +32,12 @@ public final class JNotesPreferences {
         USER_PREFERENCES.put(USER_PREF_BASEPATH, basePath);
 	}
 	
-	public static String getCurrentProfile() { 
-		return USER_PREFERENCES.get(USER_PREF_CURRENT_PROFILE, DEFAULT_PROFILE);
+	public static String getCurrentNoteBook() { 
+		return USER_PREFERENCES.get(USER_PREF_CURRENT_NOTEBOOK, DEFAULT_NOTEBOOK);
 	}
 	
-	public static void setCurrentProfile(String currentProfile) { 
-		USER_PREFERENCES.put(USER_PREF_CURRENT_PROFILE, currentProfile);
+	public static void setCurrentNoteBook(String currentNoteBook) { 
+		USER_PREFERENCES.put(USER_PREF_CURRENT_NOTEBOOK, currentNoteBook);
 	}
 	
 }

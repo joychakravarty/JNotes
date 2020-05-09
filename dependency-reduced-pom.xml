@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.jc</groupId>
   <artifactId>JNotes</artifactId>
-  <version>01.05</version>
+  <version>02.00</version>
   <build>
     <finalName>JNotes</finalName>
     <plugins>
@@ -26,6 +26,14 @@
             <contact>joy.chakravarty84@gmail.com</contact>
           </manifestAttributes>
         </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.22.0</version>
+      </plugin>
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>2.22.0</version>
       </plugin>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>

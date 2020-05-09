@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuButton?>
 <?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextArea?>
@@ -15,26 +17,37 @@
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.input.KeyCodeCombination?>
-<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.text.Text?>
 
-<BorderPane prefHeight="600.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.jc.jnotes.viewcontroller.NotesController">
+<BorderPane prefHeight="622.0" prefWidth="799.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.jc.jnotes.viewcontroller.NotesController">
+   <bottom>
+      <Text fx:id="notificationText" strokeType="OUTSIDE" strokeWidth="0.0" wrappingWidth="600.0" BorderPane.alignment="CENTER_LEFT">
+         <BorderPane.margin>
+            <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
+         </BorderPane.margin></Text>
+   </bottom>
    <center>
-      <TableView fx:id="notesTable" editable="true" prefHeight="346.0" prefWidth="596.0">
-        <columns>
-          <TableColumn fx:id="keyColumn" minWidth="50.0" prefWidth="300.0" />
-          <TableColumn fx:id="valueColumn" minWidth="50.0" prefWidth="300.0" />
-        </columns>
-         <columnResizePolicy>
-            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-         </columnResizePolicy>
-      </TableView>
+      <SplitPane dividerPositions="0.5" orientation="VERTICAL" BorderPane.alignment="CENTER">
+        <items>
+            <TableView fx:id="notesTable" editable="true" prefHeight="400.0" prefWidth="621.0">
+              <columns>
+                <TableColumn fx:id="keyColumn" minWidth="50.0" prefWidth="300.0" />
+                <TableColumn fx:id="valueColumn" minWidth="50.0" prefWidth="300.0" />
+              </columns>
+               <columnResizePolicy>
+                  <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+               </columnResizePolicy>
+            </TableView>
+            <TextArea fx:id="infoField" />
+        </items>
+      </SplitPane>
    </center>
    <top>
-      <ToolBar prefHeight="41.0" prefWidth="384.0" BorderPane.alignment="CENTER">
-         <items>
+      <ToolBar prefHeight="41.0" prefWidth="324.0" BorderPane.alignment="CENTER">
+        <items>
             <MenuButton fx:id="menuButton" mnemonicParsing="false" prefHeight="29.0" prefWidth="50.0">
               <items>
                   <Menu mnemonicParsing="false" text="Note">
@@ -49,24 +62,24 @@
                               <KeyCodeCombination alt="UP" code="E" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                            </accelerator>
                         </MenuItem>
-                        <MenuItem mnemonicParsing="false" onAction="#deleteNoteEntry" text="Delete">
+                        <MenuItem mnemonicParsing="false" onAction="#deleteNoteEntries" text="Delete">
                            <accelerator>
                               <KeyCodeCombination alt="UP" code="D" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                            </accelerator>
                         </MenuItem>
                     </items>
                   </Menu>
-                  <Menu mnemonicParsing="false" text="Profile">
+                  <Menu mnemonicParsing="false" text="NoteBook">
                      <items>
-                        <MenuItem mnemonicParsing="false" onAction="#addNewProfile" text="New" />
-                        <MenuItem mnemonicParsing="false" onAction="#renameProfile" text="Rename" />
-                        <MenuItem mnemonicParsing="false" onAction="#deleteProfile" text="Delete" />
-                        <MenuItem mnemonicParsing="false" onAction="#importProfile" text="Import">
+                        <MenuItem mnemonicParsing="false" onAction="#addNewNoteBook" text="New" />
+                        <MenuItem mnemonicParsing="false" onAction="#renameNoteBook" text="Rename" />
+                        <MenuItem mnemonicParsing="false" onAction="#deleteNoteBook" text="Delete" />
+                        <MenuItem mnemonicParsing="false" onAction="#importNoteBook" text="Import">
                         	<accelerator>
                               <KeyCodeCombination alt="UP" code="I" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                            </accelerator>
                         </MenuItem>
-                        <MenuItem mnemonicParsing="false" onAction="#exportProfile" text="Export">
+                        <MenuItem mnemonicParsing="false" onAction="#exportNoteBook" text="Export">
                             <accelerator>
                               <KeyCodeCombination alt="UP" code="X" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                            	</accelerator>
@@ -88,33 +101,23 @@
                   </ImageView>
                </graphic>
             </MenuButton>
-            <ComboBox fx:id="profileComboBox" prefHeight="27.0" prefWidth="214.0" />
-            <HBox prefHeight="29.0" prefWidth="110.0">
-               <children>
-                  <ToggleButton fx:id="sortToggleButton" mnemonicParsing="false" onAction="#sortByModificationDate" prefHeight="27.0" prefWidth="25.0">
-                      <graphic>
+            <ComboBox fx:id="noteBookComboBox" prefHeight="27.0" prefWidth="214.0" />
+            <ToggleButton fx:id="sortToggleButton" mnemonicParsing="false" onAction="#sortByModificationDate" prefHeight="27.0" prefWidth="25.0">
+                <graphic>
 	                      <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
 	                          <image>
 	                              <Image url="@../../../../images/sort-16.png" />
 	                          </image>
 	                      </ImageView>
 	                  </graphic>
-                     <tooltip>
-                        <Tooltip text="Sort by modification time" />
-                     </tooltip>
-                  </ToggleButton>
-               </children></HBox>
-            <TextField fx:id="searchField" prefHeight="27.0" prefWidth="350.0" />
+               <tooltip>
+                  <Tooltip text="Sort by modification time" />
+               </tooltip>
+            </ToggleButton>
+            <Pane HBox.hgrow="ALWAYS" />
+            <TextField fx:id="searchField" prefHeight="28.0" prefWidth="364.0" />
             <CheckBox fx:id="searchAllCheckBox" mnemonicParsing="false" />
-         </items>
+        </items>
       </ToolBar>
    </top>
-   <bottom>
-      <AnchorPane prefHeight="150.0" prefWidth="500.0" BorderPane.alignment="CENTER">
-         <children>
-            <TextArea fx:id="infoField" editable="false" layoutX="4.0" layoutY="-7.0" prefHeight="83.0" prefWidth="476.0" AnchorPane.bottomAnchor="25.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="5.0" AnchorPane.topAnchor="5.0" />
-            <Text fx:id="notificationText" layoutX="5.0" layoutY="141.0" strokeType="OUTSIDE" strokeWidth="0.0" wrappingWidth="600.0" />
-         </children>
-      </AnchorPane>
-   </bottom>
 </BorderPane>

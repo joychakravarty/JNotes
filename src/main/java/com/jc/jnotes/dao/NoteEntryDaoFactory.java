@@ -20,7 +20,7 @@ public final class NoteEntryDaoFactory {
     private final static Map<String, NoteEntryDao> DAO_MAP = new HashMap<>();
 
     public static NoteEntryDao getNoteEntryDao() throws IOException {
-        final String mapKey = JNotesPreferences.getBasePath() + JNotesPreferences.getCurrentProfile();
+        final String mapKey = JNotesPreferences.getBasePath() + JNotesPreferences.getCurrentNoteBook();
 
         if (DAO_MAP.get(mapKey) != null) {
             return DAO_MAP.get(mapKey);
