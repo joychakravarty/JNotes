@@ -1,29 +1,25 @@
 package com.jc.jnotes.viewcontroller;
 
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 import com.jc.jnotes.model.NoteEntry;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
+
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.KeyCombination;
 import javafx.scene.input.KeyEvent;
 
 /**
  *
  * @author Joy C
  */
-public class NonEditableTableCell extends TableCell<NoteEntry, String> {
+public class SaveEnabledTableCell extends TableCell<NoteEntry, String> {
  
         private TextField textField;
         private BiConsumer<String, Integer> saveOnEditBiConsumer;
         private int colIndex;
  
-        public NonEditableTableCell(BiConsumer<String, Integer> saveOnEditBiConsumer, int colIndex) {
+    public SaveEnabledTableCell(BiConsumer<String, Integer> saveOnEditBiConsumer, int colIndex) {
             this.saveOnEditBiConsumer = saveOnEditBiConsumer;
             this.colIndex = colIndex;
         }

@@ -82,10 +82,10 @@ public class NotesController {
     private static final String ADD_STATUS_NOTIFICATION = "Success: Note Added.";
     private static final String EDIT_STATUS_NOTIFICATION = "Success: Note Saved.";
     private static final String DELETE_STATUS_NOTIFICATION = "Success: Note Deleted.";
-    
+
     private static final String DELETE_NOTES_CONFIRMATION_HEADER = "Delete selected notes?";
     private static final String DELETE_NOTES_CONFIRMATION_CONTENT = "%d note(s) will be deleted.";
-    
+
     private static final String NOTEBOOK_DELETE_STATUS_NOTIFICATION = "Success: NoteBook Deleted.";
 
     private static final String EXPORT_SUCCESS_STATUS_NOTIFICATION = "Exported successfully. File: %s";
@@ -149,7 +149,7 @@ public class NotesController {
         initilalizeMenuButton();
 
         initializeNoteBooks();
-        
+
         addAccelerators();
 
     }
@@ -162,6 +162,7 @@ public class NotesController {
             if (StringUtils.isNotBlank(selectedNoteBook)) {
                 JNotesPreferences.setCurrentNoteBook(selectedNoteBook);
                 loadAllNoteEntries();
+                infoField.clear();
             }
         });
 
@@ -242,6 +243,19 @@ public class NotesController {
                         }
                     }
                 }
+            } else if (event.getCode() == KeyCode.S && event.isShortcutDown()) {
+                event.consume();
+                if (selectedNoteEntry != null) {
+                    selectedNoteEntry.setInfo(infoField.getText());
+                    try {
+                        NoteEntryDaoFactory.getNoteEntryDao().editNoteEntry(selectedNoteEntry);
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                        alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to save NoteEntry Dialog", "");
+                    }
+                    notificationText.setText(EDIT_STATUS_NOTIFICATION);
+                    notesTable.refresh();
+                }
             }
         });
     }
@@ -265,10 +279,10 @@ public class NotesController {
         };
 
         keyColumn.setCellValueFactory(new PropertyValueFactory<>(KEY_COL_NAME));
-        keyColumn.setCellFactory((tabCol) -> new NonEditableTableCell(saveOnEditBiConsumer, 0));
+        keyColumn.setCellFactory((tabCol) -> new SaveEnabledTableCell(saveOnEditBiConsumer, 0));
 
         valueColumn.setCellValueFactory(new PropertyValueFactory<>(VALUE_COL_NAME));
-        valueColumn.setCellFactory((tabCol) -> new NonEditableTableCell(saveOnEditBiConsumer, 1));
+        valueColumn.setCellFactory((tabCol) -> new SaveEnabledTableCell(saveOnEditBiConsumer, 1));
     }
 
     private void initializeNotesTable() {
@@ -278,13 +292,15 @@ public class NotesController {
 
         // When the selected NoteEntry in notesTable we set its info in the infoField
         notesTable.getSelectionModel().selectedItemProperty().addListener((obs, prevNoteEntry, selectedNoteEntry) -> {
+            // CRITICAL: most of the code relies on selectedNoteEntry. On losing focus, it also sets selectedNoteEntry to null.
             this.selectedNoteEntry = selectedNoteEntry;
+            // END CRITICAL
             if (selectedNoteEntry != null) { // When the JNotes start no NoteEntry is selected. This is to handle that
                 infoField.setText(selectedNoteEntry.getInfo());
                 notificationText
                         .setText("Last modified on: " + selectedNoteEntry.getLastModifiedTime().format(DEFAULT_DATETIME_DISPLAY_FORMAT));
             } else {
-                infoField.setText("");
+                infoField.clear();
             }
         });
 
@@ -412,7 +428,7 @@ public class NotesController {
                 if (result.get() == ButtonType.OK) {
                     NoteEntryDaoFactory.getNoteEntryDao().deleteNoteEntries(noteEntriesToBeDeleted);
                     observableNoteEntryList.removeAll(noteEntriesToBeDeleted);
-                    infoField.setText("");
+                    infoField.clear();
                     this.selectedNoteEntry = null;
                     notesTable.refresh();
                     notificationText.setText(DELETE_STATUS_NOTIFICATION);
