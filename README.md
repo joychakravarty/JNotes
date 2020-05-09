@@ -9,7 +9,9 @@
   (Or you may want to have a notebook for learning Dutch language like word-meaning-setences). 
   Key: "snel"  Value: "fast"  Info: "JNotes is fast \n JNotes is snel". 
 
-  Usually I use OneNote and have a table to store this kind of data but I use OneNote for other daily activity as well like jotting down my analysis of a Prod Issue, during this time I do not wish to move away from that page to find my "Acceptance Webapp url", this is why I built JNotes, its my lookup table! There are other application to store Notes but they are more like title-body or content with multiple tags. JNotes offers: key-value-content  
+## Purpose:
+  There are several application to store Notes but they are more like "title-body" or "content-multiple tags". JNotes offers one of a kind: "key-value-content".  
+  Usually I use OneNote and have a table to store this kind of data but I use OneNote for other daily activity as well like jotting down my analysis of a Prod Issue, during this time I do not wish to move away from that page to find my "Acceptance Webapp url", this is why I built JNotes, its my lookup table!   
   
 ## Why JNotes:
   - It's keyboard friendly. TIP: Use shortcuts as much as possible, I built it for Keyboard poeple like me. 
