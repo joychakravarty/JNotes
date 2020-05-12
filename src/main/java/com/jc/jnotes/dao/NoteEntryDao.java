@@ -6,6 +6,8 @@ import java.util.List;
 import com.jc.jnotes.model.NoteEntry;
 
 /**
+ *
+ * This is the base interface with the basic CRUD functionality for NoteEntry.
  * 
  * @author Joy C
  *
@@ -18,8 +20,6 @@ public interface NoteEntryDao {
      * @throws IOException
      */
     List<NoteEntry> getAll() throws IOException;
-
-    List<NoteEntry> searchNotes(String searchParam, boolean searchInfo) throws IOException;
 
     long addNoteEntry(NoteEntry noteEntry) throws IOException;
 

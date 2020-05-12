@@ -1,8 +1,13 @@
 package com.jc.jnotes.helper;
 
+import static com.jc.jnotes.JNotesConstants.CURRENT_VERSION;
+import static com.jc.jnotes.JNotesConstants.APP_NAME;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Optional;
+
+import org.apache.commons.lang3.StringUtils;
 
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
@@ -20,7 +25,11 @@ import javafx.stage.Stage;
  * @author Joy C
  *
  */
-public class AlertHelper {
+public final class AlertHelper {
+    
+    private AlertHelper() {
+        
+    }
 
     /**
      * Displays Error Alert Dialog with the exception details.
@@ -31,7 +40,7 @@ public class AlertHelper {
      * @param headerText
      * @param contextText
      */
-    public void showAlertWithExceptionDetails(Stage parentStage, Exception ex, String headerText, String contextText) {
+    public static void showAlertWithExceptionDetails(Stage parentStage, Exception ex, String headerText, String contextText) {
         Alert alert = new Alert(AlertType.ERROR);
         alert.setTitle("Exception Dialog");
         alert.setHeaderText(headerText);
@@ -74,7 +83,7 @@ public class AlertHelper {
      * @param headerText
      * @param contentText
      */
-    public void showErrorAlert(Stage parentStage, String headerText, String contentText) {
+    public static void showErrorAlert(Stage parentStage, String headerText, String contentText) {
         Alert alert = new Alert(AlertType.ERROR);
         alert.initOwner(parentStage);
         alert.setTitle("Exception Dialog");
@@ -92,13 +101,23 @@ public class AlertHelper {
      * @param contentText
      * @return
      */
-    public Optional<ButtonType> showDefaultConfirmation(Stage parentStage, String headerText, String contentText) {
+    public static Optional<ButtonType> showDefaultConfirmation(Stage parentStage, String headerText, String contentText) {
         Alert alert = new Alert(AlertType.CONFIRMATION);
         alert.setTitle("Confirmation Dialog");
         alert.setHeaderText(headerText);
         alert.setContentText(contentText);
 
         return alert.showAndWait();
+    }
+    
+    public static void showAboutJNotesDialog() {
+        Alert alert = new Alert(AlertType.INFORMATION);
+        alert.setTitle("About " + APP_NAME);
+        alert.setHeaderText("Author - Joy Chakravarty");
+        if (StringUtils.isNotBlank(CURRENT_VERSION)) {
+            alert.setContentText("Version: " + CURRENT_VERSION);
+        }
+        alert.showAndWait();
     }
     
     

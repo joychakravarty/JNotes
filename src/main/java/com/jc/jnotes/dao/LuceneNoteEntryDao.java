@@ -1,7 +1,7 @@
 package com.jc.jnotes.dao;
 
-import static com.jc.jnotes.JNotesPreferences.DEFAULT_APP_NAME;
-import static com.jc.jnotes.JNotesPreferences.DEFAULT_DATETIME_DISPLAY_FORMAT;
+import static com.jc.jnotes.JNotesConstants.APP_NAME;
+import static com.jc.jnotes.JNotesConstants.DATETIME_DISPLAY_FORMAT;
 import static com.jc.jnotes.JNotesPreferences.getBasePath;
 import static com.jc.jnotes.JNotesPreferences.getCurrentNoteBook;
 import static com.jc.jnotes.model.NoteEntry.ID_COL_NAME;
@@ -48,10 +48,12 @@ import com.jc.jnotes.model.NoteEntry;
 
 /**
  * 
+ * This is a Lucene based implemen
+ * 
  * @author Joy C
  *
  */
-public class LuceneNoteEntryDao implements NoteEntryDao {
+public class LuceneNoteEntryDao implements LocalNoteEntryDao {
 
     private final Directory indexDir;
     private final Query getAllQuery = new MatchAllDocsQuery();
@@ -60,7 +62,7 @@ public class LuceneNoteEntryDao implements NoteEntryDao {
     // "info"}, analyzer);
 
     public LuceneNoteEntryDao() throws IOException {
-        this(DEFAULT_APP_NAME);
+        this(APP_NAME);
     }
 
     public LuceneNoteEntryDao(String pathAppender) throws IOException {
@@ -189,7 +191,7 @@ public class LuceneNoteEntryDao implements NoteEntryDao {
         for (ScoreDoc scoreDoc : sDocs) {
             Document dd = searcher.doc(scoreDoc.doc);
             NoteEntry noteEntry = new NoteEntry(dd.get(ID_COL_NAME), dd.get(KEY_COL_NAME), dd.get(VALUE_COL_NAME), dd.get(INFO_COL_NAME));
-            noteEntry.setLastModifiedTime(LocalDateTime.parse(dd.get(LAST_MODIFIED_TIME_COL_NAME), DEFAULT_DATETIME_DISPLAY_FORMAT));
+            noteEntry.setLastModifiedTime(LocalDateTime.parse(dd.get(LAST_MODIFIED_TIME_COL_NAME), DATETIME_DISPLAY_FORMAT));
             noteEntries.add(noteEntry);
         }
         return noteEntries;
@@ -201,7 +203,7 @@ public class LuceneNoteEntryDao implements NoteEntryDao {
         document.add(new TextField(KEY_COL_NAME, noteEntry.getKey(), Field.Store.YES));
         document.add(new TextField(VALUE_COL_NAME, noteEntry.getValue(), Field.Store.YES));
         document.add(new TextField(INFO_COL_NAME, noteEntry.getInfo(), Field.Store.YES));
-        document.add(new StringField(LAST_MODIFIED_TIME_COL_NAME, noteEntry.getLastModifiedTime().format(DEFAULT_DATETIME_DISPLAY_FORMAT),
+        document.add(new StringField(LAST_MODIFIED_TIME_COL_NAME, noteEntry.getLastModifiedTime().format(DATETIME_DISPLAY_FORMAT),
                 Field.Store.YES));
         return document;
 

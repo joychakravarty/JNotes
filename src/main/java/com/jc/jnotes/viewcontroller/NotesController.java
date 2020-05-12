@@ -1,9 +1,6 @@
 package com.jc.jnotes.viewcontroller;
 
-import static com.jc.jnotes.JNotesPreferences.CURRENT_VERSION;
-import static com.jc.jnotes.JNotesPreferences.DEFAULT_APP_NAME;
-import static com.jc.jnotes.JNotesPreferences.DEFAULT_DATETIME_DISPLAY_FORMAT;
-import static com.jc.jnotes.JNotesPreferences.getBasePath;
+import static com.jc.jnotes.JNotesConstants.DATETIME_DISPLAY_FORMAT;
 import static com.jc.jnotes.JNotesPreferences.getCurrentNoteBook;
 import static com.jc.jnotes.model.NoteEntry.KEY_COL_NAME;
 import static com.jc.jnotes.model.NoteEntry.VALUE_COL_NAME;
@@ -11,28 +8,22 @@ import static com.jc.jnotes.model.NoteEntry.VALUE_COL_NAME;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.lucene.index.IndexNotFoundException;
 
 import com.jc.jnotes.JNotesApplication;
 import com.jc.jnotes.JNotesPreferences;
-import com.jc.jnotes.dao.NoteEntryDaoFactory;
 import com.jc.jnotes.helper.AlertHelper;
-import com.jc.jnotes.helper.ImportExportHelper;
+import com.jc.jnotes.helper.IOHelper;
 import com.jc.jnotes.model.NoteEntry;
+import com.jc.jnotes.service.ControllerService;
+import com.jc.jnotes.service.ControllerServiceException;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -41,8 +32,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
@@ -54,7 +43,6 @@ import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -86,16 +74,11 @@ public class NotesController {
     private static final String DELETE_NOTES_CONFIRMATION_HEADER = "Delete selected notes?";
     private static final String DELETE_NOTES_CONFIRMATION_CONTENT = "%d note(s) will be deleted.";
 
-    private static final String NOTEBOOK_DELETE_STATUS_NOTIFICATION = "Success: NoteBook Deleted.";
-
     private static final String EXPORT_SUCCESS_STATUS_NOTIFICATION = "Exported successfully. File: %s";
     private static final String EXPORT_FAILURE_STATUS_NOTIFICATION = "Export failed.";
 
     private static final String IMPORT_SUCCESS_STATUS_NOTIFICATION = "Imported Notes count: %d";
     private static final String IMPORT_FAILURE_STATUS_NOTIFICATION = "Import failed.";
-
-    private final AlertHelper alertHelper = new AlertHelper();
-    private final ImportExportHelper importExportHelper = new ImportExportHelper();
 
     private ObservableList<NoteEntry> observableNoteEntryList;
     private Stage parentStage;
@@ -103,7 +86,10 @@ public class NotesController {
     private NoteEntry selectedNoteEntry = null;
     private boolean showingSearchedResults = false;
 
-    private Comparator<NoteEntry> comparator = Comparator.comparing((noteEntry) -> noteEntry.getLastModifiedTime());
+    private final Comparator<NoteEntry> comparator = Comparator.comparing((noteEntry) -> noteEntry.getLastModifiedTime());
+    private final ControllerService service = new ControllerService();
+
+    private NoteBookActionsController noteBookActionsController;
 
     @FXML
     private TableView<NoteEntry> notesTable;
@@ -151,6 +137,8 @@ public class NotesController {
         initializeNoteBooks();
 
         addAccelerators();
+
+        noteBookActionsController = new NoteBookActionsController(parentStage, noteBookComboBox, notificationText);
 
     }
 
@@ -248,10 +236,9 @@ public class NotesController {
                 if (selectedNoteEntry != null) {
                     selectedNoteEntry.setInfo(infoField.getText());
                     try {
-                        NoteEntryDaoFactory.getNoteEntryDao().editNoteEntry(selectedNoteEntry);
-                    } catch (IOException ex) {
-                        ex.printStackTrace();
-                        alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to save NoteEntry Dialog", "");
+                        service.editNoteEntry(selectedNoteEntry);
+                    } catch (ControllerServiceException ex) {
+                        AlertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to save NoteEntry Dialog", "");
                     }
                     notificationText.setText(EDIT_STATUS_NOTIFICATION);
                     notesTable.refresh();
@@ -268,10 +255,9 @@ public class NotesController {
                 selectedNoteEntry.setValue(editedText);
             }
             try {
-                NoteEntryDaoFactory.getNoteEntryDao().editNoteEntry(selectedNoteEntry);
-            } catch (IOException ex) {
-                ex.printStackTrace();
-                alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to save NoteEntry Dialog", "");
+                service.editNoteEntry(selectedNoteEntry);
+            } catch (ControllerServiceException ex) {
+                AlertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to save NoteEntry Dialog", "");
             }
             notesTable.getSelectionModel().clearSelection();
             notificationText.setText(EDIT_STATUS_NOTIFICATION);
@@ -297,8 +283,7 @@ public class NotesController {
             // END CRITICAL
             if (selectedNoteEntry != null) { // When the JNotes start no NoteEntry is selected. This is to handle that
                 infoField.setText(selectedNoteEntry.getInfo());
-                notificationText
-                        .setText("Last modified on: " + selectedNoteEntry.getLastModifiedTime().format(DEFAULT_DATETIME_DISPLAY_FORMAT));
+                notificationText.setText("Last modified on: " + selectedNoteEntry.getLastModifiedTime().format(DATETIME_DISPLAY_FORMAT));
             } else {
                 infoField.clear();
             }
@@ -357,18 +342,9 @@ public class NotesController {
     }
 
     private void loadNoteBooks() {
-        Path directory = Paths.get(getBasePath(), DEFAULT_APP_NAME);
-        List<String> directories;
-        try {
-            directories = Files.walk(directory).filter(Files::isDirectory).map((path) -> path.getFileName()).map(Path::toString)
-                    .filter((name) -> !name.equals(DEFAULT_APP_NAME)).collect(Collectors.toList());
-        } catch (IOException e) {
-            directories = new ArrayList<>();
-            directories.add(JNotesPreferences.DEFAULT_NOTEBOOK);
-        }
+        List<String> directories = IOHelper.getAllNoteBooks();
         noteBookComboBox.getItems().addAll(directories);
         noteBookComboBox.getSelectionModel().select(getCurrentNoteBook());
-
     }
 
     private void addAccelerators() {
@@ -382,27 +358,18 @@ public class NotesController {
     protected void loadAllNoteEntries() {
         List<NoteEntry> allNoteEntries;
         try {
-            allNoteEntries = NoteEntryDaoFactory.getNoteEntryDao().getAll();
-        } catch (IndexNotFoundException inEx) {
+            allNoteEntries = service.getAll();
+        } catch (ControllerServiceException ex) {
             allNoteEntries = new ArrayList<>();
-            System.err.println("Exception in loadAllNoteEntries - IndexNotfound. " + inEx.getMessage());
-        } catch (IOException ex) {
-            allNoteEntries = new ArrayList<>();
-            ex.printStackTrace();
-            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to get all Notes", "");
+            AlertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to get all Notes", "");
         }
         loadNoteEntries(allNoteEntries);
     }
 
     protected void loadSearchedNoteEntries(String searchTxt) {
         List<NoteEntry> noteEntries;
-        try {
-            boolean searchInfoAlso = searchAllCheckBox.isSelected();
-            noteEntries = NoteEntryDaoFactory.getNoteEntryDao().searchNotes(searchTxt, searchInfoAlso);
-        } catch (IOException e) {
-            e.printStackTrace();
-            noteEntries = Collections.emptyList();
-        }
+        boolean searchInfoAlso = searchAllCheckBox.isSelected();
+        noteEntries = service.searchNotes(searchTxt, searchInfoAlso);
         loadNoteEntries(noteEntries);
     }
 
@@ -423,10 +390,10 @@ public class NotesController {
             // System.out.println(toBeDeletedNoteEntry);
             if (noteEntriesToBeDeleted != null) {
 
-                Optional<ButtonType> result = alertHelper.showDefaultConfirmation(parentStage, DELETE_NOTES_CONFIRMATION_HEADER,
+                Optional<ButtonType> result = AlertHelper.showDefaultConfirmation(parentStage, DELETE_NOTES_CONFIRMATION_HEADER,
                         String.format(DELETE_NOTES_CONFIRMATION_CONTENT, noteEntriesToBeDeleted.size()));
                 if (result.get() == ButtonType.OK) {
-                    NoteEntryDaoFactory.getNoteEntryDao().deleteNoteEntries(noteEntriesToBeDeleted);
+                    service.deleteNoteEntries(noteEntriesToBeDeleted);
                     observableNoteEntryList.removeAll(noteEntriesToBeDeleted);
                     infoField.clear();
                     this.selectedNoteEntry = null;
@@ -436,7 +403,7 @@ public class NotesController {
             }
         } catch (IOException ex) {
             ex.printStackTrace();
-            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to delete Notes", "");
+            AlertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to delete Notes", "");
         }
     }
 
@@ -474,7 +441,7 @@ public class NotesController {
             noteEntryStage.show();
         } catch (IOException ex) {
             ex.printStackTrace();
-            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to open NoteEntry Dialog", "");
+            AlertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to open NoteEntry Dialog", "");
         }
     }
 
@@ -515,60 +482,8 @@ public class NotesController {
             noteEntryStage.show();
         } catch (IOException ex) {
             ex.printStackTrace();
-            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to open NoteEntry Dialog", "");
+            AlertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to open NoteEntry Dialog", "");
         }
-    }
-
-    @FXML
-    protected void deleteNoteBook() {
-        try {
-            if (noteBookComboBox.getItems().size() == 1) {
-                alertHelper.showErrorAlert(parentStage, "Invalid Operation", "Cannot delete the only NoteBook");
-
-            } else {
-                String noteBookToBeDeleted = noteBookComboBox.getSelectionModel().getSelectedItem();
-                Optional<ButtonType> result = alertHelper.showDefaultConfirmation(parentStage,
-                        "Delete NoteBook: " + noteBookToBeDeleted + "?", "Note: This is will delete all the data within this noteBook!");
-
-                if (result.get() == ButtonType.OK) {
-                    noteBookComboBox.getItems().remove(noteBookToBeDeleted);
-                    noteBookComboBox.getSelectionModel().select(0);
-                    Path pathToBeDeleted = Paths.get(getBasePath(), DEFAULT_APP_NAME, noteBookToBeDeleted);
-                    FileUtils.deleteDirectory(pathToBeDeleted.toFile());
-                    notificationText.setText(NOTEBOOK_DELETE_STATUS_NOTIFICATION);
-                }
-            }
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to delete NoteBook", "");
-        }
-    }
-
-    @FXML
-    protected void renameNoteBook() {
-        String noteBookToBeRenamed = noteBookComboBox.getSelectionModel().getSelectedItem();
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setHeaderText("Rename NoteBook: " + noteBookToBeRenamed);
-        dialog.setContentText("New NoteBook Name");
-        dialog.showAndWait().ifPresent(text -> {
-            if (StringUtils.isNotBlank(text) && noteBookComboBox.getItems().indexOf(text) == -1) {
-                try {
-                    Path source = Paths.get(getBasePath(), DEFAULT_APP_NAME, noteBookToBeRenamed);
-                    Files.move(source, source.resolveSibling(text));
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                    alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to Rename NoteBook", "");
-                    return;
-                }
-
-                int index = noteBookComboBox.getItems().indexOf(noteBookToBeRenamed);
-                noteBookComboBox.getItems().add(index, text);
-                noteBookComboBox.getItems().remove(noteBookToBeRenamed);
-                noteBookComboBox.getSelectionModel().select(index);
-            } else {
-                alertHelper.showErrorAlert(parentStage, "Invalid operation", "Please enter a valid NoteBook name");
-            }
-        });
     }
 
     @FXML
@@ -583,33 +498,25 @@ public class NotesController {
     }
 
     @FXML
+    protected void deleteNoteBook() {
+        noteBookActionsController.deleteNoteBook();
+    }
+
+    @FXML
+    protected void renameNoteBook() {
+        noteBookActionsController.renameNoteBook();
+    }
+
+    @FXML
     protected void addNewNoteBook() {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setHeaderText("Add New NoteBook");
-        dialog.setContentText("New NoteBook Name");
-        dialog.showAndWait().ifPresent(text -> {
-            if (StringUtils.isNotBlank(text) && noteBookComboBox.getItems().indexOf(text) == -1) {
-                try {
-                    Paths.get(getBasePath(), DEFAULT_APP_NAME, text);
-                } catch (InvalidPathException ex) {
-                    ex.printStackTrace();
-                    alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to Add NoteBook", "");
-                    return;
-                }
-                int index = noteBookComboBox.getItems().size() - 1;
-                noteBookComboBox.getItems().add(index, text);
-                noteBookComboBox.getSelectionModel().select(index);
-            } else {
-                alertHelper.showErrorAlert(parentStage, "Invalid operation", "Please enter a valid NoteBook name");
-            }
-        });
+        noteBookActionsController.addNewNoteBook();
     }
 
     @FXML
     protected void exportNoteBook() {
-        boolean exprtStatus = importExportHelper.exportNoteBook(observableNoteEntryList);
-        if (exprtStatus) {
-            notificationText.setText(String.format(EXPORT_SUCCESS_STATUS_NOTIFICATION, importExportHelper.getExportFilePath().toString()));
+        String exprtFilePath = IOHelper.exportNoteBook(observableNoteEntryList);
+        if (exprtFilePath != null) {
+            notificationText.setText(String.format(EXPORT_SUCCESS_STATUS_NOTIFICATION, exprtFilePath));
         } else {
             notificationText.setText(EXPORT_FAILURE_STATUS_NOTIFICATION);
         }
@@ -619,25 +526,24 @@ public class NotesController {
     protected void importNoteBook() {
         FileChooser fileChooser = new FileChooser();
         File selectedFile = fileChooser.showOpenDialog(parentStage);
-        fileChooser.setInitialDirectory(Paths.get(JNotesPreferences.getBasePath()).toFile());
+        fileChooser.setInitialDirectory(IOHelper.getBaseDirectory());
         fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Text Files", "*.csv"),
                 new FileChooser.ExtensionFilter("Properties Files", "*.properties"));
         if (selectedFile == null) {
             return;
         }
-        List<NoteEntry> noteEntries = importExportHelper.importNoteBook(selectedFile);
+        List<NoteEntry> noteEntries = IOHelper.importNoteBook(selectedFile);
         if (noteEntries == null) {
             notificationText.setText(IMPORT_FAILURE_STATUS_NOTIFICATION);
         } else {
             try {
-                for (NoteEntry nEntry : noteEntries) {
-                    NoteEntryDaoFactory.getNoteEntryDao().addNoteEntry(nEntry);
-                    observableNoteEntryList.add(nEntry);
+                for (NoteEntry note : noteEntries) {
+                    service.addNoteEntry(note);
+                    observableNoteEntryList.add(note);
                 }
                 notificationText.setText(String.format(IMPORT_SUCCESS_STATUS_NOTIFICATION, noteEntries.size()));
                 notesTable.refresh();
-            } catch (IOException ex) {
-                ex.printStackTrace();
+            } catch (ControllerServiceException ex) {
                 notificationText.setText(IMPORT_FAILURE_STATUS_NOTIFICATION);
             }
         }
@@ -645,13 +551,7 @@ public class NotesController {
 
     @FXML
     private void showAbout() {
-        Alert alert = new Alert(AlertType.INFORMATION);
-        alert.setTitle("About " + DEFAULT_APP_NAME);
-        alert.setHeaderText("Author - Joy Chakravarty");
-        if (StringUtils.isNotBlank(CURRENT_VERSION)) {
-            alert.setContentText("Version: " + CURRENT_VERSION);
-        }
-        alert.showAndWait();
+        AlertHelper.showAboutJNotesDialog();
     }
 
     @FXML

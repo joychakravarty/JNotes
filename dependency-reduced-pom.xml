@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.jc</groupId>
   <artifactId>JNotes</artifactId>
-  <version>02.00</version>
+  <version>02.01</version>
   <build>
     <finalName>JNotes</finalName>
     <plugins>
@@ -62,6 +62,12 @@
     </plugins>
   </build>
   <dependencies>
+    <dependency>
+      <groupId>com.datastax.dse</groupId>
+      <artifactId>dse-java-driver-core</artifactId>
+      <version>2.4.0</version>
+      <scope>compile</scope>
+    </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>

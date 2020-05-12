@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.jc.jnotes.JNotesPreferences;
+import com.jc.jnotes.dao.LocalNoteEntryDao;
+import com.jc.jnotes.dao.RemoteNoteEntryDao;
+import com.jc.jnotes.dao.LuceneNoteEntryDao;
 
 /**
  * 
@@ -17,18 +20,22 @@ public final class NoteEntryDaoFactory {
         
     }
 
-    private final static Map<String, NoteEntryDao> DAO_MAP = new HashMap<>();
+    private final static Map<String, LocalNoteEntryDao> LOCAL_DAO_MAP = new HashMap<>();
 
-    public static NoteEntryDao getNoteEntryDao() throws IOException {
+    public static LocalNoteEntryDao getLocalNoteEntryDao() throws IOException {
         final String mapKey = JNotesPreferences.getBasePath() + JNotesPreferences.getCurrentNoteBook();
 
-        if (DAO_MAP.get(mapKey) != null) {
-            return DAO_MAP.get(mapKey);
+        if (LOCAL_DAO_MAP.get(mapKey) != null) {
+            return LOCAL_DAO_MAP.get(mapKey);
         } else {
-            NoteEntryDao noteEntryDao = new LuceneNoteEntryDao();
-            DAO_MAP.put(mapKey, noteEntryDao);
+            LocalNoteEntryDao noteEntryDao = new LuceneNoteEntryDao();
+            LOCAL_DAO_MAP.put(mapKey, noteEntryDao);
             return noteEntryDao;
         }
+    }
+    
+    public static RemoteNoteEntryDao getRemoteNoteEntryDao()  {
+        return null;
     }
 
 }

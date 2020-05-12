@@ -1,14 +1,14 @@
 package com.jc.jnotes.viewcontroller;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.jc.jnotes.dao.NoteEntryDaoFactory;
 import com.jc.jnotes.helper.AlertHelper;
 import com.jc.jnotes.model.NoteEntry;
+import com.jc.jnotes.service.ControllerService;
+import com.jc.jnotes.service.ControllerServiceException;
 
 import javafx.application.Platform;
 import javafx.event.EventHandler;
@@ -39,8 +39,8 @@ public class NoteEntryController implements Initializable {
     private String mode;
     
     private Runnable runAfter;
-
-    private final AlertHelper alertHelper = new AlertHelper();
+    
+    private final ControllerService service = new ControllerService();
 
     @FXML
     private TextField keyField;
@@ -112,15 +112,13 @@ public class NoteEntryController implements Initializable {
             noteEntry.setInfo(infoField.getText());
             try {
                 if (MODE_ADD.equals(mode)) {
-                    NoteEntryDaoFactory.getNoteEntryDao().addNoteEntry(noteEntry);
+                    service.addNoteEntry(noteEntry);
                 }else {
-                    NoteEntryDaoFactory.getNoteEntryDao().editNoteEntry(noteEntry);
+                    service.editNoteEntry(noteEntry);
                 }
                 runAfter.run();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-                alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to save", "");
-                
+            } catch (ControllerServiceException ex) {
+                AlertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to save", "");
             }
             parentStage.close();
         }
@@ -133,7 +131,7 @@ public class NoteEntryController implements Initializable {
 
     private boolean isInputValid() {
         if (StringUtils.isBlank(keyField.getText())) {
-            alertHelper.showErrorAlert(parentStage, "Key cannot be blank", "");
+            AlertHelper.showErrorAlert(parentStage, "Key cannot be blank", "");
             return false;
         } else {
             return true;

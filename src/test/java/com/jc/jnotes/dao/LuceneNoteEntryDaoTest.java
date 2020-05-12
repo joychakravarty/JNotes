@@ -20,7 +20,7 @@ import com.jc.jnotes.model.NoteEntry;
 public class LuceneNoteEntryDaoTest {
     
     private static final String TEST_INDX_DIR = "JNotesTest";
-    private NoteEntryDao dao;
+    private LocalNoteEntryDao dao;
     
     @BeforeEach
     void clearIndexes() throws IOException {

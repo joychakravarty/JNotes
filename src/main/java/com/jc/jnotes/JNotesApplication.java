@@ -1,5 +1,6 @@
 package com.jc.jnotes;
 
+import static com.jc.jnotes.JNotesConstants.*;
 import java.io.InputStream;
 
 import com.jc.jnotes.helper.AlertHelper;
@@ -19,11 +20,9 @@ import javafx.stage.Stage;
  */
 public class JNotesApplication extends Application {
 
-    private final AlertHelper alertHelper = new AlertHelper();
-
     @Override
     public void start(Stage stage) {
-        stage.setTitle(JNotesPreferences.DEFAULT_APP_NAME);
+        stage.setTitle(APP_NAME);
 
         InputStream iconInputStream = JNotesApplication.class.getResourceAsStream("/images/spiral-booklet.png");
         if (iconInputStream != null) {
@@ -53,7 +52,7 @@ public class JNotesApplication extends Application {
             notesController.setParentStage(stage);
         } catch (Exception ex) {
             ex.printStackTrace();
-            alertHelper.showErrorAlert(stage, "Could not load notes", ex.getMessage());
+            AlertHelper.showErrorAlert(stage, "Could not load notes", ex.getMessage());
         }
     }
 }
