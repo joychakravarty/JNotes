@@ -18,39 +18,37 @@ import java.util.prefs.Preferences;
  * @author Joy C
  *
  */
-public final class JNotesPreferences {
-
-    private JNotesPreferences() {
-
-    }
-
-    private static final Preferences USER_PREFERENCES = Preferences.userNodeForPackage(JNotesPreferences.class);
-    private static final String USER_PREF_BASEPATH = "basePath";
-    private static final String USER_PREF_CURRENT_NOTEBOOK = "currentNoteBook";
-    private static final String JNOTES_USER_NAME = "jnotes_username";
+public class UserPreferences {
+    
+    private static final String KEY_BASEPATH = "basePath";
+    private static final String KEY_CURRENT_NOTEBOOK = "currentNoteBook";
+    private static final String JNOTES_USER_ID = "jnotes_userid";
     private static final String JNOTES_USER_SECRET = "jnotes_usersecret";
+    
+    private final Preferences userPreferences = Preferences.userNodeForPackage(UserPreferences.class);
 
-    public static String getBasePath() {
-        return USER_PREFERENCES.get(USER_PREF_BASEPATH, USER_HOME_PATH);
+
+    public String getBasePath() {
+        return userPreferences.get(KEY_BASEPATH, USER_HOME_PATH);
     }
 
-    public static void setBasePath(String basePath) {
-        USER_PREFERENCES.put(USER_PREF_BASEPATH, basePath);
+    public void setBasePath(String basePath) {
+        userPreferences.put(KEY_BASEPATH, basePath);
     }
 
-    public static String getCurrentNoteBook() {
-        return USER_PREFERENCES.get(USER_PREF_CURRENT_NOTEBOOK, DEFAULT_NOTEBOOK);
+    public String getCurrentNoteBook() {
+        return userPreferences.get(KEY_CURRENT_NOTEBOOK, DEFAULT_NOTEBOOK);
     }
 
-    public static void setCurrentNoteBook(String currentNoteBook) {
-        USER_PREFERENCES.put(USER_PREF_CURRENT_NOTEBOOK, currentNoteBook);
+    public void setCurrentNoteBook(String currentNoteBook) {
+        userPreferences.put(KEY_CURRENT_NOTEBOOK, currentNoteBook);
     }
 
-    public static void setUserNameAndSecretForOnlineSync(String userName, String secret) {
-        USER_PREFERENCES.put(JNOTES_USER_NAME, userName);
-        USER_PREFERENCES.put(JNOTES_USER_SECRET, secret);
+    public void setUserIdAndSecretForOnlineSync(String userId, String secret) {
+        userPreferences.put(JNOTES_USER_ID, userId);
+        userPreferences.put(JNOTES_USER_SECRET, secret);
 
-        String jnSyncStr = userName + "|" + secret;
+        String jnSyncStr = userId + "|" + secret;
 
         Path path = Paths.get(getBasePath(), APP_NAME, ONLINE_SYNC_CONF_FILE);
         byte[] strToBytes = jnSyncStr.getBytes();
@@ -62,8 +60,8 @@ public final class JNotesPreferences {
         }
     }
 
-    public static String getUserName() {
-        String userName = USER_PREFERENCES.get(JNOTES_USER_NAME, null);
+    public String getUserId() {
+        String userName = userPreferences.get(JNOTES_USER_ID, null);
         if (userName == null) {// attempt to get userName from sync_conf file
             try {
                 Path path = Paths.get(getBasePath(), APP_NAME, ONLINE_SYNC_CONF_FILE);
@@ -72,7 +70,7 @@ public final class JNotesPreferences {
                 if (jnSyncStr != null && jnSyncStr.contains("|")) {
                     userName = (jnSyncStr.split("\\|"))[0];
                     if(userName!=null) {
-                        USER_PREFERENCES.put(JNOTES_USER_NAME, userName);
+                        userPreferences.put(JNOTES_USER_ID, userName);
                     }
                 }
             } catch (Exception e) {
@@ -82,8 +80,8 @@ public final class JNotesPreferences {
         return userName;
     }
     
-    public static String getUserSecret() {
-        String userSecret = USER_PREFERENCES.get(JNOTES_USER_SECRET, null);
+    public String getUserSecret() {
+        String userSecret = userPreferences.get(JNOTES_USER_SECRET, null);
         if (userSecret == null) {// attempt to get userSecret from sync_conf file
             try {
                 Path path = Paths.get(getBasePath(), APP_NAME, ONLINE_SYNC_CONF_FILE);
@@ -92,7 +90,7 @@ public final class JNotesPreferences {
                 if (jnSyncStr != null && jnSyncStr.contains("|")) {
                     userSecret = (jnSyncStr.split("\\|"))[1];
                     if(userSecret!=null) {
-                        USER_PREFERENCES.put(JNOTES_USER_SECRET, userSecret);
+                        userPreferences.put(JNOTES_USER_SECRET, userSecret);
                     }
                 }
             } catch (Exception e) {
@@ -100,6 +98,11 @@ public final class JNotesPreferences {
             }
         }
         return userSecret;
+    }
+
+    public boolean isConnected() {
+        // TODO Auto-generated method stub
+        return true;
     }
 
 }

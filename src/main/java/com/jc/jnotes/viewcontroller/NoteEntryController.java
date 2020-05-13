@@ -4,7 +4,9 @@ import java.net.URL;
 import java.util.ResourceBundle;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationContext;
 
+import com.jc.jnotes.JNotesApplication;
 import com.jc.jnotes.helper.AlertHelper;
 import com.jc.jnotes.model.NoteEntry;
 import com.jc.jnotes.service.ControllerService;
@@ -34,13 +36,17 @@ public class NoteEntryController implements Initializable {
     public static final String MODE_EDIT = "MODE_EDIT";
 
     private NoteEntry noteEntry;
-    private Stage parentStage;
-    //private ObservableList<NoteEntry> noteEntryList;
+    // private ObservableList<NoteEntry> noteEntryList;
     private String mode;
-    
+
+    // To Be Set By Caller
+    private Stage parentStage;
+
+    // Spring Dependencies
+    private ControllerService service;
+    private AlertHelper alertHelper;
+
     private Runnable runAfter;
-    
-    private final ControllerService service = new ControllerService();
 
     @FXML
     private TextField keyField;
@@ -60,7 +66,14 @@ public class NoteEntryController implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        prepareDependencies();
         addAccelerators();
+    }
+
+    private void prepareDependencies() {
+        ApplicationContext applicationContext = JNotesApplication.getAppicationContext();
+        service = applicationContext.getBean(ControllerService.class);
+        alertHelper = applicationContext.getBean(AlertHelper.class);
     }
 
     private void addAccelerators() {
@@ -87,7 +100,7 @@ public class NoteEntryController implements Initializable {
     public void setParentStage(Stage parentStage) {
         this.parentStage = parentStage;
     }
-    
+
     public void setRunAfter(Runnable runAfter) {
         this.runAfter = runAfter;
     }
@@ -113,12 +126,12 @@ public class NoteEntryController implements Initializable {
             try {
                 if (MODE_ADD.equals(mode)) {
                     service.addNoteEntry(noteEntry);
-                }else {
+                } else {
                     service.editNoteEntry(noteEntry);
                 }
                 runAfter.run();
             } catch (ControllerServiceException ex) {
-                AlertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to save", "");
+                alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to save", "");
             }
             parentStage.close();
         }
@@ -131,10 +144,11 @@ public class NoteEntryController implements Initializable {
 
     private boolean isInputValid() {
         if (StringUtils.isBlank(keyField.getText())) {
-            AlertHelper.showErrorAlert(parentStage, "Key cannot be blank", "");
+            alertHelper.showErrorAlert(parentStage, "Key cannot be blank", "");
             return false;
         } else {
             return true;
         }
     }
+
 }

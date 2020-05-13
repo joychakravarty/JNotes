@@ -18,10 +18,8 @@ public final class JNotesConstants {
     public static final String CURRENT_VERSION = JNotesConstants.class.getPackage().getImplementationVersion();
     public static final String USER_HOME_PATH = System.getProperty("user.home");
     public static final String ONLINE_SYNC_CONF_FILE = "jn_sync_DO_NOT_TOUCH.txt";
-    public static final String CASSANDRA_CONNECTION_PATH = "/Users/d3m0n/workzone/secure-connect-jnotes.zip";
-    public static final String INSTALLER_USERNAME = "jnotes_installer";
-    public static final String INSTALLER_PASSWORD = "Installer1234!";
-    public static final String CLIENT_USERNAME = "jnotes_user";
-    public static final String CLIENT_PASSWORD = "User1234!";
+    
+    public static final String ENCRYPTION_SALT = "5c0744940b5c369b";
+    public static final String LOCAL_ENCRYPTION_KEY = "XxxYyyZzz";  
     
 }

@@ -1,8 +1,9 @@
-package com.jc.jnotes.dao;
+package com.jc.jnotes.dao.remote;
 
 import java.io.IOException;
 import java.util.List;
 
+import com.jc.jnotes.dao.NoteEntryDao;
 import com.jc.jnotes.model.NoteEntry;
 
 /**

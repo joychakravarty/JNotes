@@ -1,13 +1,11 @@
 package com.jc.jnotes.helper;
 
 import static com.jc.jnotes.JNotesConstants.APP_NAME;
-import static com.jc.jnotes.JNotesConstants.DEFAULT_NOTEBOOK;
 import static com.jc.jnotes.JNotesConstants.DATETIME_EXPORT_FORMAT;
+import static com.jc.jnotes.JNotesConstants.DEFAULT_NOTEBOOK;
 import static com.jc.jnotes.JNotesConstants.EXPORT_FILE_SUFFIX;
 import static com.jc.jnotes.JNotesConstants.FIELD_SEPARATOR;
 import static com.jc.jnotes.JNotesConstants.LINE_SEPARATOR;
-import static com.jc.jnotes.JNotesPreferences.getBasePath;
-import static com.jc.jnotes.JNotesPreferences.getCurrentNoteBook;
 
 import java.io.File;
 import java.io.FileReader;
@@ -26,8 +24,9 @@ import java.util.stream.Collectors;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import com.jc.jnotes.JNotesPreferences;
+import com.jc.jnotes.UserPreferences;
 import com.jc.jnotes.model.NoteEntry;
 
 import javafx.collections.ObservableList;
@@ -37,32 +36,24 @@ import javafx.collections.ObservableList;
  * @author Joy C
  *
  */
-public final class IOHelper {
+public class IOHelper {
 
-    private IOHelper() {
-
-    }
-
-    private static Path getExportFilePath() {
-        return Paths.get(getBasePath(), APP_NAME,
-                getCurrentNoteBook() + "_" + LocalDateTime.now().format(DATETIME_EXPORT_FORMAT) + EXPORT_FILE_SUFFIX);
-    }
+    @Autowired
+    private UserPreferences userPreferences;
 
     /**
      * 
      * @param observableNoteEntryList
      * @return String value of the Path of the exported file. null if export failed.
      */
-    public static String exportNoteBook(final ObservableList<NoteEntry> observableNoteEntryList) {
+    public String exportNoteBook(final ObservableList<NoteEntry> observableNoteEntryList) {
         final Path exportPath = getExportFilePath();
         String exportPathStr = exportPath.toString();
         final File csvOutputFile = exportPath.toFile();
         FileUtils.deleteQuietly(csvOutputFile); // If file already exists delete it
         try {
-            observableNoteEntryList.stream()
-                    .map((noteEntry) -> String.join(FIELD_SEPARATOR, escapeSpecialCharacters(noteEntry.getKey()),
-                            escapeSpecialCharacters(noteEntry.getValue()), escapeSpecialCharacters(noteEntry.getInfo())))
-                    .forEach((str) -> {
+            observableNoteEntryList.stream().map((noteEntry) -> String.join(FIELD_SEPARATOR, escapeSpecialCharacters(noteEntry.getKey()),
+                    escapeSpecialCharacters(noteEntry.getValue()), escapeSpecialCharacters(noteEntry.getInfo()))).forEach((str) -> {
                         try {
                             FileUtils.writeStringToFile(csvOutputFile, str + LINE_SEPARATOR, Charset.defaultCharset(), true);
                         } catch (IOException e) {
@@ -76,7 +67,12 @@ public final class IOHelper {
         return exportPathStr;
     }
 
-    private static String escapeSpecialCharacters(String str) {
+    private Path getExportFilePath() {
+        return Paths.get(userPreferences.getBasePath(), APP_NAME,
+                userPreferences.getCurrentNoteBook() + "_" + LocalDateTime.now().format(DATETIME_EXPORT_FORMAT) + EXPORT_FILE_SUFFIX);
+    }
+
+    private String escapeSpecialCharacters(String str) {
         if (str.contains(FIELD_SEPARATOR) || str.contains("\"") || str.contains("'") || str.contains(LINE_SEPARATOR)) {
             str = str.replace("\"", "\"\"");
             str = "\"" + str + "\"";
@@ -90,7 +86,7 @@ public final class IOHelper {
      * @return null -> invalid fileType selected
      * 
      */
-    public static List<NoteEntry> importNoteBook(File importFile) {
+    public List<NoteEntry> importNoteBook(File importFile) {
         System.out.println(importFile.getPath());
         List<NoteEntry> noteEntries;
         Path filePath = importFile.toPath();
@@ -107,7 +103,7 @@ public final class IOHelper {
         return noteEntries;
     }
 
-    private static List<NoteEntry> propertiesToNoteEntries(File importFile) {
+    private List<NoteEntry> propertiesToNoteEntries(File importFile) {
         List<NoteEntry> noteEntries = new ArrayList<>();
         try {
             Properties properties = new Properties();
@@ -123,7 +119,7 @@ public final class IOHelper {
         return noteEntries;
     }
 
-    private static List<NoteEntry> csvToNoteEntries(File file) {
+    private List<NoteEntry> csvToNoteEntries(File file) {
         List<NoteEntry> noteEntries = new ArrayList<>();
         try {
             Reader in = new FileReader(file);
@@ -145,22 +141,22 @@ public final class IOHelper {
 
     }
 
-    public static void moveNoteBook(String noteBookToBeRenamed, String newNoteBookName) throws IOException {
-        Path source = Paths.get(getBasePath(), APP_NAME, noteBookToBeRenamed);
+    public void moveNoteBook(String noteBookToBeRenamed, String newNoteBookName) throws IOException {
+        Path source = Paths.get(userPreferences.getBasePath(), APP_NAME, noteBookToBeRenamed);
         Files.move(source, source.resolveSibling(newNoteBookName));
     }
 
-    public static void deleteNoteBook(String noteBookToBeDeleted) throws IOException {
-        Path pathToBeDeleted = Paths.get(getBasePath(), APP_NAME, noteBookToBeDeleted);
+    public void deleteNoteBook(String noteBookToBeDeleted) throws IOException {
+        Path pathToBeDeleted = Paths.get(userPreferences.getBasePath(), APP_NAME, noteBookToBeDeleted);
         FileUtils.deleteDirectory(pathToBeDeleted.toFile());
     }
 
-    public static void addNoteBook(String newNoteBookName) {
-        Paths.get(getBasePath(), APP_NAME, newNoteBookName);
+    public void addNoteBook(String newNoteBookName) {
+        Paths.get(userPreferences.getBasePath(), APP_NAME, newNoteBookName);
     }
 
-    public static List<String> getAllNoteBooks() {
-        Path directory = Paths.get(getBasePath(), APP_NAME);
+    public List<String> getAllNoteBooks() {
+        Path directory = Paths.get(userPreferences.getBasePath(), APP_NAME);
         List<String> directories;
         try {
             directories = Files.walk(directory).filter(Files::isDirectory).map((path) -> path.getFileName()).map(Path::toString)
@@ -172,7 +168,7 @@ public final class IOHelper {
         return directories;
     }
 
-    public static File getBaseDirectory() {
-        return Paths.get(JNotesPreferences.getBasePath()).toFile();
+    public File getBaseDirectory() {
+        return Paths.get(userPreferences.getBasePath()).toFile();
     }
 }

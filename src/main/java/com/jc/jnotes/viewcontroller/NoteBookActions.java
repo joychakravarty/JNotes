@@ -19,46 +19,50 @@ import javafx.stage.Stage;
  *
  * @author Joy C
  * 
- * To make NotesController less monolithic, this class takes away the 
- * functionality of Add/Rename/Delete NoteBooks from NotesController.
+ *         To make NotesController less monolithic, this class takes away the functionality of Add/Rename/Delete
+ *         NoteBooks from NotesController.
  * 
  *
  */
-public class NoteBookActionsController {
-    
+public class NoteBookActions {
+
     private static final String NOTEBOOK_DELETE_STATUS_NOTIFICATION = "Success: NoteBook Deleted.";
- 
+
     private final ComboBox<String> noteBookComboBox;
     private final Stage parentStage;
     private final Text notificationText;
-    
-    public NoteBookActionsController(Stage parentStage, ComboBox<String> noteBookComboBox, Text notificationText) {
+    private final AlertHelper alertHelper;
+    private final IOHelper ioHelper;
+
+    public NoteBookActions(AlertHelper alertHelper, IOHelper ioHelper, Stage parentStage, ComboBox<String> noteBookComboBox,
+            Text notificationText) {
         this.parentStage = parentStage;
         this.noteBookComboBox = noteBookComboBox;
         this.notificationText = notificationText;
+        this.alertHelper = alertHelper;
+        this.ioHelper = ioHelper;
     }
 
-    
     protected void deleteNoteBook() {
         try {
             if (noteBookComboBox.getItems().size() == 1) {
-                AlertHelper.showErrorAlert(parentStage, "Invalid Operation", "Cannot delete the only NoteBook");
+                alertHelper.showErrorAlert(parentStage, "Invalid Operation", "Cannot delete the only NoteBook");
 
             } else {
                 String noteBookToBeDeleted = noteBookComboBox.getSelectionModel().getSelectedItem();
-                Optional<ButtonType> result = AlertHelper.showDefaultConfirmation(parentStage,
+                Optional<ButtonType> result = alertHelper.showDefaultConfirmation(parentStage,
                         "Delete NoteBook: " + noteBookToBeDeleted + "?", "Note: This is will delete all the data within this noteBook!");
 
                 if (result.get() == ButtonType.OK) {
                     noteBookComboBox.getItems().remove(noteBookToBeDeleted);
                     noteBookComboBox.getSelectionModel().select(0);
-                    IOHelper.deleteNoteBook(noteBookToBeDeleted);
+                    ioHelper.deleteNoteBook(noteBookToBeDeleted);
                     notificationText.setText(NOTEBOOK_DELETE_STATUS_NOTIFICATION);
                 }
             }
         } catch (IOException ex) {
             ex.printStackTrace();
-            AlertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to delete NoteBook", "");
+            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to delete NoteBook", "");
         }
     }
 
@@ -70,10 +74,10 @@ public class NoteBookActionsController {
         dialog.showAndWait().ifPresent(newNoteBookName -> {
             if (StringUtils.isNotBlank(newNoteBookName) && noteBookComboBox.getItems().indexOf(newNoteBookName) == -1) {
                 try {
-                    IOHelper.moveNoteBook(noteBookToBeRenamed, newNoteBookName);
+                    ioHelper.moveNoteBook(noteBookToBeRenamed, newNoteBookName);
                 } catch (IOException ex) {
                     ex.printStackTrace();
-                    AlertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to Rename NoteBook", "");
+                    alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to Rename NoteBook", "");
                     return;
                 }
 
@@ -82,7 +86,7 @@ public class NoteBookActionsController {
                 noteBookComboBox.getItems().remove(noteBookToBeRenamed);
                 noteBookComboBox.getSelectionModel().select(index);
             } else {
-                AlertHelper.showErrorAlert(parentStage, "Invalid operation", "Please enter a valid NoteBook name");
+                alertHelper.showErrorAlert(parentStage, "Invalid operation", "Please enter a valid NoteBook name");
             }
         });
     }
@@ -94,17 +98,17 @@ public class NoteBookActionsController {
         dialog.showAndWait().ifPresent(newNoteBookName -> {
             if (StringUtils.isNotBlank(newNoteBookName) && noteBookComboBox.getItems().indexOf(newNoteBookName) == -1) {
                 try {
-                    IOHelper.addNoteBook(newNoteBookName);
+                    ioHelper.addNoteBook(newNoteBookName);
                 } catch (InvalidPathException ex) {
                     ex.printStackTrace();
-                    AlertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to Add NoteBook", "");
+                    alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to Add NoteBook", "");
                     return;
                 }
                 int index = noteBookComboBox.getItems().size() - 1;
                 noteBookComboBox.getItems().add(index, newNoteBookName);
                 noteBookComboBox.getSelectionModel().select(index);
             } else {
-                AlertHelper.showErrorAlert(parentStage, "Invalid operation", "Please enter a valid NoteBook name");
+                alertHelper.showErrorAlert(parentStage, "Invalid operation", "Please enter a valid NoteBook name");
             }
         });
     }

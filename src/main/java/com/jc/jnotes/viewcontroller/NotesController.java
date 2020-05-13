@@ -1,7 +1,6 @@
 package com.jc.jnotes.viewcontroller;
 
 import static com.jc.jnotes.JNotesConstants.DATETIME_DISPLAY_FORMAT;
-import static com.jc.jnotes.JNotesPreferences.getCurrentNoteBook;
 import static com.jc.jnotes.model.NoteEntry.KEY_COL_NAME;
 import static com.jc.jnotes.model.NoteEntry.VALUE_COL_NAME;
 
@@ -16,9 +15,10 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationContext;
 
 import com.jc.jnotes.JNotesApplication;
-import com.jc.jnotes.JNotesPreferences;
+import com.jc.jnotes.UserPreferences;
 import com.jc.jnotes.helper.AlertHelper;
 import com.jc.jnotes.helper.IOHelper;
 import com.jc.jnotes.model.NoteEntry;
@@ -80,16 +80,22 @@ public class NotesController {
     private static final String IMPORT_SUCCESS_STATUS_NOTIFICATION = "Imported Notes count: %d";
     private static final String IMPORT_FAILURE_STATUS_NOTIFICATION = "Import failed.";
 
-    private ObservableList<NoteEntry> observableNoteEntryList;
+    // To Be Set By Caller
     private Stage parentStage;
+
+    private ObservableList<NoteEntry> observableNoteEntryList;
     private Stage noteEntryStage;
     private NoteEntry selectedNoteEntry = null;
     private boolean showingSearchedResults = false;
 
     private final Comparator<NoteEntry> comparator = Comparator.comparing((noteEntry) -> noteEntry.getLastModifiedTime());
-    private final ControllerService service = new ControllerService();
+    private NoteBookActions noteBookActions;
 
-    private NoteBookActionsController noteBookActionsController;
+    // Spring Dependencies
+    private UserPreferences userPreferences;
+    private ControllerService service;
+    private AlertHelper alertHelper;
+    private IOHelper ioHelper;
 
     @FXML
     private TableView<NoteEntry> notesTable;
@@ -122,6 +128,8 @@ public class NotesController {
     @FXML
     private void initialize() {
 
+        prepareDependencies();
+
         loadAllNoteEntries();
 
         initializeNotesTable();
@@ -138,8 +146,15 @@ public class NotesController {
 
         addAccelerators();
 
-        noteBookActionsController = new NoteBookActionsController(parentStage, noteBookComboBox, notificationText);
+    }
 
+    private void prepareDependencies() {
+        ApplicationContext applicationContext = JNotesApplication.getAppicationContext();
+        userPreferences = applicationContext.getBean(UserPreferences.class);
+        service = applicationContext.getBean(ControllerService.class);
+        alertHelper = applicationContext.getBean(AlertHelper.class);
+        ioHelper = applicationContext.getBean(IOHelper.class);
+        noteBookActions = new NoteBookActions(alertHelper, ioHelper, parentStage, noteBookComboBox, notificationText);
     }
 
     private void initializeNoteBooks() {
@@ -148,7 +163,7 @@ public class NotesController {
         noteBookComboBox.setEditable(false);
         noteBookComboBox.getSelectionModel().selectedItemProperty().addListener((obs, prevNoteBook, selectedNoteBook) -> {
             if (StringUtils.isNotBlank(selectedNoteBook)) {
-                JNotesPreferences.setCurrentNoteBook(selectedNoteBook);
+                userPreferences.setCurrentNoteBook(selectedNoteBook);
                 loadAllNoteEntries();
                 infoField.clear();
             }
@@ -238,7 +253,7 @@ public class NotesController {
                     try {
                         service.editNoteEntry(selectedNoteEntry);
                     } catch (ControllerServiceException ex) {
-                        AlertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to save NoteEntry Dialog", "");
+                        alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to save NoteEntry Dialog", "");
                     }
                     notificationText.setText(EDIT_STATUS_NOTIFICATION);
                     notesTable.refresh();
@@ -257,7 +272,7 @@ public class NotesController {
             try {
                 service.editNoteEntry(selectedNoteEntry);
             } catch (ControllerServiceException ex) {
-                AlertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to save NoteEntry Dialog", "");
+                alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to save NoteEntry Dialog", "");
             }
             notesTable.getSelectionModel().clearSelection();
             notificationText.setText(EDIT_STATUS_NOTIFICATION);
@@ -342,9 +357,9 @@ public class NotesController {
     }
 
     private void loadNoteBooks() {
-        List<String> directories = IOHelper.getAllNoteBooks();
+        List<String> directories = ioHelper.getAllNoteBooks();
         noteBookComboBox.getItems().addAll(directories);
-        noteBookComboBox.getSelectionModel().select(getCurrentNoteBook());
+        noteBookComboBox.getSelectionModel().select(userPreferences.getCurrentNoteBook());
     }
 
     private void addAccelerators() {
@@ -361,7 +376,7 @@ public class NotesController {
             allNoteEntries = service.getAll();
         } catch (ControllerServiceException ex) {
             allNoteEntries = new ArrayList<>();
-            AlertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to get all Notes", "");
+            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to get all Notes", "");
         }
         loadNoteEntries(allNoteEntries);
     }
@@ -390,7 +405,7 @@ public class NotesController {
             // System.out.println(toBeDeletedNoteEntry);
             if (noteEntriesToBeDeleted != null) {
 
-                Optional<ButtonType> result = AlertHelper.showDefaultConfirmation(parentStage, DELETE_NOTES_CONFIRMATION_HEADER,
+                Optional<ButtonType> result = alertHelper.showDefaultConfirmation(parentStage, DELETE_NOTES_CONFIRMATION_HEADER,
                         String.format(DELETE_NOTES_CONFIRMATION_CONTENT, noteEntriesToBeDeleted.size()));
                 if (result.get() == ButtonType.OK) {
                     service.deleteNoteEntries(noteEntriesToBeDeleted);
@@ -403,7 +418,7 @@ public class NotesController {
             }
         } catch (IOException ex) {
             ex.printStackTrace();
-            AlertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to delete Notes", "");
+            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to delete Notes", "");
         }
     }
 
@@ -412,7 +427,7 @@ public class NotesController {
         NoteEntry newNoteEntry = new NoteEntry(NoteEntry.generateID(), "", "", "");
         try {
             FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(JNotesApplication.class.getResource("viewcontroller/NoteEntry.fxml"));
+            loader.setLocation(JNotesApplication.getResource("viewcontroller/NoteEntry.fxml"));
             AnchorPane page = (AnchorPane) loader.load();
 
             noteEntryStage = new Stage();
@@ -433,7 +448,7 @@ public class NotesController {
                 notificationText.setText(ADD_STATUS_NOTIFICATION);
             });
 
-            InputStream iconInputStream = JNotesApplication.class.getResourceAsStream("/images/edit.png");
+            InputStream iconInputStream = JNotesApplication.getResourceAsStream("/images/edit.png");
             if (iconInputStream != null) {
                 noteEntryStage.getIcons().add(new Image(iconInputStream));
             }
@@ -441,7 +456,7 @@ public class NotesController {
             noteEntryStage.show();
         } catch (IOException ex) {
             ex.printStackTrace();
-            AlertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to open NoteEntry Dialog", "");
+            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to open NoteEntry Dialog", "");
         }
     }
 
@@ -452,7 +467,7 @@ public class NotesController {
         }
         try {
             FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(JNotesApplication.class.getResource("viewcontroller/NoteEntry.fxml"));
+            loader.setLocation(JNotesApplication.getResource("viewcontroller/NoteEntry.fxml"));
             AnchorPane page = (AnchorPane) loader.load();
 
             noteEntryStage = new Stage();
@@ -474,7 +489,7 @@ public class NotesController {
                 // infoField.requestFocus();
             });
 
-            InputStream iconInputStream = JNotesApplication.class.getResourceAsStream("/images/edit.png");
+            InputStream iconInputStream = JNotesApplication.getResourceAsStream("/images/edit.png");
             if (iconInputStream != null) {
                 noteEntryStage.getIcons().add(new Image(iconInputStream));
             }
@@ -482,7 +497,7 @@ public class NotesController {
             noteEntryStage.show();
         } catch (IOException ex) {
             ex.printStackTrace();
-            AlertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to open NoteEntry Dialog", "");
+            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to open NoteEntry Dialog", "");
         }
     }
 
@@ -499,22 +514,22 @@ public class NotesController {
 
     @FXML
     protected void deleteNoteBook() {
-        noteBookActionsController.deleteNoteBook();
+        noteBookActions.deleteNoteBook();
     }
 
     @FXML
     protected void renameNoteBook() {
-        noteBookActionsController.renameNoteBook();
+        noteBookActions.renameNoteBook();
     }
 
     @FXML
     protected void addNewNoteBook() {
-        noteBookActionsController.addNewNoteBook();
+        noteBookActions.addNewNoteBook();
     }
 
     @FXML
     protected void exportNoteBook() {
-        String exprtFilePath = IOHelper.exportNoteBook(observableNoteEntryList);
+        String exprtFilePath = ioHelper.exportNoteBook(observableNoteEntryList);
         if (exprtFilePath != null) {
             notificationText.setText(String.format(EXPORT_SUCCESS_STATUS_NOTIFICATION, exprtFilePath));
         } else {
@@ -526,13 +541,13 @@ public class NotesController {
     protected void importNoteBook() {
         FileChooser fileChooser = new FileChooser();
         File selectedFile = fileChooser.showOpenDialog(parentStage);
-        fileChooser.setInitialDirectory(IOHelper.getBaseDirectory());
+        fileChooser.setInitialDirectory(ioHelper.getBaseDirectory());
         fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Text Files", "*.csv"),
                 new FileChooser.ExtensionFilter("Properties Files", "*.properties"));
         if (selectedFile == null) {
             return;
         }
-        List<NoteEntry> noteEntries = IOHelper.importNoteBook(selectedFile);
+        List<NoteEntry> noteEntries = ioHelper.importNoteBook(selectedFile);
         if (noteEntries == null) {
             notificationText.setText(IMPORT_FAILURE_STATUS_NOTIFICATION);
         } else {
@@ -551,7 +566,7 @@ public class NotesController {
 
     @FXML
     private void showAbout() {
-        AlertHelper.showAboutJNotesDialog();
+        alertHelper.showAboutJNotesDialog();
     }
 
     @FXML

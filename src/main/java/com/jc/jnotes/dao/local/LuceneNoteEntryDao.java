@@ -1,9 +1,6 @@
-package com.jc.jnotes.dao;
+package com.jc.jnotes.dao.local;
 
-import static com.jc.jnotes.JNotesConstants.APP_NAME;
 import static com.jc.jnotes.JNotesConstants.DATETIME_DISPLAY_FORMAT;
-import static com.jc.jnotes.JNotesPreferences.getBasePath;
-import static com.jc.jnotes.JNotesPreferences.getCurrentNoteBook;
 import static com.jc.jnotes.model.NoteEntry.ID_COL_NAME;
 import static com.jc.jnotes.model.NoteEntry.INFO_COL_NAME;
 import static com.jc.jnotes.model.NoteEntry.KEY_COL_NAME;
@@ -48,7 +45,7 @@ import com.jc.jnotes.model.NoteEntry;
 
 /**
  * 
- * This is a Lucene based implemen
+ * This is a Lucene based implementation of Local store of Notes
  * 
  * @author Joy C
  *
@@ -61,12 +58,8 @@ public class LuceneNoteEntryDao implements LocalNoteEntryDao {
     // private final MultiFieldQueryParser multiFieldQueryParser = new MultiFieldQueryParser(new String[]{"key", "value",
     // "info"}, analyzer);
 
-    public LuceneNoteEntryDao() throws IOException {
-        this(APP_NAME);
-    }
-
-    public LuceneNoteEntryDao(String pathAppender) throws IOException {
-        Path indexPath = Paths.get(getBasePath(), pathAppender, getCurrentNoteBook());
+    public LuceneNoteEntryDao(String basePath, String pathAppender, String noteBook) throws IOException {
+        Path indexPath = Paths.get(basePath, pathAppender, noteBook);
         File file = indexPath.toFile();
         if (!file.exists()) {
             file.mkdirs();
@@ -75,7 +68,7 @@ public class LuceneNoteEntryDao implements LocalNoteEntryDao {
     }
 
     @Override
-    public List<NoteEntry> getAll() throws IOException {
+    public List<NoteEntry> getAll(String notebook) throws IOException {
         List<NoteEntry> noteEntries;
         IndexReader indexReader;
         try {
@@ -95,7 +88,7 @@ public class LuceneNoteEntryDao implements LocalNoteEntryDao {
     }
 
     @Override
-    public long addNoteEntry(NoteEntry noteEntry) throws IOException {
+    public long addNoteEntry(String notebook, NoteEntry noteEntry) throws IOException {
         IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
         IndexWriter writer = new IndexWriter(indexDir, indexWriterConfig);
         Document document = fromNoteEntry(noteEntry);
@@ -106,7 +99,7 @@ public class LuceneNoteEntryDao implements LocalNoteEntryDao {
     }
 
     @Override
-    public long editNoteEntry(NoteEntry noteEntry) throws IOException {
+    public long editNoteEntry(String notebook, NoteEntry noteEntry) throws IOException {
         IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
         IndexWriter writer = new IndexWriter(indexDir, indexWriterConfig);
         Document document = fromNoteEntry(noteEntry);
@@ -118,7 +111,7 @@ public class LuceneNoteEntryDao implements LocalNoteEntryDao {
     }
 
     @Override
-    public void deleteNoteEntry(NoteEntry noteEntry) throws IOException {
+    public void deleteNoteEntry(String notebook, NoteEntry noteEntry) throws IOException {
         IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
         IndexWriter writer = new IndexWriter(indexDir, indexWriterConfig);
         writer.deleteDocuments(new Term(ID_COL_NAME, noteEntry.getId()));
@@ -129,7 +122,7 @@ public class LuceneNoteEntryDao implements LocalNoteEntryDao {
     }
     
     @Override
-    public void deleteNoteEntries(List<NoteEntry> noteEntries) throws IOException {
+    public void deleteNoteEntries(String notebook, List<NoteEntry> noteEntries) throws IOException {
         if(noteEntries==null) {
             throw new IllegalArgumentException("deleteNoteEntries: Cannot pass null as argument.");
         }
