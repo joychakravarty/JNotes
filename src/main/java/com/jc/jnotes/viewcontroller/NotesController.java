@@ -84,7 +84,10 @@ public class NotesController {
     private Stage parentStage;
 
     private ObservableList<NoteEntry> observableNoteEntryList;
+    
+    //Child stages
     private Stage noteEntryStage;
+    private Stage syncStage;
     private NoteEntry selectedNoteEntry = null;
     private boolean showingSearchedResults = false;
 
@@ -458,6 +461,41 @@ public class NotesController {
             ex.printStackTrace();
             alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to open NoteEntry Dialog", "");
         }
+    }
+    
+    @FXML
+    protected void sync() {
+        try {
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(JNotesApplication.getResource("viewcontroller/Sync.fxml"));
+            AnchorPane page = (AnchorPane) loader.load();
+            syncStage = new Stage();
+            syncStage.setTitle("Sync Online Settings");
+            syncStage.initModality(Modality.WINDOW_MODAL);
+            syncStage.initOwner(parentStage);
+            Scene scene = new Scene(page);
+            syncStage.setScene(scene);
+
+            SyncController controller = loader.getController();
+            controller.setParentStage(syncStage);
+            controller.setRunAfter(() -> {
+                notesTable.refresh();
+//                notificationText.setText(EDIT_STATUS_NOTIFICATION);
+//                infoField.setText(notesTable.getSelectionModel().getSelectedItem().getInfo());
+                // infoField.requestFocus();
+            });
+
+            InputStream iconInputStream = JNotesApplication.getResourceAsStream("/images/edit.png");
+            if (iconInputStream != null) {
+                syncStage.getIcons().add(new Image(iconInputStream));
+            }
+
+            syncStage.show();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to open Sync Dialog", "");
+        }
+
     }
 
     @FXML

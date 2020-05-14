@@ -1,4 +1,4 @@
-package com.jc.jnotes.dao;
+package com.jc.jnotes.dao.local.lucene;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import com.jc.jnotes.UserPreferences;
 import com.jc.jnotes.dao.local.LocalNoteEntryDao;
-import com.jc.jnotes.dao.local.LuceneNoteEntryDao;
+import com.jc.jnotes.dao.local.lucene.LuceneNoteEntryDao;
 import com.jc.jnotes.model.NoteEntry;
 
 public class LuceneNoteEntryDaoTest {

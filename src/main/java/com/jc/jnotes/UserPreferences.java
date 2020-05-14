@@ -24,6 +24,7 @@ public class UserPreferences {
     private static final String KEY_CURRENT_NOTEBOOK = "currentNoteBook";
     private static final String JNOTES_USER_ID = "jnotes_userid";
     private static final String JNOTES_USER_SECRET = "jnotes_usersecret";
+    private static final String JNOTES_IS_CONNECTED = "jnotes_isconnected";
     
     private final Preferences userPreferences = Preferences.userNodeForPackage(UserPreferences.class);
 
@@ -99,10 +100,14 @@ public class UserPreferences {
         }
         return userSecret;
     }
+    
+    public void setConnected(boolean isConnected) {
+        userPreferences.put(JNOTES_IS_CONNECTED, String.valueOf(isConnected));
+    }
 
     public boolean isConnected() {
-        // TODO Auto-generated method stub
-        return true;
+        String isConnectedStr = userPreferences.get(JNOTES_IS_CONNECTED, String.valueOf(false));
+        return Boolean.valueOf(isConnectedStr);
     }
 
 }

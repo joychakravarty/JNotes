@@ -25,6 +25,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import com.jc.jnotes.UserPreferences;
 import com.jc.jnotes.model.NoteEntry;
@@ -36,6 +37,7 @@ import javafx.collections.ObservableList;
  * @author Joy C
  *
  */
+@Component
 public class IOHelper {
 
     @Autowired

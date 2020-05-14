@@ -1,4 +1,4 @@
-package com.jc.jnotes.helper;
+package com.jc.jnotes.util;
 
 import static com.jc.jnotes.JNotesConstants.ENCRYPTION_SALT;
 import static com.jc.jnotes.JNotesConstants.LOCAL_ENCRYPTION_KEY;
@@ -6,20 +6,18 @@ import static com.jc.jnotes.JNotesConstants.LOCAL_ENCRYPTION_KEY;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.crypto.encrypt.Encryptors;
 import org.springframework.security.crypto.encrypt.TextEncryptor;
-import org.springframework.stereotype.Component;
 
-@Component
-public class EncryptionHelper {
+public final class EncryptionUtil {
 
-    public String locallyEncrypt(String textToEncrypt) {
+    public static String locallyEncrypt(String textToEncrypt) {
         return encrypt(LOCAL_ENCRYPTION_KEY, textToEncrypt);
     }
 
-    public String locallyDecrypt(String textToDecrypt) {
+    public static String locallyDecrypt(String textToDecrypt) {
         return decrypt(LOCAL_ENCRYPTION_KEY, textToDecrypt);
     }
 
-    public String encrypt(String encryptionKey, String textToEncrypt) {
+    public static String encrypt(String encryptionKey, String textToEncrypt) {
         if (StringUtils.isBlank(textToEncrypt)) {
             return null;
         }
@@ -27,7 +25,7 @@ public class EncryptionHelper {
         return encryptor.encrypt(textToEncrypt);
     }
 
-    public String decrypt(String encryptionKey, String textToDecrypt) {
+    public static String decrypt(String encryptionKey, String textToDecrypt) {
         if (StringUtils.isBlank(textToDecrypt)) {
             return null;
         }
@@ -36,11 +34,10 @@ public class EncryptionHelper {
     }
 
     public static void main(String[] args) {
-        EncryptionHelper encHelper = new EncryptionHelper();
-        String encryptedVal = encHelper.locallyEncrypt("Testing1234!");
+        String encryptedVal = locallyEncrypt("Testing1234!");
         System.out.println("encryptedVal " + encryptedVal);
 
-        String decryptedVal = encHelper.locallyDecrypt(encryptedVal);
+        String decryptedVal = locallyDecrypt(encryptedVal);
         System.out.println("decryptedVal " + decryptedVal);
     }
 

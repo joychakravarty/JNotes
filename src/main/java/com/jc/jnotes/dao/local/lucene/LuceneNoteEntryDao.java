@@ -1,4 +1,4 @@
-package com.jc.jnotes.dao.local;
+package com.jc.jnotes.dao.local.lucene;
 
 import static com.jc.jnotes.JNotesConstants.DATETIME_DISPLAY_FORMAT;
 import static com.jc.jnotes.model.NoteEntry.ID_COL_NAME;
@@ -40,7 +40,9 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.springframework.stereotype.Component;
 
+import com.jc.jnotes.dao.local.LocalNoteEntryDao;
 import com.jc.jnotes.model.NoteEntry;
 
 /**
@@ -50,6 +52,7 @@ import com.jc.jnotes.model.NoteEntry;
  * @author Joy C
  *
  */
+@Component
 public class LuceneNoteEntryDao implements LocalNoteEntryDao {
 
     private final Directory indexDir;
@@ -59,6 +62,7 @@ public class LuceneNoteEntryDao implements LocalNoteEntryDao {
     // "info"}, analyzer);
 
     public LuceneNoteEntryDao(String basePath, String pathAppender, String noteBook) throws IOException {
+        System.out.println("Creating LuceneNoteEntryDao : notebook :" + noteBook);
         Path indexPath = Paths.get(basePath, pathAppender, noteBook);
         File file = indexPath.toFile();
         if (!file.exists()) {
@@ -120,26 +124,25 @@ public class LuceneNoteEntryDao implements LocalNoteEntryDao {
         writer.commit();
         writer.close();
     }
-    
+
     @Override
     public void deleteNoteEntries(String notebook, List<NoteEntry> noteEntries) throws IOException {
-        if(noteEntries==null) {
+        if (noteEntries == null) {
             throw new IllegalArgumentException("deleteNoteEntries: Cannot pass null as argument.");
         }
         IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
         IndexWriter writer = new IndexWriter(indexDir, indexWriterConfig);
-//        final int noteEntriesToBeDeleted = noteEntries.size();
-//        Term[] terms = new Term[noteEntriesToBeDeleted];
-//        for (int i=0; i<noteEntriesToBeDeleted; i++) {
-//          Term term = new Term(ID_COL_NAME, noteEntries.get(i).getId());    
-//          terms[i] = term;
-//        }
-        Term[] terms = noteEntries.stream().map((noteEntry)->{
+        // final int noteEntriesToBeDeleted = noteEntries.size();
+        // Term[] terms = new Term[noteEntriesToBeDeleted];
+        // for (int i=0; i<noteEntriesToBeDeleted; i++) {
+        // Term term = new Term(ID_COL_NAME, noteEntries.get(i).getId());
+        // terms[i] = term;
+        // }
+        Term[] terms = noteEntries.stream().map((noteEntry) -> {
             Term term = new Term(ID_COL_NAME, noteEntry.getId());
             return term;
-            }).toArray(Term[]::new);
-                
-        
+        }).toArray(Term[]::new);
+
         writer.deleteDocuments(terms);
         writer.flush();
         // writer.forceMergeDeletes();
