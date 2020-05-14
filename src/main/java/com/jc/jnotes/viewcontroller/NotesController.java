@@ -148,7 +148,21 @@ public class NotesController {
         initializeNoteBooks();
 
         addAccelerators();
+        
+        initializeOnlineDataStore();
 
+    }
+
+    private void initializeOnlineDataStore() {
+        if(StringUtils.isNotBlank(userPreferences.getUserId()) && userPreferences.isConnected()) {
+            try {
+                service.connect(false, userPreferences.getUserId(), userPreferences.getUserSecret());
+            } catch (ControllerServiceException e) {
+                e.printStackTrace();
+                alertHelper.showErrorAlert(parentStage, "Failed to connect to Online Database", null);
+                userPreferences.setConnected(false);
+            }
+        }
     }
 
     private void prepareDependencies() {

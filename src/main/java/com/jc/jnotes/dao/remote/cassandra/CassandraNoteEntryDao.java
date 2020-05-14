@@ -1,9 +1,12 @@
 package com.jc.jnotes.dao.remote.cassandra;
 
-import java.io.IOException;
-import java.time.Instant;
+import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createTable;
+
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -11,8 +14,13 @@ import org.springframework.stereotype.Component;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
+import com.datastax.oss.driver.api.core.servererrors.AlreadyExistsException;
+import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
+import com.datastax.oss.driver.api.core.type.DataTypes;
+import com.datastax.oss.driver.api.querybuilder.schema.CreateTable;
 import com.jc.jnotes.dao.remote.RemoteNoteEntryDao;
 import com.jc.jnotes.model.NoteEntry;
+import com.jc.jnotes.util.EncryptionUtil;
 
 /**
  * 
@@ -39,78 +47,101 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
     }
 
     @Override
-    public List<NoteEntry> getAll(String notebook) throws IOException {
+    public boolean setupUser(String userId) {
+        boolean returnStatus = true;
+        try {
+            CreateTable create = createTable(cassandraSessionManager.getKeyspace(), userId).withPartitionKey("notebook", DataTypes.TEXT)
+                    .withClusteringColumn("noteid", DataTypes.TEXT).withColumn("key", DataTypes.TEXT).withColumn("value", DataTypes.TEXT)
+                    .withColumn("info", DataTypes.TEXT).withColumn("lastModifiedTime", DataTypes.TIMESTAMP);
 
-        String cqlStr = String.format(GET_ALL, cassandraSessionManager.getKeyspace(), userId);
-
-        ResultSet results = cassandraSessionManager.getClientSession()
-                .execute(SimpleStatement.builder(cqlStr).addPositionalValues(notebook).build());
-        Row row = results.one();
-        System.out.println("***************************************************************************************");
-        if (row == null) {
-            System.out.println("No row selected");
-        } else {
-            System.out.format("%s %s %s\n", row.getString("key"), row.getString("value"), row.getUuid("info"));
+            cassandraSessionManager.getClientSession().execute(create.build());
+        } catch (AlreadyExistsException ex) {
+            System.err.println(userId + "already exists");
+            returnStatus = false;
         }
-
-        // TODO Auto-generated method stub
-        return null;
+        return returnStatus;
     }
 
     @Override
-    public long addNoteEntry(String notebook, NoteEntry noteEntry) throws IOException {
+    public List<NoteEntry> getAll(String notebook) {
+
+        String cqlStr = String.format(GET_ALL, cassandraSessionManager.getKeyspace(), userId);
+        ResultSet results;
+        try {
+            results = cassandraSessionManager.getClientSession()
+                    .execute(SimpleStatement.builder(cqlStr).addPositionalValues(notebook).build());
+        } catch (InvalidQueryException ex) {
+            System.err.println("Caught InvalidQueryException");
+            return null;
+        }
+        List<Row> rows = results.all();
+        if (rows != null && !rows.isEmpty()) {
+            return rows.stream().map(row -> toNoteEntry(row)).collect(Collectors.toList());
+        } else {
+            return Collections.emptyList();
+        }
+
+    }
+
+    private NoteEntry toNoteEntry(Row row) {
+        NoteEntry noteEntry = new NoteEntry(row.getString("noteid"), EncryptionUtil.decrypt(userEncryptionKey, row.getString("key")),
+                EncryptionUtil.decrypt(userEncryptionKey, row.getString("value")),
+                EncryptionUtil.decrypt(userEncryptionKey, row.getString("info")),
+                LocalDateTime.ofInstant(row.getInstant("lastModifiedTime"), ZoneOffset.UTC));
+        return noteEntry;
+    }
+
+    @Override
+    public long addNoteEntry(String notebook, NoteEntry noteEntry) {
 
         String cqlStr = String.format(ADD_NOTE_ENTRY, cassandraSessionManager.getKeyspace(), userId);
 
-        cassandraSessionManager.getClientSession().execute(SimpleStatement.builder(cqlStr).addPositionalValues(notebook, noteEntry.getId(),
-                noteEntry.getKey(), noteEntry.getValue(), noteEntry.getInfo(), getLastModifiedTimeForCassandra(noteEntry)).build());
+        cassandraSessionManager.getClientSession()
+                .execute(SimpleStatement.builder(cqlStr)
+                        .addPositionalValues(notebook, noteEntry.getId(), EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getKey()),
+                                EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getValue()),
+                                EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getInfo()),
+                                noteEntry.getLastModifiedTime().toInstant(ZoneOffset.UTC))
+                        .build());
         return 0;
     }
 
-    private Instant getLastModifiedTimeForCassandra(NoteEntry noteEntry) {
-        return Instant.ofEpochSecond(noteEntry.getLastModifiedTime().toEpochSecond(ZoneOffset.UTC));
-    }
-
     @Override
-    public long editNoteEntry(String notebook, NoteEntry noteEntry) throws IOException {
+    public long editNoteEntry(String notebook, NoteEntry noteEntry) {
         String cqlStr = String.format(EDIT_NOTE_ENTRY, cassandraSessionManager.getKeyspace(), userId);
 
         cassandraSessionManager.getClientSession()
-                .execute(
-                        SimpleStatement.builder(cqlStr)
-                                .addPositionalValues(notebook, noteEntry.getId(), noteEntry.getKey(), noteEntry.getValue(),
-                                        noteEntry.getInfo(), getLastModifiedTimeForCassandra(noteEntry), notebook, noteEntry.getId())
-                                .build());
+                .execute(SimpleStatement.builder(cqlStr)
+                        .addPositionalValues(EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getKey()),
+                                EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getValue()),
+                                EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getInfo()),
+                                noteEntry.getLastModifiedTime().toInstant(ZoneOffset.UTC), notebook, noteEntry.getId())
+                        .build());
         return 0;
     }
 
     @Override
-    public void deleteNoteEntry(String notebook, NoteEntry noteEntry) throws IOException {
+    public void deleteNoteEntry(String notebook, NoteEntry noteEntry) {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public void deleteNoteEntries(String notebook, List<NoteEntry> noteEntries) throws IOException {
+    public void deleteNoteEntries(String notebook, List<NoteEntry> noteEntries) {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public long restore() throws IOException {
+    public boolean backup(String notebook, List<NoteEntry> notes) {
         // TODO Auto-generated method stub
-        return 0;
+        return false;
     }
 
     @Override
-    public long backup() throws IOException {
+    public void disconnect() {
         // TODO Auto-generated method stub
-        return 0;
-    }
 
-    @Override
-    public void closeConnection() {
-        cassandraSessionManager.closeClientSession();
     }
 
 }

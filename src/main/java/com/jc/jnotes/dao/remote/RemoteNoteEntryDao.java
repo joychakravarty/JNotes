@@ -1,21 +1,23 @@
 package com.jc.jnotes.dao.remote;
 
-import java.io.IOException;
+import java.util.List;
 
 import com.jc.jnotes.dao.NoteEntryDao;
+import com.jc.jnotes.model.NoteEntry;
 
 /**
- * Remote version of NoteEntryDao should also provide functionality of backup and restore along with CRUD.
+ * Remote version of NoteEntryDao should also provide functionality of backup and restore(getAll)
+ * along with CRUD.
  * 
  * @author Joy C
  *
  */
 public interface RemoteNoteEntryDao extends NoteEntryDao {
+    
+    boolean setupUser(String userId);
 
-    long restore() throws IOException;
+    boolean backup(String notebook, List<NoteEntry> notes);
 
-    long backup() throws IOException;
-
-    void closeConnection();
+    void disconnect();
 
 }

@@ -34,7 +34,7 @@ public final class EncryptionUtil {
     }
 
     public static void main(String[] args) {
-        String encryptedVal = locallyEncrypt("Testing1234!");
+        String encryptedVal = locallyEncrypt("Testing");
         System.out.println("encryptedVal " + encryptedVal);
 
         String decryptedVal = locallyDecrypt(encryptedVal);

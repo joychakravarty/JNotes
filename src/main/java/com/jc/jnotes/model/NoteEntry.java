@@ -42,6 +42,10 @@ public class NoteEntry implements Comparable<NoteEntry> {
     }
     
     public NoteEntry(String id, String key, String value, String info){
+        this(id, key, value, info, LocalDateTime.now());
+    }
+    
+    public NoteEntry(String id, String key, String value, String info, LocalDateTime lastModifiedTime){
         if(id==null){
             throw new IllegalArgumentException("NoteEntry id cannot be null");
         }
@@ -49,7 +53,7 @@ public class NoteEntry implements Comparable<NoteEntry> {
         this.key = new SimpleStringProperty(key==null?StringUtils.EMPTY:key);
         this.value = new SimpleStringProperty(value==null?StringUtils.EMPTY:value);
         this.info = new SimpleStringProperty(info==null?StringUtils.EMPTY:info);
-        this.lastModifiedTime = new SimpleObjectProperty<LocalDateTime>(LocalDateTime.now());
+        this.lastModifiedTime = new SimpleObjectProperty<LocalDateTime>(lastModifiedTime);
     }
     
     public String getId(){

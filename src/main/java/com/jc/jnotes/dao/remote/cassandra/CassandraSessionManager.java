@@ -18,36 +18,13 @@ public class CassandraSessionManager {
     @Value("${cassandra.keyspace}")
     private String keyspace;
 
-    @Value("${cassandra.installation_role_username}")
-    private String installationRoleUserName;
+    @Value("${cassandra.jnotes_client_username}")
+    private String clientUserName;
 
-    @Value("${cassandra.installation_role_password}")
-    private String installationRolePassword;
+    @Value("${cassandra.jnotes_client_password}")
+    private String clientPassword;
 
-    @Value("${cassandra.client_role_username}")
-    private String clientRoleUserName;
-
-    @Value("${cassandra.client_role_password}")
-    private String clientRolePassword;
-
-    private CqlSession installerCqlSession;
     private CqlSession clientCqlSession;
-
-    public CqlSession getInstallerSession() {
-        if (installerCqlSession == null) {
-            installerCqlSession = CqlSession.builder().withCloudSecureConnectBundle(JNotesApplication.getResource(securityBundle))
-                    .withKeyspace(keyspace)
-                    .withAuthCredentials(installationRoleUserName, EncryptionUtil.locallyDecrypt(installationRolePassword)).build();
-        }
-        return installerCqlSession;
-    }
-
-    protected void closeInstallerSession() {
-        if (installerCqlSession != null) {
-            installerCqlSession.close();
-            installerCqlSession = null;
-        }
-    }
 
     protected void closeClientSession() {
         if (clientCqlSession != null) {
@@ -59,7 +36,7 @@ public class CassandraSessionManager {
     public CqlSession getClientSession() {
         if (clientCqlSession == null) {
             clientCqlSession = CqlSession.builder().withCloudSecureConnectBundle(JNotesApplication.getResource(securityBundle))
-                    .withKeyspace(keyspace).withAuthCredentials(clientRoleUserName, EncryptionUtil.locallyDecrypt(clientRolePassword))
+                    .withKeyspace(keyspace).withAuthCredentials(clientUserName, EncryptionUtil.locallyDecrypt(clientPassword))
                     .build();
         }
         return clientCqlSession;
@@ -72,7 +49,6 @@ public class CassandraSessionManager {
     @PreDestroy
     public void cleanup() {
         System.out.println("CassandraSessionManager: Session cleanup");
-        closeInstallerSession();
         closeClientSession();
     }
 

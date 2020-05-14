@@ -66,20 +66,22 @@ public class SyncController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         prepareDependencies();
         addAccelerators();
-        initializeTextFields();
-        initializeButtons();
+        initializeControls();
     }
 
-    private void initializeTextFields() {
+    private void initializeControls() {
         String userId = userPreferences.getUserId();
         String userSecret = userPreferences.getUserSecret();
         if(StringUtils.isNotBlank(userId)) {
             userIdTextField.setText(userId);
             userSecretTextField.setText(userSecret);
+            existingUserRadioButton.setSelected(true);
+            newUserRadioButton.setSelected(false);
+        } else {
+            existingUserRadioButton.setSelected(false);
+            newUserRadioButton.setSelected(true);
         }
-    }
-
-    private void initializeButtons() {
+        
         boolean isConnected = userPreferences.isConnected();
         if(isConnected) {
             connectButton.setText("Disconnect");
@@ -136,17 +138,23 @@ public class SyncController implements Initializable {
     public void disconnect() {
         service.disconnect();
         userPreferences.setConnected(false);
+        connectButton.setText("Connect");
+        backupButton.setDisable(true);
+        restoreButton.setDisable(true);
     }
     
     public void connect() {
         String userId = userIdTextField.getText();
         String userSecret = userSecretTextField.getText();
+        boolean isNewUser = newUserRadioButton.isSelected();
+        System.out.println("isNewUser : "+isNewUser);
         if (isInputValid(userId, userSecret)) {
             try {
-                String message = service.connect(userId, userSecret);
+                String message = service.connect(isNewUser, userId, userSecret);
                 if (message != null) {
-                    alertHelper.showErrorAlert(parentStage, "UserId already exists", null);
+                    alertHelper.showErrorAlert(parentStage, null, message);
                 } else {
+                    alertHelper.showInfoDialog(parentStage, null, "Connection successful!");
                     userPreferences.setUserIdAndSecretForOnlineSync(userId, userSecret);
                     userPreferences.setConnected(true);
                     connectButton.setText("Disconnect");
@@ -154,34 +162,36 @@ public class SyncController implements Initializable {
                     restoreButton.setDisable(false);
                 }
             } catch (ControllerServiceException ex) {
-                alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to save", "");
+                ex.printStackTrace();
+                alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to connect", "");
+                userPreferences.setConnected(false);
             }
         }
     }
 
     private boolean isInputValid(String userId, String userSecret) {
         if (StringUtils.isBlank(userId)) {
-            alertHelper.showErrorAlert(parentStage, "UserId cannot be blank", "");
+            alertHelper.showErrorAlert(parentStage, null, "UserId cannot be blank");
             return false;
         }
         if (!StringUtils.isAlpha(userId)) {
-            alertHelper.showErrorAlert(parentStage, "UserId can only contain alphabets.", "");
+            alertHelper.showErrorAlert(parentStage, null, "UserId can only contain alphabets.");
             return false;
         }
         if (userId.length() > 15) {
-            alertHelper.showErrorAlert(parentStage, "UserId cannot be more than 15 characters.", "");
+            alertHelper.showErrorAlert(parentStage, null, "UserId cannot be more than 15 characters.");
             return false;
         }
         if (StringUtils.isBlank(userSecret)) {
-            alertHelper.showErrorAlert(parentStage, "Secret cannot be blank.", "");
+            alertHelper.showErrorAlert(parentStage, null, "Secret cannot be blank.");
             return false;
         }
         if (!StringUtils.isAlphanumeric(userSecret)) {
-            alertHelper.showErrorAlert(parentStage, "Please use a n alpha-numeric Secret.", "");
+            alertHelper.showErrorAlert(parentStage, null, "Please use a n alpha-numeric Secret.");
             return false;
         }
         if (userSecret.length() > 15) {
-            alertHelper.showErrorAlert(parentStage, "Secret cannot be more than 15 characters.", "");
+            alertHelper.showErrorAlert(parentStage, null, "Secret cannot be more than 15 characters.");
             return false;
         }
         return true;

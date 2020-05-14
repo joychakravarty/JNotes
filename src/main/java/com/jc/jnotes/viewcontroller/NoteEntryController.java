@@ -144,7 +144,7 @@ public class NoteEntryController implements Initializable {
 
     private boolean isInputValid() {
         if (StringUtils.isBlank(keyField.getText())) {
-            alertHelper.showErrorAlert(parentStage, "Key cannot be blank", "");
+            alertHelper.showErrorAlert(parentStage, null, "Key cannot be blank");
             return false;
         } else {
             return true;

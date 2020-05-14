@@ -83,8 +83,8 @@ public class AlertHelper {
      */
     public void showErrorAlert(Stage parentStage, String headerText, String contentText) {
         Alert alert = new Alert(AlertType.ERROR);
-        alert.initOwner(parentStage);
-        alert.setTitle("Exception Dialog");
+        //alert.initOwner(parentStage);
+        alert.setTitle("Error Dialog");
         alert.setHeaderText(headerText);
         alert.setContentText(contentText);
 
@@ -106,6 +106,16 @@ public class AlertHelper {
         alert.setContentText(contentText);
 
         return alert.showAndWait();
+    }
+    
+    public void showInfoDialog(Stage parentStage, String header, String message) {
+        Alert alert = new Alert(AlertType.INFORMATION);
+        //alert.initOwner(parentStage);
+        alert.setTitle("Information Dialog");
+        alert.setHeaderText(header);
+        alert.setContentText(message);
+
+        alert.showAndWait();
     }
     
     public void showAboutJNotesDialog() {
