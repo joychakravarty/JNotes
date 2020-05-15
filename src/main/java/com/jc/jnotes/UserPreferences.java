@@ -2,8 +2,8 @@ package com.jc.jnotes;
 
 import static com.jc.jnotes.JNotesConstants.APP_NAME;
 import static com.jc.jnotes.JNotesConstants.DEFAULT_NOTEBOOK;
-import static com.jc.jnotes.JNotesConstants.USER_HOME_PATH;
 import static com.jc.jnotes.JNotesConstants.ONLINE_SYNC_CONF_FILE;
+import static com.jc.jnotes.JNotesConstants.USER_HOME_PATH;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,15 +19,15 @@ import java.util.prefs.Preferences;
  *
  */
 public class UserPreferences {
-    
+
     private static final String KEY_BASEPATH = "basePath";
     private static final String KEY_CURRENT_NOTEBOOK = "currentNoteBook";
     private static final String JNOTES_USER_ID = "jnotes_userid";
     private static final String JNOTES_USER_SECRET = "jnotes_usersecret";
     private static final String JNOTES_IS_CONNECTED = "jnotes_isconnected";
-    
-    private final Preferences userPreferences = Preferences.userNodeForPackage(UserPreferences.class);
+    private static final String JNOTES_AUTOCONNECT = "jnotes_autoconnect";
 
+    private final Preferences userPreferences = Preferences.userNodeForPackage(UserPreferences.class);
 
     public String getBasePath() {
         return userPreferences.get(KEY_BASEPATH, USER_HOME_PATH);
@@ -70,7 +70,7 @@ public class UserPreferences {
 
                 if (jnSyncStr != null && jnSyncStr.contains("|")) {
                     userName = (jnSyncStr.split("\\|"))[0];
-                    if(userName!=null) {
+                    if (userName != null) {
                         userPreferences.put(JNOTES_USER_ID, userName);
                     }
                 }
@@ -80,7 +80,7 @@ public class UserPreferences {
         }
         return userName;
     }
-    
+
     public String getUserSecret() {
         String userSecret = userPreferences.get(JNOTES_USER_SECRET, null);
         if (userSecret == null) {// attempt to get userSecret from sync_conf file
@@ -90,7 +90,7 @@ public class UserPreferences {
 
                 if (jnSyncStr != null && jnSyncStr.contains("|")) {
                     userSecret = (jnSyncStr.split("\\|"))[1];
-                    if(userSecret!=null) {
+                    if (userSecret != null) {
                         userPreferences.put(JNOTES_USER_SECRET, userSecret);
                     }
                 }
@@ -100,7 +100,7 @@ public class UserPreferences {
         }
         return userSecret;
     }
-    
+
     public void setConnected(boolean isConnected) {
         userPreferences.put(JNOTES_IS_CONNECTED, String.valueOf(isConnected));
     }
@@ -108,6 +108,15 @@ public class UserPreferences {
     public boolean isConnected() {
         String isConnectedStr = userPreferences.get(JNOTES_IS_CONNECTED, String.valueOf(false));
         return Boolean.valueOf(isConnectedStr);
+    }
+
+    public void setAutoConnect(boolean autoConnect) {
+        userPreferences.put(JNOTES_AUTOCONNECT, String.valueOf(autoConnect));
+    }
+
+    public boolean getAutoConnect() {
+        String autoConnectStr = userPreferences.get(JNOTES_AUTOCONNECT, String.valueOf(false));
+        return Boolean.valueOf(autoConnectStr);
     }
 
 }

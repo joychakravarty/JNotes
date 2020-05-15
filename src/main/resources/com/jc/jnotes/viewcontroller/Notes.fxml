@@ -23,12 +23,6 @@
 <?import javafx.scene.text.Text?>
 
 <BorderPane prefHeight="622.0" prefWidth="799.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.jc.jnotes.viewcontroller.NotesController">
-   <bottom>
-      <Text fx:id="notificationText" strokeType="OUTSIDE" strokeWidth="0.0" wrappingWidth="600.0" BorderPane.alignment="CENTER_LEFT">
-         <BorderPane.margin>
-            <Insets bottom="2.0" left="2.0" right="2.0" top="2.0" />
-         </BorderPane.margin></Text>
-   </bottom>
    <center>
       <SplitPane dividerPositions="0.5" orientation="VERTICAL" BorderPane.alignment="CENTER">
         <items>
@@ -52,7 +46,7 @@
               <items>
                   <Menu mnemonicParsing="false" text="Note">
                     <items>
-                    <MenuItem mnemonicParsing="false" onAction="#addNewNoteEntry" text="New">
+                    	<MenuItem mnemonicParsing="false" onAction="#addNewNoteEntry" text="New">
                            <accelerator>
                               <KeyCodeCombination alt="UP" code="N" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                            </accelerator>
@@ -86,7 +80,11 @@
                         </MenuItem>
                      </items>
                   </Menu>
-                  <MenuItem mnemonicParsing="false" onAction="#sync" text="Sync" />
+                  <MenuItem mnemonicParsing="false" onAction="#sync" text="Sync" >
+                      <accelerator>
+                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
+                      </accelerator>
+                  </MenuItem>
                 <MenuItem mnemonicParsing="false" onAction="#showAbout" text="About" />
                 <MenuItem mnemonicParsing="false" onAction="#exitJNote" text="Exit">
                      <accelerator>
@@ -97,7 +95,7 @@
                <graphic>
                   <ImageView fitHeight="19.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
                      <image>
-                        <Image url="@../../../../images/menu-24.png" />
+                        <Image url="@../../../../images/menu.png" />
                      </image>
                   </ImageView>
                </graphic>
@@ -107,7 +105,7 @@
                 <graphic>
 	                      <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">
 	                          <image>
-	                              <Image url="@../../../../images/sort-16.png" />
+	                              <Image url="@../../../../images/sort.png" />
 	                          </image>
 	                      </ImageView>
 	                  </graphic>
@@ -121,4 +119,19 @@
         </items>
       </ToolBar>
    </top>
+   <bottom>
+      <HBox alignment="CENTER" prefHeight="25.0" prefWidth="799.0" BorderPane.alignment="CENTER">
+         <children>
+            <Text fx:id="notificationText" strokeType="OUTSIDE" strokeWidth="0.0" wrappingWidth="600.0" HBox.hgrow="NEVER">
+               <HBox.margin>
+                  <Insets left="5.0" />
+               </HBox.margin></Text>
+            <Pane prefHeight="24.0" prefWidth="154.0" HBox.hgrow="ALWAYS" />
+            <ImageView fx:id="connectionImage" fitHeight="24.0" fitWidth="24.0" pickOnBounds="true" preserveRatio="true" HBox.hgrow="NEVER">
+               <HBox.margin>
+                  <Insets right="5.0" />
+               </HBox.margin></ImageView>
+         </children>
+      </HBox>
+   </bottom>
 </BorderPane>

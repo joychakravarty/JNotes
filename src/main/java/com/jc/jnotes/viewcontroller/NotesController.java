@@ -47,6 +47,7 @@ import javafx.scene.control.ToggleButton;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
@@ -120,6 +121,8 @@ public class NotesController {
     private MenuButton menuButton;
     @FXML
     private ToggleButton sortToggleButton;
+    @FXML
+    private ImageView connectionImage;
 
     public void setParentStage(Stage parentStage) {
         this.parentStage = parentStage;
@@ -154,14 +157,19 @@ public class NotesController {
     }
 
     private void initializeOnlineDataStore() {
-        if(StringUtils.isNotBlank(userPreferences.getUserId()) && userPreferences.isConnected()) {
+        if(userPreferences.getAutoConnect() && StringUtils.isNotBlank(userPreferences.getUserId()) && userPreferences.isConnected()) {
             try {
                 service.connect(false, userPreferences.getUserId(), userPreferences.getUserSecret());
+                updateConnectionImageBasedOnFlag(true);
             } catch (ControllerServiceException e) {
                 e.printStackTrace();
-                alertHelper.showErrorAlert(parentStage, "Failed to connect to Online Database", null);
+                //alertHelper.showErrorAlert(parentStage, "Failed to connect to Online Database", null);
                 userPreferences.setConnected(false);
+                updateConnectionImageBasedOnFlag(false);
             }
+        } else {
+            userPreferences.setConnected(false);
+            updateConnectionImageBasedOnFlag(false);
         }
     }
 
@@ -185,7 +193,6 @@ public class NotesController {
                 infoField.clear();
             }
         });
-
     }
 
     private void initilalizeMenuButton() {
@@ -372,6 +379,16 @@ public class NotesController {
             }
         });
     }
+    
+    private void updateConnectionImageBasedOnFlag(boolean isConnectedFLag) {
+        InputStream connectionStatusImg;
+        if(isConnectedFLag) {
+            connectionStatusImg = JNotesApplication.getResourceAsStream("/images/connected.png");
+        }else {
+            connectionStatusImg = JNotesApplication.getResourceAsStream("/images/disconnected.png");
+        }
+        connectionImage.setImage(new Image(connectionStatusImg));
+    }
 
     private void loadNoteBooks() {
         List<String> directories = ioHelper.getAllNoteBooks();
@@ -448,7 +465,7 @@ public class NotesController {
             AnchorPane page = (AnchorPane) loader.load();
 
             noteEntryStage = new Stage();
-            noteEntryStage.setTitle("Add Note Entry");
+            noteEntryStage.setTitle("Add");
             noteEntryStage.initModality(Modality.WINDOW_MODAL);
             noteEntryStage.initOwner(parentStage);
             Scene scene = new Scene(page);
@@ -465,7 +482,7 @@ public class NotesController {
                 notificationText.setText(ADD_STATUS_NOTIFICATION);
             });
 
-            InputStream iconInputStream = JNotesApplication.getResourceAsStream("/images/edit.png");
+            InputStream iconInputStream = JNotesApplication.getResourceAsStream("/images/add.png");
             if (iconInputStream != null) {
                 noteEntryStage.getIcons().add(new Image(iconInputStream));
             }
@@ -484,7 +501,7 @@ public class NotesController {
             loader.setLocation(JNotesApplication.getResource("viewcontroller/Sync.fxml"));
             AnchorPane page = (AnchorPane) loader.load();
             syncStage = new Stage();
-            syncStage.setTitle("Sync Online Settings");
+            syncStage.setTitle("Settings");
             syncStage.initModality(Modality.WINDOW_MODAL);
             syncStage.initOwner(parentStage);
             Scene scene = new Scene(page);
@@ -494,12 +511,14 @@ public class NotesController {
             controller.setParentStage(syncStage);
             controller.setRunAfter(() -> {
                 notesTable.refresh();
-//                notificationText.setText(EDIT_STATUS_NOTIFICATION);
-//                infoField.setText(notesTable.getSelectionModel().getSelectedItem().getInfo());
-                // infoField.requestFocus();
+                if(userPreferences.isConnected()) {
+                    updateConnectionImageBasedOnFlag(true);
+                }else {
+                    updateConnectionImageBasedOnFlag(false);
+                }
             });
 
-            InputStream iconInputStream = JNotesApplication.getResourceAsStream("/images/edit.png");
+            InputStream iconInputStream = JNotesApplication.getResourceAsStream("/images/cloudsync.png");
             if (iconInputStream != null) {
                 syncStage.getIcons().add(new Image(iconInputStream));
             }
@@ -523,7 +542,7 @@ public class NotesController {
             AnchorPane page = (AnchorPane) loader.load();
 
             noteEntryStage = new Stage();
-            noteEntryStage.setTitle("Edit Note Entry");
+            noteEntryStage.setTitle("Edit");
             noteEntryStage.initModality(Modality.WINDOW_MODAL);
             noteEntryStage.initOwner(parentStage);
             Scene scene = new Scene(page);

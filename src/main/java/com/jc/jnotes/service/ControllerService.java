@@ -100,6 +100,7 @@ public class ControllerService {
 
     // Do not use UserPreference inside this method as it will be updated after the connection is made/verified.
     public String connect(boolean isNewUser, String userId, String userSecret) throws ControllerServiceException {
+        System.out.println("Connecting to Cloud Datastore!");
         String returnString = null;
         try {
             if (isNewUser) {

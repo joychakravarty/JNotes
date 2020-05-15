@@ -2,6 +2,7 @@ package com.jc.jnotes.viewcontroller;
 
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationContext;
@@ -13,11 +14,13 @@ import com.jc.jnotes.service.ControllerService;
 import com.jc.jnotes.service.ControllerServiceException;
 
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
@@ -47,6 +50,9 @@ public class SyncController implements Initializable {
     private RadioButton newUserRadioButton;
     @FXML
     private RadioButton existingUserRadioButton;
+    
+    @FXML
+    private CheckBox autoConnectCheckBox;
 
     @FXML
     private TextField userIdTextField;
@@ -72,7 +78,7 @@ public class SyncController implements Initializable {
     private void initializeControls() {
         String userId = userPreferences.getUserId();
         String userSecret = userPreferences.getUserSecret();
-        if(StringUtils.isNotBlank(userId)) {
+        if (StringUtils.isNotBlank(userId)) {
             userIdTextField.setText(userId);
             userSecretTextField.setText(userSecret);
             existingUserRadioButton.setSelected(true);
@@ -81,9 +87,9 @@ public class SyncController implements Initializable {
             existingUserRadioButton.setSelected(false);
             newUserRadioButton.setSelected(true);
         }
-        
+
         boolean isConnected = userPreferences.isConnected();
-        if(isConnected) {
+        if (isConnected) {
             connectButton.setText("Disconnect");
             backupButton.setDisable(false);
             restoreButton.setDisable(false);
@@ -91,6 +97,12 @@ public class SyncController implements Initializable {
             connectButton.setText("Connect");
             backupButton.setDisable(true);
             restoreButton.setDisable(true);
+        }
+        
+        if(userPreferences.getAutoConnect()) {
+            autoConnectCheckBox.setSelected(true);
+        } else {
+            autoConnectCheckBox.setSelected(false);
         }
     }
 
@@ -128,44 +140,68 @@ public class SyncController implements Initializable {
 
     @FXML
     public void connectDisconnect() {
-        if(userPreferences.isConnected()) {
+        if(autoConnectCheckBox.isSelected()) {
+            userPreferences.setAutoConnect(true);
+        } else {
+            userPreferences.setAutoConnect(false);
+        }
+        if (userPreferences.isConnected()) {
             disconnect();
         } else {
             connect();
         }
     }
-    
+
     public void disconnect() {
         service.disconnect();
         userPreferences.setConnected(false);
         connectButton.setText("Connect");
         backupButton.setDisable(true);
         restoreButton.setDisable(true);
+        runAfter.run();
     }
-    
+
     public void connect() {
         String userId = userIdTextField.getText();
         String userSecret = userSecretTextField.getText();
         boolean isNewUser = newUserRadioButton.isSelected();
-        System.out.println("isNewUser : "+isNewUser);
+
         if (isInputValid(userId, userSecret)) {
-            try {
-                String message = service.connect(isNewUser, userId, userSecret);
-                if (message != null) {
-                    alertHelper.showErrorAlert(parentStage, null, message);
-                } else {
-                    alertHelper.showInfoDialog(parentStage, null, "Connection successful!");
-                    userPreferences.setUserIdAndSecretForOnlineSync(userId, userSecret);
-                    userPreferences.setConnected(true);
-                    connectButton.setText("Disconnect");
-                    backupButton.setDisable(false);
-                    restoreButton.setDisable(false);
+            Task<String> task = new Task<String>() {
+                @Override
+                public String call() throws ControllerServiceException {
+                    return service.connect(isNewUser, userId, userSecret);
                 }
-            } catch (ControllerServiceException ex) {
-                ex.printStackTrace();
-                alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to connect", "");
+            };
+
+            task.setOnRunning((e) -> connectButton.setText("Connecting.."));
+            task.setOnSucceeded((e) -> {
+                try {
+                    String message = task.get();
+                    if (message != null) {
+                        connectButton.setText("Connect");
+                        alertHelper.showErrorAlert(parentStage, null, message);
+                    } else {
+                        connectButton.setText("Disconnect");
+                        alertHelper.showInfoDialog(parentStage, null, "Connection successful!");
+                        userPreferences.setUserIdAndSecretForOnlineSync(userId, userSecret);
+                        userPreferences.setConnected(true);
+                        backupButton.setDisable(false);
+                        restoreButton.setDisable(false);
+                        runAfter.run();
+                    }
+                } catch (InterruptedException | ExecutionException e1) {
+                    e1.printStackTrace();
+                    connectButton.setText("Connect");
+                }
+            });
+            task.setOnFailed((e) -> {
+                task.getException().printStackTrace();
+                connectButton.setText("Connect");
+                alertHelper.showAlertWithExceptionDetails(parentStage, task.getException(), "Failed to connect", "");
                 userPreferences.setConnected(false);
-            }
+            });
+            new Thread(task).start();
         }
     }
 

@@ -38,7 +38,7 @@ public class AlertHelper {
      * @param headerText
      * @param contextText
      */
-    public void showAlertWithExceptionDetails(Stage parentStage, Exception ex, String headerText, String contextText) {
+    public void showAlertWithExceptionDetails(Stage parentStage, Throwable ex, String headerText, String contextText) {
         Alert alert = new Alert(AlertType.ERROR);
         alert.setTitle("Exception Dialog");
         alert.setHeaderText(headerText);
