@@ -1,18 +1,23 @@
 package com.jc.jnotes.helper;
 
-import static com.jc.jnotes.JNotesConstants.CURRENT_VERSION;
 import static com.jc.jnotes.JNotesConstants.APP_NAME;
+import static com.jc.jnotes.JNotesConstants.CURRENT_VERSION;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
+import com.jc.jnotes.JNotesApplication;
+
 import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.GridPane;
@@ -30,8 +35,8 @@ import javafx.stage.Stage;
 public class AlertHelper {
 
     /**
-     * Displays Error Alert Dialog with the exception details.
-     * Intended for displaying Exception details to the user. Not intended for user errors, like validation error.
+     * Displays Error Alert Dialog with the exception details. Intended for displaying Exception details to the user. Not
+     * intended for user errors, like validation error.
      * 
      * @param parentStage
      * @param ex
@@ -72,7 +77,7 @@ public class AlertHelper {
 
         alert.showAndWait();
     }
-    
+
     /**
      * 
      * Displays Error Alert Dialog for User errors or Validation Errors not meant to be used in ExceptionHandling.
@@ -83,14 +88,14 @@ public class AlertHelper {
      */
     public void showErrorAlert(Stage parentStage, String headerText, String contentText) {
         Alert alert = new Alert(AlertType.ERROR);
-        //alert.initOwner(parentStage);
+        // alert.initOwner(parentStage);
         alert.setTitle("Error Dialog");
         alert.setHeaderText(headerText);
         alert.setContentText(contentText);
 
         alert.showAndWait();
     }
-    
+
     /**
      * Displays confirmation type alert dialog
      * 
@@ -107,25 +112,31 @@ public class AlertHelper {
 
         return alert.showAndWait();
     }
-    
+
     public void showInfoDialog(Stage parentStage, String header, String message) {
         Alert alert = new Alert(AlertType.INFORMATION);
-        //alert.initOwner(parentStage);
+        // alert.initOwner(parentStage);
         alert.setTitle("Information Dialog");
         alert.setHeaderText(header);
         alert.setContentText(message);
 
         alert.showAndWait();
     }
-    
+
     public void showAboutJNotesDialog() {
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle("About " + APP_NAME);
-        alert.setHeaderText("Author - Joy Chakravarty");
+        String headerText = "Author: Joy Chakravarty";
         if (StringUtils.isNotBlank(CURRENT_VERSION)) {
-            alert.setContentText("Version: " + CURRENT_VERSION);
+            headerText = headerText + "\n" + APP_NAME + " Version: " + CURRENT_VERSION;
         }
+        alert.setHeaderText(headerText);
+
+        String contentText = new BufferedReader(new InputStreamReader(JNotesApplication.getResourceAsStream("/About.txt"))).lines()
+                .collect(Collectors.joining("\n"));
+
+        alert.setContentText(contentText);
         alert.showAndWait();
     }
-    
+
 }

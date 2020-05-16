@@ -4,6 +4,7 @@ import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createTable
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -39,6 +40,7 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
     private static final String GET_ALL = "SELECT * FROM %s.%s WHERE notebook = ?";
     private static final String ADD_NOTE_ENTRY = "INSERT INTO %s.%s (notebook, noteid, key, value, info, lastModifiedTime) VALUES (?,?,?,?,?,?)";
     private static final String EDIT_NOTE_ENTRY = "UPDATE %s.%s SET key = ?, value = ?, info = ?, lastModifiedTime = ? where notebook = ? and noteid = ?";
+    private static final String DELETE_NOTE_ENTRIES = "DELETE FROM %s.%s WHERE notebook = ? and noteid IN ?";
 
     public CassandraNoteEntryDao(String userId, String userEncKey) {
         System.out.println("Creating CassandraNoteEntryDao : " + userId + "-" + userEncKey);
@@ -122,14 +124,17 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
 
     @Override
     public void deleteNoteEntry(String notebook, NoteEntry noteEntry) {
-        // TODO Auto-generated method stub
+        List<NoteEntry> noteEntries = new ArrayList<>();
+        noteEntries.add(noteEntry);
+        deleteNoteEntries(notebook, noteEntries);
 
     }
 
     @Override
     public void deleteNoteEntries(String notebook, List<NoteEntry> noteEntries) {
-        // TODO Auto-generated method stub
-
+        List<String> noteIds = noteEntries.stream().map((noteEntry) -> noteEntry.getId()).collect(Collectors.toList());
+        String cqlStr = String.format(DELETE_NOTE_ENTRIES, cassandraSessionManager.getKeyspace(), userId);
+        cassandraSessionManager.getClientSession().execute(SimpleStatement.builder(cqlStr).addPositionalValues(notebook, noteIds).build());
     }
 
     @Override
@@ -140,8 +145,7 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
 
     @Override
     public void disconnect() {
-        // TODO Auto-generated method stub
-
+        cassandraSessionManager.closeClientSession();
     }
 
 }

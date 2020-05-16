@@ -96,6 +96,10 @@ public class ControllerService {
 
     public void deleteNoteEntries(List<NoteEntry> noteEntriesToBeDeleted) throws IOException {
         this.getLocalNoteEntryDao().deleteNoteEntries(userPreferences.getCurrentNoteBook(), noteEntriesToBeDeleted);
+        if (userPreferences.isConnected()) {
+            this.getRemoteNoteEntryDao(userPreferences.getUserId(), userPreferences.getUserSecret())
+                    .deleteNoteEntries(userPreferences.getCurrentNoteBook(), noteEntriesToBeDeleted);
+        }
     }
 
     // Do not use UserPreference inside this method as it will be updated after the connection is made/verified.

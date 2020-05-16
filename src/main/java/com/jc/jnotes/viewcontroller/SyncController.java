@@ -1,6 +1,7 @@
 package com.jc.jnotes.viewcontroller;
 
 import java.net.URL;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutionException;
 
@@ -20,6 +21,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
@@ -36,6 +38,8 @@ public class SyncController implements Initializable {
 
     // To Be Set By Caller
     private Stage parentStage;
+    
+    private Stage progressStage;
 
     // Spring Dependencies
     private ControllerService service;
@@ -218,12 +222,17 @@ public class SyncController implements Initializable {
             alertHelper.showErrorAlert(parentStage, null, "UserId cannot be more than 15 characters.");
             return false;
         }
+        
         if (StringUtils.isBlank(userSecret)) {
-            alertHelper.showErrorAlert(parentStage, null, "Secret cannot be blank.");
+            Optional<ButtonType> result = alertHelper.showDefaultConfirmation(parentStage, "Your data will not be encrypted. Is it ok?", null);
+            if (result.get() == ButtonType.OK) {
+                return true;
+            }
+            //alertHelper.showErrorAlert(parentStage, null, "Secret cannot be blank.");
             return false;
         }
         if (!StringUtils.isAlphanumeric(userSecret)) {
-            alertHelper.showErrorAlert(parentStage, null, "Please use a n alpha-numeric Secret.");
+            alertHelper.showErrorAlert(parentStage, null, "Please use an alpha-numeric Secret.");
             return false;
         }
         if (userSecret.length() > 15) {

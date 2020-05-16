@@ -21,6 +21,9 @@ public final class EncryptionUtil {
         if (StringUtils.isBlank(textToEncrypt)) {
             return null;
         }
+        if(StringUtils.isBlank(encryptionKey)) {
+            return textToEncrypt;
+        }
         TextEncryptor encryptor = Encryptors.queryableText(encryptionKey, ENCRYPTION_SALT);
         return encryptor.encrypt(textToEncrypt);
     }
@@ -28,6 +31,9 @@ public final class EncryptionUtil {
     public static String decrypt(String encryptionKey, String textToDecrypt) {
         if (StringUtils.isBlank(textToDecrypt)) {
             return null;
+        }
+        if(StringUtils.isBlank(encryptionKey)) {
+            return textToDecrypt;
         }
         TextEncryptor encryptor = Encryptors.queryableText(encryptionKey, ENCRYPTION_SALT);
         return encryptor.decrypt(textToDecrypt);

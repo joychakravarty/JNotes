@@ -1,0 +1,17 @@
+This is a desktop application which allows quick-access/lookup to your key-value-info type of data.
+
+Shortcuts:
+    Ctrl+N - New note
+    Ctrl+E - Edit note
+    Ctrl+S - Save note changes. (also for in-line edits)  
+    Ctrl+D - Delete selected notes  
+    Ctrl+X - Export NoteBook to CSV  
+    Ctrl+I - Import CSV/Properties to current Notebook  
+    Ctrl+F - Takes you to search field  
+    Ctrl+C - Copies the selected cell value
+    Ctrl+Y - Sync settings
+    ESC    - Closes diaglogs/popups, clears search  
+    Ctrl+Q - Quit JNotes     
+        
+License:
+    https://github.com/joychakravarty/JNotes/blob/master/LICENSE
