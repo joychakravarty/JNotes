@@ -9,9 +9,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.datastax.oss.driver.api.core.ConsistencyLevel;
+import com.datastax.oss.driver.api.core.cql.BatchStatement;
+import com.datastax.oss.driver.api.core.cql.BatchStatementBuilder;
+import com.datastax.oss.driver.api.core.cql.BatchType;
+import com.datastax.oss.driver.api.core.cql.BatchableStatement;
+import com.datastax.oss.driver.api.core.cql.BoundStatement;
+import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
@@ -42,10 +51,18 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
     private static final String EDIT_NOTE_ENTRY = "UPDATE %s.%s SET key = ?, value = ?, info = ?, lastModifiedTime = ? where notebook = ? and noteid = ?";
     private static final String DELETE_NOTE_ENTRIES = "DELETE FROM %s.%s WHERE notebook = ? and noteid IN ?";
 
+    private PreparedStatement preparedAddNoteEntry;
+
     public CassandraNoteEntryDao(String userId, String userEncKey) {
         System.out.println("Creating CassandraNoteEntryDao : " + userId + "-" + userEncKey);
         this.userId = userId;
         this.userEncryptionKey = userEncKey;
+    }
+
+    @PostConstruct
+    private void postConstruct() {
+        String addNoteEntryCQL = String.format(ADD_NOTE_ENTRY, cassandraSessionManager.getKeyspace(), userId);
+        preparedAddNoteEntry = cassandraSessionManager.getClientSession().prepare(addNoteEntryCQL);
     }
 
     @Override
@@ -82,7 +99,6 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
         } else {
             return Collections.emptyList();
         }
-
     }
 
     private NoteEntry toNoteEntry(Row row) {
@@ -95,17 +111,24 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
 
     @Override
     public long addNoteEntry(String notebook, NoteEntry noteEntry) {
+        cassandraSessionManager.getClientSession().execute(getBoundStatementForAddNoteEntry(notebook, noteEntry));
 
-        String cqlStr = String.format(ADD_NOTE_ENTRY, cassandraSessionManager.getKeyspace(), userId);
-
-        cassandraSessionManager.getClientSession()
-                .execute(SimpleStatement.builder(cqlStr)
-                        .addPositionalValues(notebook, noteEntry.getId(), EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getKey()),
-                                EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getValue()),
-                                EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getInfo()),
-                                noteEntry.getLastModifiedTime().toInstant(ZoneOffset.UTC))
-                        .build());
+        // String cqlStr = String.format(ADD_NOTE_ENTRY, cassandraSessionManager.getKeyspace(), userId);
+        //
+        // cassandraSessionManager.getClientSession()
+        // .execute(SimpleStatement.builder(cqlStr)
+        // .addPositionalValues(notebook, noteEntry.getId(), EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getKey()),
+        // EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getValue()),
+        // EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getInfo()),
+        // noteEntry.getLastModifiedTime().toInstant(ZoneOffset.UTC))
+        // .build());
         return 0;
+    }
+
+    private BoundStatement getBoundStatementForAddNoteEntry(String notebook, NoteEntry noteEntry) {
+        return preparedAddNoteEntry.bind(notebook, noteEntry.getId(), EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getKey()),
+                EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getValue()),
+                EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getInfo()), noteEntry.getLastModifiedTime().toInstant(ZoneOffset.UTC));
     }
 
     @Override
@@ -139,8 +162,12 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
 
     @Override
     public boolean backup(String notebook, List<NoteEntry> notes) {
-        // TODO Auto-generated method stub
-        return false;
+        Iterable<BatchableStatement<?>> statements = notes.stream()
+                .map((noteEntry) -> getBoundStatementForAddNoteEntry(notebook, noteEntry)).collect(Collectors.toList());
+        BatchStatement batch = new BatchStatementBuilder(BatchType.UNLOGGED).setKeyspace(cassandraSessionManager.getKeyspace())
+                .setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM).addStatements(statements).build();
+        cassandraSessionManager.getClientSession().execute(batch);
+        return true;
     }
 
     @Override

@@ -122,6 +122,16 @@ public class AlertHelper {
 
         alert.showAndWait();
     }
+    
+    public void showWarningDialog(Stage parentStage, String header, String message) {
+        Alert alert = new Alert(AlertType.WARNING);
+        // alert.initOwner(parentStage);
+        alert.setTitle("Warning Dialog");
+        alert.setHeaderText(header);
+        alert.setContentText(message);
+
+        alert.showAndWait();
+    }
 
     public void showAboutJNotesDialog() {
         Alert alert = new Alert(AlertType.INFORMATION);

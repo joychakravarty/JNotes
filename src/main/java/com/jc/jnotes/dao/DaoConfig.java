@@ -6,14 +6,12 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.Scope;
 
-import com.jc.jnotes.UserPreferences;
 import com.jc.jnotes.dao.local.LocalNoteEntryDao;
 import com.jc.jnotes.dao.local.lucene.LuceneNoteEntryDao;
 import com.jc.jnotes.dao.remote.RemoteNoteEntryDao;
@@ -39,19 +37,19 @@ public class DaoConfig {
     private final Map<String, LocalNoteEntryDao> localDaoMap = new HashMap<>();
     private final Map<String, RemoteNoteEntryDao> remoteDaoMap = new HashMap<>();
 
-    @Bean
-    public Function<UserPreferences, LocalNoteEntryDao> localNoteEntryDaoFactory() {
-        return userPreferences -> {
+    @Bean(name="localNoteEntryDaoFactory")
+    public BiFunction<String, String, LocalNoteEntryDao> getLocalNoteEntryDaoFactory() {
+        return (basePath, notebook) -> {
             try {
-                return getLocalNoteEntryDao(userPreferences);
+                return getLocalNoteEntryDao(basePath, notebook);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         };
     }
 
-    @Bean
-    public BiFunction<String, String, RemoteNoteEntryDao> remoteNoteEntryDaoFactory() {
+    @Bean(name="remoteNoteEntryDaoFactory")
+    public BiFunction<String, String, RemoteNoteEntryDao> getRemoteNoteEntryDaoFactory() {
         return (userId, userSecret) -> {
             return getRemoteNoteEntryDao(userId, userSecret);
         };
@@ -59,13 +57,12 @@ public class DaoConfig {
 
     @Bean
     @Scope(value = "prototype")
-    public LocalNoteEntryDao getLocalNoteEntryDao(UserPreferences userPreferences) throws IOException {
-        String mapKey = userPreferences.getBasePath() + "-" + userPreferences.getCurrentNoteBook();
+    public LocalNoteEntryDao getLocalNoteEntryDao(String basePath, String notebook) throws IOException {
+        String mapKey = basePath + "-" + notebook;
         if (localDaoMap.get(mapKey) != null) {
             return localDaoMap.get(mapKey);
         } else {
-            LocalNoteEntryDao noteEntryDao = new LuceneNoteEntryDao(userPreferences.getBasePath(), APP_NAME,
-                    userPreferences.getCurrentNoteBook());
+            LocalNoteEntryDao noteEntryDao = new LuceneNoteEntryDao(basePath, APP_NAME, notebook);
             localDaoMap.put(mapKey, noteEntryDao);
             return noteEntryDao;
         }

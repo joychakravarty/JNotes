@@ -5,15 +5,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import org.apache.lucene.index.IndexNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.jc.jnotes.UserPreferences;
 import com.jc.jnotes.dao.local.LocalNoteEntryDao;
 import com.jc.jnotes.dao.remote.RemoteNoteEntryDao;
+import com.jc.jnotes.helper.IOHelper;
 import com.jc.jnotes.model.NoteEntry;
 
 /**
@@ -30,13 +32,18 @@ public class ControllerService {
     private UserPreferences userPreferences;
 
     @Autowired
-    private Function<UserPreferences, LocalNoteEntryDao> localNoteEntryDaoFactory;
+    @Qualifier("localNoteEntryDaoFactory")
+    private BiFunction<String, String, LocalNoteEntryDao> localNoteEntryDaoFactory;
 
-    public LocalNoteEntryDao getLocalNoteEntryDao() {
-        return localNoteEntryDaoFactory.apply(userPreferences);
+    @Autowired
+    private IOHelper ioHelper;
+
+    public LocalNoteEntryDao getLocalNoteEntryDao(String notebook) {
+        return localNoteEntryDaoFactory.apply(userPreferences.getBasePath(), notebook);
     }
 
     @Autowired
+    @Qualifier("remoteNoteEntryDaoFactory")
     private BiFunction<String, String, RemoteNoteEntryDao> remoteNoteEntryDaoFactory;
 
     public RemoteNoteEntryDao getRemoteNoteEntryDao(String userId, String userSecret) {
@@ -45,7 +52,7 @@ public class ControllerService {
 
     public void addNoteEntry(NoteEntry noteEntry) throws ControllerServiceException {
         try {
-            this.getLocalNoteEntryDao().addNoteEntry(userPreferences.getCurrentNoteBook(), noteEntry);
+            this.getLocalNoteEntryDao(userPreferences.getCurrentNoteBook()).addNoteEntry(userPreferences.getCurrentNoteBook(), noteEntry);
             if (userPreferences.isConnected()) {
                 this.getRemoteNoteEntryDao(userPreferences.getUserId(), userPreferences.getUserSecret())
                         .addNoteEntry(userPreferences.getCurrentNoteBook(), noteEntry);
@@ -58,7 +65,7 @@ public class ControllerService {
 
     public void editNoteEntry(NoteEntry noteEntry) throws ControllerServiceException {
         try {
-            this.getLocalNoteEntryDao().editNoteEntry(userPreferences.getCurrentNoteBook(), noteEntry);
+            this.getLocalNoteEntryDao(userPreferences.getCurrentNoteBook()).editNoteEntry(userPreferences.getCurrentNoteBook(), noteEntry);
             if (userPreferences.isConnected()) {
                 this.getRemoteNoteEntryDao(userPreferences.getUserId(), userPreferences.getUserSecret())
                         .editNoteEntry(userPreferences.getCurrentNoteBook(), noteEntry);
@@ -72,7 +79,7 @@ public class ControllerService {
     public List<NoteEntry> searchNotes(String searchTxt, boolean searchInfoAlso) {
         List<NoteEntry> notes;
         try {
-            notes = this.getLocalNoteEntryDao().searchNotes(searchTxt, searchInfoAlso);
+            notes = this.getLocalNoteEntryDao(userPreferences.getCurrentNoteBook()).searchNotes(searchTxt, searchInfoAlso);
         } catch (Exception ex) {
             ex.printStackTrace();
             notes = Collections.emptyList();
@@ -83,7 +90,7 @@ public class ControllerService {
     public List<NoteEntry> getAll() throws ControllerServiceException {
         List<NoteEntry> allNoteEntries;
         try {
-            allNoteEntries = this.getLocalNoteEntryDao().getAll(userPreferences.getCurrentNoteBook());
+            allNoteEntries = this.getLocalNoteEntryDao(userPreferences.getCurrentNoteBook()).getAll(userPreferences.getCurrentNoteBook());
         } catch (IndexNotFoundException indexNotFoundEx) {
             allNoteEntries = new ArrayList<>();
             System.err.println("Exception in loadAllNoteEntries - IndexNotfound. " + indexNotFoundEx.getMessage());
@@ -95,7 +102,8 @@ public class ControllerService {
     }
 
     public void deleteNoteEntries(List<NoteEntry> noteEntriesToBeDeleted) throws IOException {
-        this.getLocalNoteEntryDao().deleteNoteEntries(userPreferences.getCurrentNoteBook(), noteEntriesToBeDeleted);
+        this.getLocalNoteEntryDao(userPreferences.getCurrentNoteBook()).deleteNoteEntries(userPreferences.getCurrentNoteBook(),
+                noteEntriesToBeDeleted);
         if (userPreferences.isConnected()) {
             this.getRemoteNoteEntryDao(userPreferences.getUserId(), userPreferences.getUserSecret())
                     .deleteNoteEntries(userPreferences.getCurrentNoteBook(), noteEntriesToBeDeleted);
@@ -128,6 +136,21 @@ public class ControllerService {
 
     public void disconnect() {
         this.getRemoteNoteEntryDao(userPreferences.getUserId(), userPreferences.getUserSecret()).disconnect();
+    }
+
+    public void backup(Consumer<Long> progressConsumer) throws ControllerServiceException {
+        try {
+            // Find All Notebooks
+            List<String> notebooks = ioHelper.getAllNoteBooks();
+            long weightageOfEachNotebook = 100L / notebooks.size();
+            for (String notebook : notebooks) {
+                List<NoteEntry> notes = this.getLocalNoteEntryDao(notebook).getAll(notebook);
+                this.getRemoteNoteEntryDao(userPreferences.getUserId(), userPreferences.getUserSecret()).backup(notebook, notes);
+                progressConsumer.accept(weightageOfEachNotebook);
+            }
+        } catch (Exception ex) {
+            throw new ControllerServiceException("Failed to backup", ex);
+        }
     }
 
 }
