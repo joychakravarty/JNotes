@@ -34,8 +34,8 @@ public class DaoConfig {
     }
 
     // FlyWeight
-    private final Map<String, LocalNoteEntryDao> localDaoMap = new HashMap<>();
-    private final Map<String, RemoteNoteEntryDao> remoteDaoMap = new HashMap<>();
+    public final static Map<String, LocalNoteEntryDao> localDaoMap = new HashMap<>();
+    public final static Map<String, RemoteNoteEntryDao> remoteDaoMap = new HashMap<>();
 
     @Bean(name="localNoteEntryDaoFactory")
     public BiFunction<String, String, LocalNoteEntryDao> getLocalNoteEntryDaoFactory() {

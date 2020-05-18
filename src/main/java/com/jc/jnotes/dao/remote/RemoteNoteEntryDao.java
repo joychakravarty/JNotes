@@ -1,6 +1,7 @@
 package com.jc.jnotes.dao.remote;
 
 import java.util.List;
+import java.util.Map;
 
 import com.jc.jnotes.dao.NoteEntryDao;
 import com.jc.jnotes.model.NoteEntry;
@@ -19,5 +20,15 @@ public interface RemoteNoteEntryDao extends NoteEntryDao {
     boolean backup(String notebook, List<NoteEntry> notes);
 
     void disconnect();
+
+    /**
+     * 
+     * @return 0 - success
+     *  <br/>1 - userId does not exist 
+     *  <br/>2 - userSecret is not correct
+     */
+    int validateUserSecret();
+
+    Map<String, List<NoteEntry>> restore();
 
 }

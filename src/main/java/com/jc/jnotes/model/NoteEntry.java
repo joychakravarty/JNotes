@@ -37,6 +37,16 @@ public class NoteEntry implements Comparable<NoteEntry> {
     private StringProperty info;
     private ObjectProperty<LocalDateTime> lastModifiedTime;
     
+    private String notebook;
+    
+    public String getNotebook() {
+        return notebook;
+    }
+
+    public void setNotebook(String notebook) {
+        this.notebook = notebook;
+    }
+
     public static String generateID() {
         return UUID.randomUUID().toString();
     }

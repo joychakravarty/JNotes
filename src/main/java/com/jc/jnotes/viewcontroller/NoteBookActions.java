@@ -43,13 +43,13 @@ public class NoteBookActions {
         this.ioHelper = ioHelper;
     }
 
-    protected void deleteNoteBook() {
+    protected boolean deleteNoteBook(String noteBookToBeDeleted) {
         try {
             if (noteBookComboBox.getItems().size() == 1) {
                 alertHelper.showErrorAlert(parentStage, "Invalid Operation", "Cannot delete the only NoteBook");
 
             } else {
-                String noteBookToBeDeleted = noteBookComboBox.getSelectionModel().getSelectedItem();
+                //String noteBookToBeDeleted = noteBookComboBox.getSelectionModel().getSelectedItem();
                 Optional<ButtonType> result = alertHelper.showDefaultConfirmation(parentStage,
                         "Delete NoteBook: " + noteBookToBeDeleted + "?", "Note: This is will delete all the data within this noteBook!");
 
@@ -58,16 +58,18 @@ public class NoteBookActions {
                     noteBookComboBox.getSelectionModel().select(0);
                     ioHelper.deleteNoteBook(noteBookToBeDeleted);
                     notificationText.setText(NOTEBOOK_DELETE_STATUS_NOTIFICATION);
+                    return true;
                 }
             }
         } catch (IOException ex) {
             ex.printStackTrace();
             alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to delete NoteBook", "");
         }
+        return false;
     }
 
-    protected void renameNoteBook() {
-        String noteBookToBeRenamed = noteBookComboBox.getSelectionModel().getSelectedItem();
+    protected void renameNoteBook(String noteBookToBeRenamed) {
+        //String noteBookToBeRenamed = noteBookComboBox.getSelectionModel().getSelectedItem();
         TextInputDialog dialog = new TextInputDialog();
         dialog.setHeaderText("Rename NoteBook: " + noteBookToBeRenamed);
         dialog.setContentText("New NoteBook Name");
@@ -85,6 +87,7 @@ public class NoteBookActions {
                 noteBookComboBox.getItems().add(index, newNoteBookName);
                 noteBookComboBox.getItems().remove(noteBookToBeRenamed);
                 noteBookComboBox.getSelectionModel().select(index);
+                return;
             } else {
                 alertHelper.showErrorAlert(parentStage, "Invalid operation", "Please enter a valid NoteBook name");
             }

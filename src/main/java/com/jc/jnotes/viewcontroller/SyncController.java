@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationContext;
@@ -193,7 +194,12 @@ public class SyncController implements Initializable {
         Task<Void> task = new Task<Void>() {
             @Override
             public Void call() throws ControllerServiceException {
-                service.disconnect();
+                Consumer<Long> progressConsumer = (workDone) -> {
+                    updateProgress(workDone, 100L);
+                };
+                progressConsumer.accept(0L);
+                service.restore(progressConsumer);
+                updateProgress(100L, 100L);
                 return null;
             }
         };
@@ -201,18 +207,13 @@ public class SyncController implements Initializable {
         task.setOnRunning((e) -> progressStage.show());
         task.setOnSucceeded((e) -> {
             progressStage.hide();
-            userPreferences.setConnected(false);
-            connectButton.setText("Connect");
-            backupButton.setDisable(true);
-            restoreButton.setDisable(true);
+            alertHelper.showInfoDialog(parentStage, null, "Restore successful!");
             runAfter.run();
         });
         task.setOnFailed((e) -> {
             task.getException().printStackTrace();
             progressStage.hide();
-            // connectButton.setText("Disconnect");
-            alertHelper.showAlertWithExceptionDetails(parentStage, task.getException(), "Failed to restore", "");
-            // userPreferences.setConnected(true);
+            alertHelper.showAlertWithExceptionDetails(parentStage, task.getException(), "Failed to restore.", "");
         });
         new Thread(task).start();
     }
@@ -259,6 +260,14 @@ public class SyncController implements Initializable {
         String userId = userIdTextField.getText();
         String userSecret = userSecretTextField.getText();
         boolean isNewUser = newUserRadioButton.isSelected();
+
+        if (isNewUser && StringUtils.isNotBlank(userPreferences.getUserId())) {
+            Optional<ButtonType> result = alertHelper.showDefaultConfirmation(parentStage,
+                    "You already have a UserId, are you sure you wish to connect using a new UserId?", null);
+            if (!(result.get() == ButtonType.OK)) {
+                return;
+            }
+        }
 
         if (isInputValid(userId, userSecret)) {
             Task<String> task = new Task<String>() {
@@ -308,15 +317,15 @@ public class SyncController implements Initializable {
             alertHelper.showErrorAlert(parentStage, null, "UserId cannot be blank");
             return false;
         }
-        String userIdWarningTxt = "UserId should be between 10-20 characters long. \nUserId should be alpha-numeric." ;
-        if (userId.length() < 10 || userId.length() > 20 || !StringUtils.isAlphanumeric(userId)) {
+        String userIdWarningTxt = "UserId should be between 10-20 characters long. \nUserId should be alpha-numeric and contain atleast 1 number.";
+        if (userId.length() < 10 || userId.length() > 20 || !StringUtils.isAlphanumeric(userId)
+                || !Pattern.compile("[0-9]").matcher(userId).find()) {
             alertHelper.showErrorAlert(parentStage, null, userIdWarningTxt);
             return false;
         }
-        
 
         if (StringUtils.isBlank(userSecret)) {
-            if(newUserRadioButton.isSelected()) {
+            if (newUserRadioButton.isSelected()) {
                 alertHelper.showWarningDialog(parentStage, "Your data will not be encrypted!", null);
             }
             return true;

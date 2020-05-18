@@ -392,6 +392,7 @@ public class NotesController {
 
     private void loadNoteBooks() {
         List<String> directories = ioHelper.getAllNoteBooks();
+        noteBookComboBox.getItems().clear();
         noteBookComboBox.getItems().addAll(directories);
         noteBookComboBox.getSelectionModel().select(userPreferences.getCurrentNoteBook());
     }
@@ -511,6 +512,7 @@ public class NotesController {
             controller.setParentStage(syncStage);
             controller.setRunAfter(() -> {
                 notesTable.refresh();
+                loadNoteBooks();
                 if(userPreferences.isConnected()) {
                     updateConnectionImageBasedOnFlag(true);
                 }else {
@@ -585,12 +587,21 @@ public class NotesController {
 
     @FXML
     protected void deleteNoteBook() {
-        noteBookActions.deleteNoteBook();
+        String noteBookToBeDeleted = noteBookComboBox.getSelectionModel().getSelectedItem();
+        boolean status = noteBookActions.deleteNoteBook(noteBookToBeDeleted);
+        if(status) {
+            service.clearCachedNotebook(noteBookToBeDeleted);
+        }
     }
 
     @FXML
     protected void renameNoteBook() {
-        noteBookActions.renameNoteBook();
+        String noteBookToBeRenamed = noteBookComboBox.getSelectionModel().getSelectedItem();
+        noteBookActions.renameNoteBook(noteBookToBeRenamed);
+        String noteBookSelected = noteBookComboBox.getSelectionModel().getSelectedItem();
+        if(!noteBookSelected.equals(noteBookToBeRenamed)) {
+            service.clearCachedNotebook(noteBookToBeRenamed);
+        }
     }
 
     @FXML
