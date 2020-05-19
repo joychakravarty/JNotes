@@ -1,29 +1,32 @@
 # JNotes
 
 ## Description:
-  This is a desktop application which allows quick-access/lookup to your key-value-info type of data.  
+  JNotes is a desktop application which allows quick-access/lookup to your key-value-info type of data.  
   Example:  
-  Key: "Prd hostname"  Value: "yxz123"  Info: ""    
-  Key: "Acceptance Webapp url"  Value: "https://accServer:8445/mywebapp"  Info: "notEncryptedNotImportantPassword". 
-  
-  (Or you may want to have a notebook for learning Dutch language like word-meaning-setences). 
-  Key: "snel"  Value: "fast"  Info: "JNotes is fast \n JNotes is snel". 
+  Its perfect for day-to-day loopup notes at work  
+  Key: "shared drive location to success"  Value: "\\Some\impossible\to\remember\path" Info: "release the files when done!" 
+    
+  Or you have a notebook for learning Dutch and you can store something like word-meaning-setences  
+  Key: "snel"  Value: "fast"  Info: "JNotes is snel -> JNotes is fast"  
+    
+  As a developer I even have a notebook for my favourite GIT commands and a notebook for my favourite DB queries 
+  Key: "squash"  Value: "git rebase -i HEAD~X"  Info: "use fixup instead of squash". 
 
 ## Purpose:
   There are several application to store Notes but they are more like "title-body" or "content-multiple tags". JNotes offers one of a kind: "key-value-content".  
-  Usually I use OneNote and have a table to store this kind of data but I use OneNote for other daily activity as well like jotting down my analysis of a Prod Issue, during this time I do not wish to move away from that page to find my "Acceptance Webapp url", this is why I built JNotes, its my lookup table!   
+  Usually I used to use OneNote and have a table to store this kind of data but I use OneNote for other daily activity as well like jotting down my analysis of a Prod Issue, during this time I do not wish to move away from that page just to find some frequently used password, this is why I built JNotes, its my lookup table!   
   
 ## Why JNotes:
   - It's keyboard friendly. TIP: Use shortcuts as much as possible, I built it for Keyboard poeple like me. 
   - Lookup table without fast search is no fun, so JNotes is quick. Try it.  
   - It's a Java based application, so if you have Java 11 or higher you can simply run the .jar without any installation.  
-  - You can store your notes in cloud for free and forever. You can choose to encrypt your notes while storing in cloud, making it secure ensuring privacy.    
+  - You can store your notes in cloud for free and forever. You can choose to encrypt your notes while storing in cloud, ensuring your data privacy.      
   - Its open source - https://github.com/joychakravarty/JNotes/edit/master/README.md - so fork it and customize it.  
  
  ## Run JNotes
   - Install Java 11 or above (verify using java -version)  
   - Download the uber jar JNotes-YourOS.jar from the milestone folder based on your OS.  
-  - Run java -jar JNotes-YourOS.jar  
+  - Simply double click the jar or Run "java -jar JNotes-YourOS.jar"  
    
  ## Build and run (for Developers)
     mvn clean install  
@@ -48,7 +51,7 @@
   - Java 11.0.6  
   - JavaFX (openjfx) + FXML 13 (GUI controls)  
   - Lucene 8.5.0 (Data Access - data is written on your disk)  
-  - Cassandra (Astra by Datastax)  
+  - Cassandra (Astra by Datastax - 6.8.0)  
   - JUnit 5.2  
   - Spring 5.2.2
   - SceneBuilder 8.5.0 (Design UI)  
