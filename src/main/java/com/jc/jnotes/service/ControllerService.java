@@ -179,8 +179,10 @@ public class ControllerService {
             long weightageOfEachNotebook = 100L / notebooks.size();
             long progress = 0;
             for (String notebook : notebooks) {
+                RemoteNoteEntryDao remoteDao = this.getRemoteNoteEntryDao(userPreferences.getUserId(), userPreferences.getUserSecret());
                 List<NoteEntry> notes = this.getLocalNoteEntryDao(notebook).getAll(notebook);
-                this.getRemoteNoteEntryDao(userPreferences.getUserId(), userPreferences.getUserSecret()).backup(notebook, notes);
+                remoteDao.deleteNotebook(notebook);
+                remoteDao.backup(notebook, notes);
                 progress += weightageOfEachNotebook;
                 progressConsumer.accept(progress);
             }
@@ -238,10 +240,13 @@ public class ControllerService {
     }
 
     public void renameNotebook(String notebookToBeRenamed, String newNotebookName) throws IOException {
+        final List<NoteEntry> localNoteEntries = this.getLocalNoteEntryDao(notebookToBeRenamed).getAll(notebookToBeRenamed);
         ioHelper.moveNotebook(notebookToBeRenamed, newNotebookName);
         this.invalidateLocalDao(notebookToBeRenamed);
         if (userPreferences.isConnected()) {
-            this.getRemoteNoteEntryDao(userPreferences.getUserId(), userPreferences.getUserSecret()).renameNotebook(notebookToBeRenamed, newNotebookName);
+            RemoteNoteEntryDao remoteDao = this.getRemoteNoteEntryDao(userPreferences.getUserId(), userPreferences.getUserSecret());
+            remoteDao.deleteNotebook(notebookToBeRenamed);
+            remoteDao.backup(newNotebookName, localNoteEntries);
         }
     }
 

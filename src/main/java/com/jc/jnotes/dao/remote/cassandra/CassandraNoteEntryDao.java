@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -214,13 +215,6 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
         String cqlStr = String.format(DELETE_NOTEBOOK, userId);
         sessionManager.getClientSession().execute(SimpleStatement.builder(cqlStr).addPositionalValues(notebookToBeDeleted).build());
     }
-    
-    @Override
-    public void renameNotebook(String notebookToBeRenamed, String newNotebookName) {
-        List<NoteEntry> notes = this.getAll(notebookToBeRenamed);
-        this.deleteNotebook(notebookToBeRenamed);
-        this.backup(newNotebookName, notes);
-    }
 
     @Override
     public boolean backup(String notebook, List<NoteEntry> notes) {
@@ -268,6 +262,9 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
             return 1;
         } else {
             String encryptedValidationText = row.getString("encrypted_validation_text");
+            if(VALIDATION_TEXT.equals(encryptedValidationText) && StringUtils.isNotBlank(userEncryptionKey)) {
+                return 2;
+            }
             if (VALIDATION_TEXT.equals(EncryptionUtil.decrypt(userEncryptionKey, encryptedValidationText))) {
                 String addNoteEntryCQL = String.format(ADD_NOTE_ENTRY, userId);
                 preparedAddNoteEntry = sessionManager.getClientSession().prepare(addNoteEntryCQL);

@@ -39,8 +39,6 @@ public interface RemoteNoteEntryDao extends NoteEntryDao {
 
     void disconnect();
     
-    void renameNotebook(String notebookToBeRenamed, String newNotebookName);
-    
     void deleteNotebook(String notebookToBeDeleted);
 
     /**

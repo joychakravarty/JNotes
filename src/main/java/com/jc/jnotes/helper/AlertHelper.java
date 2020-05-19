@@ -154,7 +154,9 @@ public class AlertHelper {
     public void showAboutJNotesDialog() {
         Alert alert = new Alert(AlertType.INFORMATION);
         alert.setTitle("About " + APP_NAME);
-        String headerText = "Author: Joy Chakravarty";
+        alert.getDialogPane().setMinWidth(500);
+        alert.setWidth(500);
+        String headerText = "JNotes is a desktop application which allows quick-access/lookup to your key-value-info type of data.\nDeveloped by: Joy Chakravarty";
         if (StringUtils.isNotBlank(CURRENT_VERSION)) {
             headerText = headerText + "\n" + APP_NAME + " Version: " + CURRENT_VERSION;
         }
