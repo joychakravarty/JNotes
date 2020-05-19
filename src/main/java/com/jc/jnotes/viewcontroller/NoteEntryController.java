@@ -1,14 +1,34 @@
+/*
+ * This file is part of JNotes. Copyright (C) 2020  Joy Chakravarty
+ * 
+ * JNotes is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * JNotes is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with JNotes.  If not, see <https://www.gnu.org/licenses/>.
+ * 
+ * 
+ */
 package com.jc.jnotes.viewcontroller;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationContext;
 
-import com.jc.jnotes.dao.NoteEntryDaoFactory;
+import com.jc.jnotes.JNotesApplication;
 import com.jc.jnotes.helper.AlertHelper;
 import com.jc.jnotes.model.NoteEntry;
+import com.jc.jnotes.service.ControllerService;
+import com.jc.jnotes.service.ControllerServiceException;
 
 import javafx.application.Platform;
 import javafx.event.EventHandler;
@@ -34,13 +54,17 @@ public class NoteEntryController implements Initializable {
     public static final String MODE_EDIT = "MODE_EDIT";
 
     private NoteEntry noteEntry;
-    private Stage parentStage;
-    //private ObservableList<NoteEntry> noteEntryList;
+    // private ObservableList<NoteEntry> noteEntryList;
     private String mode;
-    
-    private Runnable runAfter;
 
-    private final AlertHelper alertHelper = new AlertHelper();
+    // To Be Set By Caller
+    private Stage parentStage;
+
+    // Spring Dependencies
+    private ControllerService service;
+    private AlertHelper alertHelper;
+
+    private Runnable runAfter;
 
     @FXML
     private TextField keyField;
@@ -60,7 +84,14 @@ public class NoteEntryController implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        prepareDependencies();
         addAccelerators();
+    }
+
+    private void prepareDependencies() {
+        ApplicationContext applicationContext = JNotesApplication.getAppicationContext();
+        service = applicationContext.getBean(ControllerService.class);
+        alertHelper = applicationContext.getBean(AlertHelper.class);
     }
 
     private void addAccelerators() {
@@ -87,7 +118,7 @@ public class NoteEntryController implements Initializable {
     public void setParentStage(Stage parentStage) {
         this.parentStage = parentStage;
     }
-    
+
     public void setRunAfter(Runnable runAfter) {
         this.runAfter = runAfter;
     }
@@ -112,15 +143,13 @@ public class NoteEntryController implements Initializable {
             noteEntry.setInfo(infoField.getText());
             try {
                 if (MODE_ADD.equals(mode)) {
-                    NoteEntryDaoFactory.getNoteEntryDao().addNoteEntry(noteEntry);
-                }else {
-                    NoteEntryDaoFactory.getNoteEntryDao().editNoteEntry(noteEntry);
+                    service.addNoteEntry(noteEntry);
+                } else {
+                    service.editNoteEntry(noteEntry);
                 }
                 runAfter.run();
-            } catch (IOException ex) {
-                ex.printStackTrace();
+            } catch (ControllerServiceException ex) {
                 alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to save", "");
-                
             }
             parentStage.close();
         }
@@ -133,10 +162,11 @@ public class NoteEntryController implements Initializable {
 
     private boolean isInputValid() {
         if (StringUtils.isBlank(keyField.getText())) {
-            alertHelper.showErrorAlert(parentStage, "Key cannot be blank", "");
+            alertHelper.showErrorAlert(parentStage, null, "Key cannot be blank");
             return false;
         } else {
             return true;
         }
     }
+
 }

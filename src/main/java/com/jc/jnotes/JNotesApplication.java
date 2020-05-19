@@ -1,11 +1,36 @@
+/*
+ * This file is part of JNotes. Copyright (C) 2020  Joy Chakravarty
+ * 
+ * JNotes is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * JNotes is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ *  along with JNotes.  If not, see <https://www.gnu.org/licenses/>.
+ * 
+ * 
+ */
 package com.jc.jnotes;
 
+import static com.jc.jnotes.JNotesConstants.APP_NAME;
+
 import java.io.InputStream;
+import java.net.URL;
+
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import com.jc.jnotes.helper.AlertHelper;
 import com.jc.jnotes.viewcontroller.NotesController;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -13,19 +38,27 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
 /**
- * This class launches the JavaFX UI for JNotes 
+ * This class launches the JavaFX UI for JNotes
  * 
  * @author Joy
  */
 public class JNotesApplication extends Application {
 
-    private final AlertHelper alertHelper = new AlertHelper();
+    private static AnnotationConfigApplicationContext applicationContext = null;
+
+    private AlertHelper alertHelper = null;
 
     @Override
     public void start(Stage stage) {
-        stage.setTitle(JNotesPreferences.DEFAULT_APP_NAME);
+        System.out.println("Starting JNotes...");
+        applicationContext = new AnnotationConfigApplicationContext();
+        applicationContext.register(AppConfig.class);
+        applicationContext.refresh();
+   
+        alertHelper = applicationContext.getBean(AlertHelper.class);
+        stage.setTitle(APP_NAME);
 
-        InputStream iconInputStream = JNotesApplication.class.getResourceAsStream("/images/spiral-booklet.png");
+        InputStream iconInputStream = JNotesApplication.getResourceAsStream("/images/spiral-booklet.png");
         if (iconInputStream != null) {
             stage.getIcons().add(new Image(iconInputStream));
         }
@@ -33,8 +66,16 @@ public class JNotesApplication extends Application {
         loadNotes(stage);
     }
 
+    @Override
+    public void stop() {
+        System.out.println("Stopping JNotes");
+        applicationContext.close();
+        Platform.exit();
+    }
+
     /**
      * This main method is NOT the starting point for the jar file. @see JNotesMain
+     * 
      * @param args
      */
     public static void main(String[] args) {
@@ -44,16 +85,29 @@ public class JNotesApplication extends Application {
     public void loadNotes(Stage stage) {
         try {
             FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(JNotesApplication.class.getResource("viewcontroller/Notes.fxml"));
+            loader.setLocation(JNotesApplication.getResource("viewcontroller/Notes.fxml"));
             BorderPane rootPane = (BorderPane) loader.load();
+            NotesController notesController = loader.getController();
+            notesController.setParentStage(stage);
             Scene scene = new Scene(rootPane);
             stage.setScene(scene);
             stage.show();
-            NotesController notesController = loader.getController();
-            notesController.setParentStage(stage);
         } catch (Exception ex) {
             ex.printStackTrace();
             alertHelper.showErrorAlert(stage, "Could not load notes", ex.getMessage());
         }
     }
+
+    public static InputStream getResourceAsStream(String resouceName) {
+        return JNotesApplication.class.getResourceAsStream(resouceName);
+    }
+
+    public static URL getResource(String resouceName) {
+        return JNotesApplication.class.getResource(resouceName);
+    }
+
+    public static ApplicationContext getAppicationContext() {
+        return applicationContext;
+    }
+
 }

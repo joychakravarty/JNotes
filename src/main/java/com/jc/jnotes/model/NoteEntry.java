@@ -1,3 +1,21 @@
+/*
+ * This file is part of JNotes. Copyright (C) 2020  Joy Chakravarty
+ * 
+ * JNotes is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * JNotes is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with JNotes.  If not, see <https://www.gnu.org/licenses/>.
+ * 
+ * 
+ */
 package com.jc.jnotes.model;
 
 import java.time.LocalDateTime;
@@ -13,6 +31,8 @@ import javafx.beans.property.StringProperty;
 
 
 /**
+ * 
+ * Model class used by both JavaFX UI and also by DAO classes.
  * 
  * @author Joy C
  *
@@ -37,11 +57,25 @@ public class NoteEntry implements Comparable<NoteEntry> {
     private StringProperty info;
     private ObjectProperty<LocalDateTime> lastModifiedTime;
     
+    private String notebook;
+    
+    public String getNotebook() {
+        return notebook;
+    }
+
+    public void setNotebook(String notebook) {
+        this.notebook = notebook;
+    }
+
     public static String generateID() {
         return UUID.randomUUID().toString();
     }
     
     public NoteEntry(String id, String key, String value, String info){
+        this(id, key, value, info, LocalDateTime.now());
+    }
+    
+    public NoteEntry(String id, String key, String value, String info, LocalDateTime lastModifiedTime){
         if(id==null){
             throw new IllegalArgumentException("NoteEntry id cannot be null");
         }
@@ -49,7 +83,7 @@ public class NoteEntry implements Comparable<NoteEntry> {
         this.key = new SimpleStringProperty(key==null?StringUtils.EMPTY:key);
         this.value = new SimpleStringProperty(value==null?StringUtils.EMPTY:value);
         this.info = new SimpleStringProperty(info==null?StringUtils.EMPTY:info);
-        this.lastModifiedTime = new SimpleObjectProperty<LocalDateTime>(LocalDateTime.now());
+        this.lastModifiedTime = new SimpleObjectProperty<LocalDateTime>(lastModifiedTime);
     }
     
     public String getId(){
