@@ -5,7 +5,7 @@ Shortcuts:
     Ctrl+E - Edit note
     Ctrl+S - Save note changes. (also for in-line edits)  
     Ctrl+D - Delete selected notes  
-    Ctrl+X - Export NoteBook to CSV  
+    Ctrl+X - Export Notebook to CSV  
     Ctrl+I - Import CSV/Properties to current Notebook  
     Ctrl+F - Takes you to search field  
     Ctrl+C - Copies the selected cell value
@@ -14,4 +14,17 @@ Shortcuts:
     Ctrl+Q - Quit JNotes     
         
 License:
-    https://github.com/joychakravarty/JNotes/blob/master/LICENSE
+    Copyright (C) 2020  Joy Chakravarty [joy.chakravarty84@gmail.com]
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>

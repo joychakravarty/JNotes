@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -17,7 +18,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.jc.jnotes.UserPreferences;
-import com.jc.jnotes.dao.DaoConfig;
 import com.jc.jnotes.dao.local.LocalNoteEntryDao;
 import com.jc.jnotes.dao.remote.RemoteNoteEntryDao;
 import com.jc.jnotes.helper.IOHelper;
@@ -41,26 +41,42 @@ public class ControllerService {
     private BiFunction<String, String, LocalNoteEntryDao> localNoteEntryDaoFactory;
 
     @Autowired
+    @Qualifier("remoteNoteEntryDaoFactory")
+    private BiFunction<String, String, RemoteNoteEntryDao> remoteNoteEntryDaoFactory;
+
+    @Autowired
+    @Qualifier("localDaoInvalidator")
+    private BiConsumer<String, String> localDaoInvalidator;
+
+    @Autowired
+    @Qualifier("remoteDaoInvalidator")
+    private BiConsumer<String, String> remoteDaoInvalidator;
+
+    @Autowired
     private IOHelper ioHelper;
 
     public LocalNoteEntryDao getLocalNoteEntryDao(String notebook) {
         return localNoteEntryDaoFactory.apply(userPreferences.getBasePath(), notebook);
     }
 
-    @Autowired
-    @Qualifier("remoteNoteEntryDaoFactory")
-    private BiFunction<String, String, RemoteNoteEntryDao> remoteNoteEntryDaoFactory;
-
     public RemoteNoteEntryDao getRemoteNoteEntryDao(String userId, String userSecret) {
         return remoteNoteEntryDaoFactory.apply(userId, userSecret);
     }
 
+    public void invalidateLocalDao(String notebook) {
+        localDaoInvalidator.accept(userPreferences.getBasePath(), notebook);
+    }
+
+    public void invalidateRemoteDao(String userId, String userSecret) {
+        remoteDaoInvalidator.accept(userId, userSecret);
+    }
+
     public void addNoteEntry(NoteEntry noteEntry) throws ControllerServiceException {
         try {
-            this.getLocalNoteEntryDao(userPreferences.getCurrentNoteBook()).addNoteEntry(userPreferences.getCurrentNoteBook(), noteEntry);
+            this.getLocalNoteEntryDao(userPreferences.getCurrentNotebook()).addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry);
             if (userPreferences.isConnected()) {
                 this.getRemoteNoteEntryDao(userPreferences.getUserId(), userPreferences.getUserSecret())
-                        .addNoteEntry(userPreferences.getCurrentNoteBook(), noteEntry);
+                        .addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -70,10 +86,10 @@ public class ControllerService {
 
     public void editNoteEntry(NoteEntry noteEntry) throws ControllerServiceException {
         try {
-            this.getLocalNoteEntryDao(userPreferences.getCurrentNoteBook()).editNoteEntry(userPreferences.getCurrentNoteBook(), noteEntry);
+            this.getLocalNoteEntryDao(userPreferences.getCurrentNotebook()).editNoteEntry(userPreferences.getCurrentNotebook(), noteEntry);
             if (userPreferences.isConnected()) {
                 this.getRemoteNoteEntryDao(userPreferences.getUserId(), userPreferences.getUserSecret())
-                        .editNoteEntry(userPreferences.getCurrentNoteBook(), noteEntry);
+                        .editNoteEntry(userPreferences.getCurrentNotebook(), noteEntry);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -84,7 +100,7 @@ public class ControllerService {
     public List<NoteEntry> searchNotes(String searchTxt, boolean searchInfoAlso) {
         List<NoteEntry> notes;
         try {
-            notes = this.getLocalNoteEntryDao(userPreferences.getCurrentNoteBook()).searchNotes(searchTxt, searchInfoAlso);
+            notes = this.getLocalNoteEntryDao(userPreferences.getCurrentNotebook()).searchNotes(searchTxt, searchInfoAlso);
         } catch (Exception ex) {
             ex.printStackTrace();
             notes = Collections.emptyList();
@@ -95,7 +111,7 @@ public class ControllerService {
     public List<NoteEntry> getAll() throws ControllerServiceException {
         List<NoteEntry> allNoteEntries;
         try {
-            allNoteEntries = this.getLocalNoteEntryDao(userPreferences.getCurrentNoteBook()).getAll(userPreferences.getCurrentNoteBook());
+            allNoteEntries = this.getLocalNoteEntryDao(userPreferences.getCurrentNotebook()).getAll(userPreferences.getCurrentNotebook());
         } catch (IndexNotFoundException indexNotFoundEx) {
             allNoteEntries = new ArrayList<>();
             System.err.println("Exception in loadAllNoteEntries - IndexNotfound. " + indexNotFoundEx.getMessage());
@@ -107,11 +123,11 @@ public class ControllerService {
     }
 
     public void deleteNoteEntries(List<NoteEntry> noteEntriesToBeDeleted) throws IOException {
-        this.getLocalNoteEntryDao(userPreferences.getCurrentNoteBook()).deleteNoteEntries(userPreferences.getCurrentNoteBook(),
+        this.getLocalNoteEntryDao(userPreferences.getCurrentNotebook()).deleteNoteEntries(userPreferences.getCurrentNotebook(),
                 noteEntriesToBeDeleted);
         if (userPreferences.isConnected()) {
             this.getRemoteNoteEntryDao(userPreferences.getUserId(), userPreferences.getUserSecret())
-                    .deleteNoteEntries(userPreferences.getCurrentNoteBook(), noteEntriesToBeDeleted);
+                    .deleteNoteEntries(userPreferences.getCurrentNotebook(), noteEntriesToBeDeleted);
         }
     }
 
@@ -142,7 +158,10 @@ public class ControllerService {
     }
 
     public void disconnect() {
-        this.getRemoteNoteEntryDao(userPreferences.getUserId(), userPreferences.getUserSecret()).disconnect();
+        String userId = userPreferences.getUserId();
+        String userSecret = userPreferences.getUserSecret();
+        this.getRemoteNoteEntryDao(userId, userSecret).disconnect();
+        this.invalidateRemoteDao(userId, userSecret);
     }
 
     /**
@@ -156,7 +175,7 @@ public class ControllerService {
      */
     public void backup(Consumer<Long> progressConsumer) throws ControllerServiceException {
         try {
-            List<String> notebooks = ioHelper.getAllNoteBooks();
+            List<String> notebooks = ioHelper.getAllNotebooks();
             long weightageOfEachNotebook = 100L / notebooks.size();
             long progress = 0;
             for (String notebook : notebooks) {
@@ -171,29 +190,32 @@ public class ControllerService {
     }
 
     /**
-     * As this overwrites all local noteEntries with the cloud noteEntries, we export the local notebooks first.
-     * 1. fetches all remote notes<br>
+     * As this overwrites all local noteEntries with the cloud noteEntries, we export the local notebooks first. 1. fetches
+     * all remote notes<br>
      * 2. associates progress weight to each notebook<br>
-     * 3. gets all local noteEntries for each notebook<br> 
-     * 4. Upserts all noteEntries for each notebook into local store<br> 
+     * 3. gets all local noteEntries for each notebook<br>
+     * 4. Upserts all noteEntries for each notebook into local store<br>
      * 
-     * @param progressConsumer - callback
+     * @param progressConsumer
+     *            - callback
      * @throws ControllerServiceException
      */
     public void restore(Consumer<Long> progressConsumer) throws ControllerServiceException {
         try {
-            Map<String, List<NoteEntry>> notebookMap = this.getRemoteNoteEntryDao(userPreferences.getUserId(), userPreferences.getUserSecret()).restore();
+            Map<String, List<NoteEntry>> notebookMap = this
+                    .getRemoteNoteEntryDao(userPreferences.getUserId(), userPreferences.getUserSecret()).restore();
             long weightageOfEachNotebook = 100L / notebookMap.size();
-            
+
             Set<String> notebookNames = notebookMap.keySet();
             long progress = 0;
             for (String notebook : notebookNames) {
                 List<NoteEntry> remoteNotes = notebookMap.get(notebook);
                 LocalNoteEntryDao localDao = this.getLocalNoteEntryDao(notebook);
                 List<NoteEntry> localNotes = localDao.getAll(notebook);
-                HashSet<String> lookupSetOfLocalNoteEntries = localNotes.stream().map((noteEntry)->noteEntry.getId()).collect(Collectors.toCollection(HashSet::new));
+                HashSet<String> lookupSetOfLocalNoteEntries = localNotes.stream().map((noteEntry) -> noteEntry.getId())
+                        .collect(Collectors.toCollection(HashSet::new));
                 for (NoteEntry remoteNote : remoteNotes) {
-                    if(lookupSetOfLocalNoteEntries.contains(remoteNote.getId())) {
+                    if (lookupSetOfLocalNoteEntries.contains(remoteNote.getId())) {
                         localDao.editNoteEntry(notebook, remoteNote);
                     } else {
                         localDao.addNoteEntry(notebook, remoteNote);
@@ -207,8 +229,25 @@ public class ControllerService {
         }
     }
 
-    public void clearCachedNotebook(String notebbok) {
-        DaoConfig.localDaoMap.remove(userPreferences.getBasePath()+"-"+notebbok);
+    public void deleteNotebook(String notebookToBeDeleted) throws IOException {
+        ioHelper.deleteNotebook(notebookToBeDeleted);
+        this.invalidateLocalDao(notebookToBeDeleted);
+        if (userPreferences.isConnected()) {
+            this.getRemoteNoteEntryDao(userPreferences.getUserId(), userPreferences.getUserSecret()).deleteNotebook(notebookToBeDeleted);
+        }
+    }
+
+    public void renameNotebook(String notebookToBeRenamed, String newNotebookName) throws IOException {
+        ioHelper.moveNotebook(notebookToBeRenamed, newNotebookName);
+        this.invalidateLocalDao(notebookToBeRenamed);
+        if (userPreferences.isConnected()) {
+            this.getRemoteNoteEntryDao(userPreferences.getUserId(), userPreferences.getUserSecret()).renameNotebook(notebookToBeRenamed, newNotebookName);
+        }
+    }
+
+    public void addNotebook(String newNotebookName) {
+        ioHelper.addNotebook(newNotebookName);
+
     }
 
 }

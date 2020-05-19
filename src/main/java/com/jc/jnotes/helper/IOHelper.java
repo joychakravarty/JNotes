@@ -1,3 +1,21 @@
+/*
+ * This file is part of JNotes. Copyright (C) 2020  Joy Chakravarty
+ * 
+ * JNotes is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * JNotes is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with JNotes.  If not, see <https://www.gnu.org/licenses/>.
+ * 
+ * 
+ */
 package com.jc.jnotes.helper;
 
 import static com.jc.jnotes.JNotesConstants.APP_NAME;
@@ -48,7 +66,7 @@ public class IOHelper {
      * @param observableNoteEntryList
      * @return String value of the Path of the exported file. null if export failed.
      */
-    public String exportNoteBook(final ObservableList<NoteEntry> observableNoteEntryList) {
+    public String exportNotebook(final ObservableList<NoteEntry> observableNoteEntryList) {
         final Path exportPath = getExportFilePath();
         String exportPathStr = exportPath.toString();
         final File csvOutputFile = exportPath.toFile();
@@ -71,7 +89,7 @@ public class IOHelper {
 
     private Path getExportFilePath() {
         return Paths.get(userPreferences.getBasePath(), APP_NAME,
-                userPreferences.getCurrentNoteBook() + "_" + LocalDateTime.now().format(DATETIME_EXPORT_FORMAT) + EXPORT_FILE_SUFFIX);
+                userPreferences.getCurrentNotebook() + "_" + LocalDateTime.now().format(DATETIME_EXPORT_FORMAT) + EXPORT_FILE_SUFFIX);
     }
 
     private String escapeSpecialCharacters(String str) {
@@ -88,7 +106,7 @@ public class IOHelper {
      * @return null -> invalid fileType selected
      * 
      */
-    public List<NoteEntry> importNoteBook(File importFile) {
+    public List<NoteEntry> importNotebook(File importFile) {
         System.out.println(importFile.getPath());
         List<NoteEntry> noteEntries;
         Path filePath = importFile.toPath();
@@ -143,21 +161,21 @@ public class IOHelper {
 
     }
 
-    public void moveNoteBook(String noteBookToBeRenamed, String newNoteBookName) throws IOException {
-        Path source = Paths.get(userPreferences.getBasePath(), APP_NAME, noteBookToBeRenamed);
-        Files.move(source, source.resolveSibling(newNoteBookName));
+    public void moveNotebook(String notebookToBeRenamed, String newNotebookName) throws IOException {
+        Path source = Paths.get(userPreferences.getBasePath(), APP_NAME, notebookToBeRenamed);
+        Files.move(source, source.resolveSibling(newNotebookName));
     }
 
-    public void deleteNoteBook(String noteBookToBeDeleted) throws IOException {
-        Path pathToBeDeleted = Paths.get(userPreferences.getBasePath(), APP_NAME, noteBookToBeDeleted);
+    public void deleteNotebook(String notebookToBeDeleted) throws IOException {
+        Path pathToBeDeleted = Paths.get(userPreferences.getBasePath(), APP_NAME, notebookToBeDeleted);
         FileUtils.deleteDirectory(pathToBeDeleted.toFile());
     }
 
-    public void addNoteBook(String newNoteBookName) {
-        Paths.get(userPreferences.getBasePath(), APP_NAME, newNoteBookName);
+    public void addNotebook(String newNotebookName) {
+        Paths.get(userPreferences.getBasePath(), APP_NAME, newNotebookName);
     }
 
-    public List<String> getAllNoteBooks() {
+    public List<String> getAllNotebooks() {
         Path directory = Paths.get(userPreferences.getBasePath(), APP_NAME);
         List<String> directories;
         try {

@@ -1,3 +1,21 @@
+/*
+ * This file is part of JNotes. Copyright (C) 2020  Joy Chakravarty
+ * 
+ * JNotes is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * JNotes is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with JNotes.  If not, see <https://www.gnu.org/licenses/>.
+ * 
+ * 
+ */
 package com.jc.jnotes.dao.local.lucene;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -29,7 +47,7 @@ public class LuceneNoteEntryDaoTest {
     @BeforeEach
     void clearIndexes() throws IOException {
         deleteIndexDirectory();
-        dao = new LuceneNoteEntryDao(userPreferences.getBasePath(), TEST_INDX_DIR, userPreferences.getCurrentNoteBook());
+        dao = new LuceneNoteEntryDao(userPreferences.getBasePath(), TEST_INDX_DIR, userPreferences.getCurrentNotebook());
     }
     
     @AfterAll
@@ -48,12 +66,12 @@ public class LuceneNoteEntryDaoTest {
         String id2 = UUID.randomUUID().toString();
         NoteEntry noteEntry1 = new NoteEntry(id1, "key1", "value1", "info1");
         NoteEntry noteEntry2 = new NoteEntry(id2, "key2", "value2", "info2");
-        dao.addNoteEntry(userPreferences.getCurrentNoteBook(), noteEntry1);
-        dao.addNoteEntry(userPreferences.getCurrentNoteBook(), noteEntry2);
+        dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry1);
+        dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry2);
         
-        dao.getAll(userPreferences.getCurrentNoteBook()).stream().forEach((ne) -> System.out.println("addEntrNoteTest: "+ne));
+        dao.getAll(userPreferences.getCurrentNotebook()).stream().forEach((ne) -> System.out.println("addEntrNoteTest: "+ne));
         
-        List<NoteEntry> noteEntries = dao.getAll(userPreferences.getCurrentNoteBook());
+        List<NoteEntry> noteEntries = dao.getAll(userPreferences.getCurrentNotebook());
         assertEquals(2, noteEntries.size());
         
         assertAll("noteEntries",
@@ -71,16 +89,16 @@ public class LuceneNoteEntryDaoTest {
         String id2 = UUID.randomUUID().toString();
         NoteEntry noteEntry1 = new NoteEntry(id1, "key1", "value1", "info1");
         NoteEntry noteEntry2 = new NoteEntry(id2, "key2", "value2", "info2");
-        dao.addNoteEntry(userPreferences.getCurrentNoteBook(), noteEntry1);
-        dao.addNoteEntry(userPreferences.getCurrentNoteBook(), noteEntry2);
+        dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry1);
+        dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry2);
         
-        dao.getAll(userPreferences.getCurrentNoteBook()).stream().forEach((ne) -> System.out.println("deleteNoteEntryTest before: "+ne));
+        dao.getAll(userPreferences.getCurrentNotebook()).stream().forEach((ne) -> System.out.println("deleteNoteEntryTest before: "+ne));
         
-        dao.deleteNoteEntry(userPreferences.getCurrentNoteBook(), noteEntry1);
+        dao.deleteNoteEntry(userPreferences.getCurrentNotebook(), noteEntry1);
         
-        dao.getAll(userPreferences.getCurrentNoteBook()).stream().forEach((ne) -> System.out.println("deleteNoteEntryTest after: "+ne));
+        dao.getAll(userPreferences.getCurrentNotebook()).stream().forEach((ne) -> System.out.println("deleteNoteEntryTest after: "+ne));
         
-        List<NoteEntry> noteEntries = dao.getAll(userPreferences.getCurrentNoteBook());
+        List<NoteEntry> noteEntries = dao.getAll(userPreferences.getCurrentNotebook());
         assertEquals(1, noteEntries.size());
         
         assertAll("noteEntries",
@@ -97,17 +115,17 @@ public class LuceneNoteEntryDaoTest {
         String id2 = UUID.randomUUID().toString();
         NoteEntry noteEntry1 = new NoteEntry(id1, "key1", "value1", "info1");
         NoteEntry noteEntry2 = new NoteEntry(id2, "key2", "value2", "info2");
-        dao.addNoteEntry(userPreferences.getCurrentNoteBook(), noteEntry1);
-        dao.addNoteEntry(userPreferences.getCurrentNoteBook(), noteEntry2);
+        dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry1);
+        dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry2);
         
-        dao.getAll(userPreferences.getCurrentNoteBook()).stream().forEach((ne) -> System.out.println("editEntryNoteTest before: "+ne));
+        dao.getAll(userPreferences.getCurrentNotebook()).stream().forEach((ne) -> System.out.println("editEntryNoteTest before: "+ne));
         
         noteEntry2.setKey("key3");
-        dao.editNoteEntry(userPreferences.getCurrentNoteBook(), noteEntry2);
+        dao.editNoteEntry(userPreferences.getCurrentNotebook(), noteEntry2);
         
-        dao.getAll(userPreferences.getCurrentNoteBook()).stream().forEach((ne) -> System.out.println("editEntryNoteTest after: "+ne));
+        dao.getAll(userPreferences.getCurrentNotebook()).stream().forEach((ne) -> System.out.println("editEntryNoteTest after: "+ne));
         
-        List<NoteEntry> noteEntries = dao.getAll(userPreferences.getCurrentNoteBook());
+        List<NoteEntry> noteEntries = dao.getAll(userPreferences.getCurrentNotebook());
         assertEquals(2, noteEntries.size());
         
         assertAll("noteEntries",
@@ -129,11 +147,11 @@ public class LuceneNoteEntryDaoTest {
         NoteEntry noteEntry1 = new NoteEntry(id1, "key1", "value1", "infoy3");//has - e1, y3-info
         NoteEntry noteEntry2 = new NoteEntry(id2, "key2", "value2", "infoe1");//has - e1-info
         NoteEntry noteEntry3 = new NoteEntry(id3, "key3", "value3", "info3");//has - y3
-        dao.addNoteEntry(userPreferences.getCurrentNoteBook(), noteEntry1);
-        dao.addNoteEntry(userPreferences.getCurrentNoteBook(), noteEntry2);
-        dao.addNoteEntry(userPreferences.getCurrentNoteBook(), noteEntry3);
+        dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry1);
+        dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry2);
+        dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry3);
         
-        List<NoteEntry> noteEntries = dao.getAll(userPreferences.getCurrentNoteBook());
+        List<NoteEntry> noteEntries = dao.getAll(userPreferences.getCurrentNotebook());
         assertEquals(3, noteEntries.size());
         
         noteEntries = dao.searchNotes("e1", false);

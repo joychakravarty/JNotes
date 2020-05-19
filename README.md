@@ -17,6 +17,7 @@
   - It's keyboard friendly. TIP: Use shortcuts as much as possible, I built it for Keyboard poeple like me. 
   - Lookup table without fast search is no fun, so JNotes is quick. Try it.  
   - It's a Java based application, so if you have Java 11 or higher you can simply run the .jar without any installation.  
+  - You can store your notes in cloud for free and forever. You can choose to encrypt your notes while storing in cloud, making it secure ensuring privacy.    
   - Its open source - https://github.com/joychakravarty/JNotes/edit/master/README.md - so fork it and customize it.  
  
  ## Run JNotes
@@ -31,37 +32,41 @@
     mvn clean javafx:run (For this, its good to have javafx sdk installed)
      
  ## Shortcuts: 
-  New note - Ctrl+N  
-  Edit note - Ctrl+E
-  Edit note in-line - Ctrl+S (after editing a note)  
-  Delete note - Ctrl+D  
-  Export NoteBook to CSV - Ctrl+X  
-  Import CSV/Properties to NoteBook - Ctrl+I  
-  
-  Ctrl+F -> takes you to search field  
-  Ctrl+C -> copies the selected cell value  
-  ESC -> Closes diaglogs/popups, clears search  
-  
-  Quit JNotes - Ctrl+Q  
+    Ctrl+N - New note  
+    Ctrl+E - Edit note  
+    Ctrl+S - Save note changes. (also for in-line edits)  
+    Ctrl+D - Delete selected notes  
+    Ctrl+X - Export Notebook to CSV  
+    Ctrl+I - Import CSV/Properties to current Notebook  
+    Ctrl+F - Takes you to search field  
+    Ctrl+C - Copies the selected cell value  
+    Ctrl+Y - Sync settings (with Cloud)  
+    ESC    - Closes diaglogs/popups, clears search  
+    Ctrl+Q - Quit JNotes  
   
  ## Tech Details:
   - Java 11.0.6  
   - JavaFX (openjfx) + FXML 13 (GUI controls)  
   - Lucene 8.5.0 (Data Access - data is written on your disk)  
+  - Cassandra (Astra by Datastax)  
+  - JUnit 5.2  
+  - Spring 5.2.2
   - SceneBuilder 8.5.0 (Design UI)  
   - Maven 3.5.0 (Build)  
   - Eclipse Oxygen 4.7.3a (IDE)  
   - macOS Mojave 10.14.6 (Dev OS - also tested on Windows 10)  
   
  ## Features in progress
-  - NoteBook switching (done)  
+  - Notebook switching (done)  
   - Display info at the bottom (done)
-  - Import/Export noteBooks from/to csv  (done)
-  - Choice to select base folder for Jnotes (Pending)  
-  - Hide password fields from table (Pending)  
-  - Add flashcard feature (Pending)
+  - Import/Export notebooks from/to csv  (done)
+  - Option to store notes in cloud (done)  
   - Delete multiple notes (Done)
   - Edit and save in-line (Done)  
+  - Choice to select base folder for Jnotes (Pending)  
+  - Hide password fields from table (Pending)  
+  - Add flashcard feature (Pending)  
+  - Feel free to email me to request more features.
   
  ## Developer: Joy Chakravarty  
     joy.chakravarty84@gmail.com | https://www.linkedin.com/in/joychak/ 

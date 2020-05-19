@@ -1,3 +1,21 @@
+/*
+ * This file is part of JNotes. Copyright (C) 2020  Joy Chakravarty
+ * 
+ * JNotes is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * JNotes is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with JNotes.  If not, see <https://www.gnu.org/licenses/>.
+ * 
+ * 
+ */
 package com.jc.jnotes;
 
 import static com.jc.jnotes.JNotesConstants.APP_NAME;
@@ -21,7 +39,7 @@ import java.util.prefs.Preferences;
 public class UserPreferences {
 
     private static final String KEY_BASEPATH = "basePath";
-    private static final String KEY_CURRENT_NOTEBOOK = "currentNoteBook";
+    private static final String KEY_CURRENT_NOTEBOOK = "currentNotebook";
     private static final String JNOTES_USER_ID = "jnotes_userid";
     private static final String JNOTES_USER_SECRET = "jnotes_usersecret";
     private static final String JNOTES_IS_CONNECTED = "jnotes_isconnected";
@@ -37,12 +55,12 @@ public class UserPreferences {
         userPreferences.put(KEY_BASEPATH, basePath);
     }
 
-    public String getCurrentNoteBook() {
+    public String getCurrentNotebook() {
         return userPreferences.get(KEY_CURRENT_NOTEBOOK, DEFAULT_NOTEBOOK);
     }
 
-    public void setCurrentNoteBook(String currentNoteBook) {
-        userPreferences.put(KEY_CURRENT_NOTEBOOK, currentNoteBook);
+    public void setCurrentNotebook(String currentNotebook) {
+        userPreferences.put(KEY_CURRENT_NOTEBOOK, currentNotebook);
     }
 
     public void setUserIdAndSecretForOnlineSync(String userId, String secret) {

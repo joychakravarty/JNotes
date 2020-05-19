@@ -1,7 +1,23 @@
+/*
+ * This file is part of JNotes. Copyright (C) 2020  Joy Chakravarty
+ * 
+ * JNotes is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * JNotes is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with JNotes.  If not, see <https://www.gnu.org/licenses/>.
+ * 
+ * 
+ */
 package com.jc.jnotes.dao.remote.cassandra;
 
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
-import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.update;
 import static com.datastax.oss.driver.api.querybuilder.SchemaBuilder.createTable;
 
 import java.time.LocalDateTime;
@@ -30,7 +46,6 @@ import com.datastax.oss.driver.api.core.servererrors.AlreadyExistsException;
 import com.datastax.oss.driver.api.core.servererrors.InvalidQueryException;
 import com.datastax.oss.driver.api.core.type.DataTypes;
 import com.datastax.oss.driver.api.querybuilder.schema.CreateTable;
-import com.datastax.oss.driver.api.querybuilder.update.Update;
 import com.jc.jnotes.dao.remote.RemoteNoteEntryDao;
 import com.jc.jnotes.model.NoteEntry;
 import com.jc.jnotes.util.EncryptionUtil;
@@ -63,6 +78,8 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
     private static final String ADD_NOTE_ENTRY = "INSERT INTO %s (notebook, noteid, key, value, info, lastModifiedTime) VALUES (?,?,?,?,?,?)";
     private static final String EDIT_NOTE_ENTRY = "UPDATE %s SET key = ?, value = ?, info = ?, lastModifiedTime = ? where notebook = ? and noteid = ?";
     private static final String DELETE_NOTE_ENTRIES = "DELETE FROM %s WHERE notebook = ? and noteid IN ?";
+    
+    private static final String DELETE_NOTEBOOK = "DELETE FROM %s WHERE notebook = ?";
 
     private static final String ADD_USERSCRET_VALIDATION_ROW = "INSERT INTO %s_secret_validation (userid, encrypted_validation_text) VALUES (?, ?)";
     private static final String GET_USERSCRET_VALIDATION_ROW = "SELECT * FROM %s_secret_validation WHERE userid = ?";
@@ -190,6 +207,19 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
         List<String> noteIds = noteEntries.stream().map((noteEntry) -> noteEntry.getId()).collect(Collectors.toList());
         String cqlStr = String.format(DELETE_NOTE_ENTRIES, userId);
         sessionManager.getClientSession().execute(SimpleStatement.builder(cqlStr).addPositionalValues(notebook, noteIds).build());
+    }
+    
+    @Override
+    public void deleteNotebook(String notebookToBeDeleted) {
+        String cqlStr = String.format(DELETE_NOTEBOOK, userId);
+        sessionManager.getClientSession().execute(SimpleStatement.builder(cqlStr).addPositionalValues(notebookToBeDeleted).build());
+    }
+    
+    @Override
+    public void renameNotebook(String notebookToBeRenamed, String newNotebookName) {
+        List<NoteEntry> notes = this.getAll(notebookToBeRenamed);
+        this.deleteNotebook(notebookToBeRenamed);
+        this.backup(newNotebookName, notes);
     }
 
     @Override

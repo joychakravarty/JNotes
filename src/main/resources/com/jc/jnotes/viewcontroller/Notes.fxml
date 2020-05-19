@@ -63,17 +63,17 @@
                         </MenuItem>
                     </items>
                   </Menu>
-                  <Menu mnemonicParsing="false" text="NoteBook">
+                  <Menu mnemonicParsing="false" text="Notebook">
                      <items>
-                        <MenuItem mnemonicParsing="false" onAction="#addNewNoteBook" text="New" />
-                        <MenuItem mnemonicParsing="false" onAction="#renameNoteBook" text="Rename" />
-                        <MenuItem mnemonicParsing="false" onAction="#deleteNoteBook" text="Delete" />
-                        <MenuItem mnemonicParsing="false" onAction="#importNoteBook" text="Import">
+                        <MenuItem mnemonicParsing="false" onAction="#addNewNotebook" text="New" />
+                        <MenuItem mnemonicParsing="false" onAction="#renameNotebook" text="Rename" />
+                        <MenuItem mnemonicParsing="false" onAction="#deleteNotebook" text="Delete" />
+                        <MenuItem mnemonicParsing="false" onAction="#importNotebook" text="Import">
                         	<accelerator>
                               <KeyCodeCombination alt="UP" code="I" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                            </accelerator>
                         </MenuItem>
-                        <MenuItem mnemonicParsing="false" onAction="#exportNoteBook" text="Export">
+                        <MenuItem mnemonicParsing="false" onAction="#exportNotebook" text="Export">
                             <accelerator>
                               <KeyCodeCombination alt="UP" code="X" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                            	</accelerator>
@@ -100,7 +100,7 @@
                   </ImageView>
                </graphic>
             </MenuButton>
-            <ComboBox fx:id="noteBookComboBox" prefHeight="27.0" prefWidth="214.0" />
+            <ComboBox fx:id="notebookComboBox" prefHeight="27.0" prefWidth="214.0" />
             <ToggleButton fx:id="sortToggleButton" mnemonicParsing="false" onAction="#sortByModificationDate" prefHeight="27.0" prefWidth="25.0">
                 <graphic>
 	                      <ImageView fitHeight="16.0" fitWidth="16.0" pickOnBounds="true" preserveRatio="true">

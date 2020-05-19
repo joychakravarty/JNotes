@@ -1,3 +1,21 @@
+/*
+ * This file is part of JNotes. Copyright (C) 2020  Joy Chakravarty
+ * 
+ * JNotes is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * JNotes is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with JNotes.  If not, see <https://www.gnu.org/licenses/>.
+ * 
+ * 
+ */
 package com.jc.jnotes.viewcontroller;
 
 import static com.jc.jnotes.JNotesConstants.DATETIME_DISPLAY_FORMAT;
@@ -85,15 +103,15 @@ public class NotesController {
     private Stage parentStage;
 
     private ObservableList<NoteEntry> observableNoteEntryList;
-    
-    //Child stages
+
+    // Child stages
     private Stage noteEntryStage;
     private Stage syncStage;
     private NoteEntry selectedNoteEntry = null;
     private boolean showingSearchedResults = false;
 
     private final Comparator<NoteEntry> comparator = Comparator.comparing((noteEntry) -> noteEntry.getLastModifiedTime());
-    private NoteBookActions noteBookActions;
+    private NotebookActions notebookActions;
 
     // Spring Dependencies
     private UserPreferences userPreferences;
@@ -116,7 +134,7 @@ public class NotesController {
     @FXML
     private Text notificationText;
     @FXML
-    private ComboBox<String> noteBookComboBox;
+    private ComboBox<String> notebookComboBox;
     @FXML
     private MenuButton menuButton;
     @FXML
@@ -148,22 +166,22 @@ public class NotesController {
 
         initilalizeMenuButton();
 
-        initializeNoteBooks();
+        initializeNotebooks();
 
         addAccelerators();
-        
+
         initializeOnlineDataStore();
 
     }
 
     private void initializeOnlineDataStore() {
-        if(userPreferences.getAutoConnect() && StringUtils.isNotBlank(userPreferences.getUserId()) && userPreferences.isConnected()) {
+        if (userPreferences.getAutoConnect() && StringUtils.isNotBlank(userPreferences.getUserId()) && userPreferences.isConnected()) {
             try {
                 service.connect(false, userPreferences.getUserId(), userPreferences.getUserSecret());
                 updateConnectionImageBasedOnFlag(true);
             } catch (ControllerServiceException e) {
                 e.printStackTrace();
-                //alertHelper.showErrorAlert(parentStage, "Failed to connect to Online Database", null);
+                // alertHelper.showErrorAlert(parentStage, "Failed to connect to Online Database", null);
                 userPreferences.setConnected(false);
                 updateConnectionImageBasedOnFlag(false);
             }
@@ -179,16 +197,16 @@ public class NotesController {
         service = applicationContext.getBean(ControllerService.class);
         alertHelper = applicationContext.getBean(AlertHelper.class);
         ioHelper = applicationContext.getBean(IOHelper.class);
-        noteBookActions = new NoteBookActions(alertHelper, ioHelper, parentStage, noteBookComboBox, notificationText);
+        notebookActions = new NotebookActions(service, alertHelper, parentStage, notebookComboBox, notificationText);
     }
 
-    private void initializeNoteBooks() {
-        noteBookComboBox.setTooltip(new Tooltip("Select NoteBook"));
-        loadNoteBooks();
-        noteBookComboBox.setEditable(false);
-        noteBookComboBox.getSelectionModel().selectedItemProperty().addListener((obs, prevNoteBook, selectedNoteBook) -> {
-            if (StringUtils.isNotBlank(selectedNoteBook)) {
-                userPreferences.setCurrentNoteBook(selectedNoteBook);
+    private void initializeNotebooks() {
+        notebookComboBox.setTooltip(new Tooltip("Select Notebook"));
+        loadNotebooks();
+        notebookComboBox.setEditable(false);
+        notebookComboBox.getSelectionModel().selectedItemProperty().addListener((obs, prevNotebook, selectedNotebook) -> {
+            if (StringUtils.isNotBlank(selectedNotebook)) {
+                userPreferences.setCurrentNotebook(selectedNotebook);
                 loadAllNoteEntries();
                 infoField.clear();
             }
@@ -200,7 +218,7 @@ public class NotesController {
             if (event.getCode() == KeyCode.TAB) {
                 event.consume();
                 if (!event.isShiftDown()) {
-                    noteBookComboBox.requestFocus();
+                    notebookComboBox.requestFocus();
                 } else {
                     infoField.requestFocus();
                 }
@@ -248,7 +266,7 @@ public class NotesController {
                         }
                     }
                 } else {
-                    noteBookComboBox.requestFocus();
+                    notebookComboBox.requestFocus();
                 }
             }
         });
@@ -352,7 +370,7 @@ public class NotesController {
             }
 
             // clear selection on click anywhere but on a filled row
-            if (source == null || (source instanceof TableRow && ((TableRow) source).isEmpty())) {
+            if (source == null || (source instanceof TableRow && ((TableRow<?>) source).isEmpty())) {
                 notesTable.getSelectionModel().clearSelection();
                 if (event.getClickCount() == 2 && source != null) {
                     this.addNewNoteEntry();
@@ -379,22 +397,22 @@ public class NotesController {
             }
         });
     }
-    
+
     private void updateConnectionImageBasedOnFlag(boolean isConnectedFLag) {
         InputStream connectionStatusImg;
-        if(isConnectedFLag) {
+        if (isConnectedFLag) {
             connectionStatusImg = JNotesApplication.getResourceAsStream("/images/connected.png");
-        }else {
+        } else {
             connectionStatusImg = JNotesApplication.getResourceAsStream("/images/disconnected.png");
         }
         connectionImage.setImage(new Image(connectionStatusImg));
     }
 
-    private void loadNoteBooks() {
-        List<String> directories = ioHelper.getAllNoteBooks();
-        noteBookComboBox.getItems().clear();
-        noteBookComboBox.getItems().addAll(directories);
-        noteBookComboBox.getSelectionModel().select(userPreferences.getCurrentNoteBook());
+    private void loadNotebooks() {
+        List<String> directories = ioHelper.getAllNotebooks();
+        notebookComboBox.getItems().clear();
+        notebookComboBox.getItems().addAll(directories);
+        notebookComboBox.getSelectionModel().select(userPreferences.getCurrentNotebook());
     }
 
     private void addAccelerators() {
@@ -494,7 +512,7 @@ public class NotesController {
             alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to open NoteEntry Dialog", "");
         }
     }
-    
+
     @FXML
     protected void sync() {
         try {
@@ -512,10 +530,10 @@ public class NotesController {
             controller.setParentStage(syncStage);
             controller.setRunAfter(() -> {
                 notesTable.refresh();
-                loadNoteBooks();
-                if(userPreferences.isConnected()) {
+                loadNotebooks();
+                if (userPreferences.isConnected()) {
                     updateConnectionImageBasedOnFlag(true);
-                }else {
+                } else {
                     updateConnectionImageBasedOnFlag(false);
                 }
             });
@@ -586,32 +604,23 @@ public class NotesController {
     }
 
     @FXML
-    protected void deleteNoteBook() {
-        String noteBookToBeDeleted = noteBookComboBox.getSelectionModel().getSelectedItem();
-        boolean status = noteBookActions.deleteNoteBook(noteBookToBeDeleted);
-        if(status) {
-            service.clearCachedNotebook(noteBookToBeDeleted);
-        }
+    protected void deleteNotebook() {
+        notebookActions.deleteNotebook();
     }
 
     @FXML
-    protected void renameNoteBook() {
-        String noteBookToBeRenamed = noteBookComboBox.getSelectionModel().getSelectedItem();
-        noteBookActions.renameNoteBook(noteBookToBeRenamed);
-        String noteBookSelected = noteBookComboBox.getSelectionModel().getSelectedItem();
-        if(!noteBookSelected.equals(noteBookToBeRenamed)) {
-            service.clearCachedNotebook(noteBookToBeRenamed);
-        }
+    protected void renameNotebook() {
+        notebookActions.renameNotebook();
     }
 
     @FXML
-    protected void addNewNoteBook() {
-        noteBookActions.addNewNoteBook();
+    protected void addNewNotebook() {
+        notebookActions.addNewNotebook();
     }
 
     @FXML
-    protected void exportNoteBook() {
-        String exprtFilePath = ioHelper.exportNoteBook(observableNoteEntryList);
+    protected void exportNotebook() {
+        String exprtFilePath = ioHelper.exportNotebook(observableNoteEntryList);
         if (exprtFilePath != null) {
             notificationText.setText(String.format(EXPORT_SUCCESS_STATUS_NOTIFICATION, exprtFilePath));
         } else {
@@ -620,7 +629,7 @@ public class NotesController {
     }
 
     @FXML
-    protected void importNoteBook() {
+    protected void importNotebook() {
         FileChooser fileChooser = new FileChooser();
         File selectedFile = fileChooser.showOpenDialog(parentStage);
         fileChooser.setInitialDirectory(ioHelper.getBaseDirectory());
@@ -629,7 +638,7 @@ public class NotesController {
         if (selectedFile == null) {
             return;
         }
-        List<NoteEntry> noteEntries = ioHelper.importNoteBook(selectedFile);
+        List<NoteEntry> noteEntries = ioHelper.importNotebook(selectedFile);
         if (noteEntries == null) {
             notificationText.setText(IMPORT_FAILURE_STATUS_NOTIFICATION);
         } else {
