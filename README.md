@@ -52,8 +52,8 @@
   - JavaFX (openjfx) + FXML 13 (GUI controls)  
   - Lucene 8.5.0 (Data Access - data is written on your disk)  
   - Cassandra (Astra by Datastax - 6.8.0)  
-  - JUnit 5.2  
-  - Spring 5.2.2
+  - JUnit 5.5.1  
+  - Spring 5.2.2 [core removed - only used crypto module]
   - SceneBuilder 8.5.0 (Design UI)  
   - Maven 3.5.0 (Build)  
   - Eclipse Oxygen 4.7.3a (IDE)  
@@ -67,7 +67,7 @@
   - Delete multiple notes (Done)
   - Edit and save in-line (Done)  
   - Choice to select base folder for Jnotes (Pending)  
-  - Hide password fields from table (Pending)  
+  - Hide password fields from table (Done)  
   - Add flashcard feature (Pending)  
   - Feel free to email me to request more features.
   
