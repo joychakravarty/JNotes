@@ -26,8 +26,7 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.ApplicationContext;
-
+import static com.jc.jnotes.AppConfig.APP_CONFIG;
 import com.jc.jnotes.JNotesApplication;
 import com.jc.jnotes.UserPreferences;
 import com.jc.jnotes.helper.AlertHelper;
@@ -133,10 +132,9 @@ public class SyncController implements Initializable {
     }
 
     private void prepareDependencies() {
-        ApplicationContext applicationContext = JNotesApplication.getAppicationContext();
-        service = applicationContext.getBean(ControllerService.class);
-        alertHelper = applicationContext.getBean(AlertHelper.class);
-        userPreferences = applicationContext.getBean(UserPreferences.class);
+        service = APP_CONFIG.getControllerService();
+        alertHelper = APP_CONFIG.getAlertHelper();
+        userPreferences = APP_CONFIG.getUserPreferences();
     }
 
     private void addAccelerators() {

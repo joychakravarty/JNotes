@@ -80,7 +80,7 @@
                         </MenuItem>
                      </items>
                   </Menu>
-                  <MenuItem mnemonicParsing="false" onAction="#sync" text="Sync" >
+                  <MenuItem mnemonicParsing="false" onAction="#sync" text="Sync">
                       <accelerator>
                           <KeyCodeCombination alt="UP" code="Y" control="UP" meta="UP" shift="UP" shortcut="DOWN" />
                       </accelerator>
@@ -129,7 +129,7 @@
             <Pane prefHeight="24.0" prefWidth="154.0" HBox.hgrow="ALWAYS" />
             <ImageView fx:id="connectionImage" fitHeight="24.0" fitWidth="24.0" pickOnBounds="true" preserveRatio="true" HBox.hgrow="NEVER">
                <HBox.margin>
-                  <Insets right="5.0" />
+                  <Insets right="5.0" top="2.0" />
                </HBox.margin></ImageView>
          </children>
       </HBox>

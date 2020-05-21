@@ -29,7 +29,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Component;
 
 import com.jc.jnotes.JNotesApplication;
 
@@ -49,7 +48,6 @@ import javafx.stage.Stage;
  * @author Joy C
  *
  */
-@Component
 public class AlertHelper {
 
     /**

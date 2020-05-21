@@ -18,13 +18,13 @@
  */
 package com.jc.jnotes.viewcontroller;
 
+import static com.jc.jnotes.AppConfig.APP_CONFIG;
+
 import java.net.URL;
 import java.util.ResourceBundle;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.ApplicationContext;
 
-import com.jc.jnotes.JNotesApplication;
 import com.jc.jnotes.helper.AlertHelper;
 import com.jc.jnotes.model.NoteEntry;
 import com.jc.jnotes.service.ControllerService;
@@ -36,6 +36,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
@@ -72,6 +73,8 @@ public class NoteEntryController implements Initializable {
     private TextField valueField;
     @FXML
     private TextArea infoField;
+    @FXML
+    private CheckBox passwordFlagField;
 
     @FXML
     private Button saveButton;
@@ -89,9 +92,8 @@ public class NoteEntryController implements Initializable {
     }
 
     private void prepareDependencies() {
-        ApplicationContext applicationContext = JNotesApplication.getAppicationContext();
-        service = applicationContext.getBean(ControllerService.class);
-        alertHelper = applicationContext.getBean(AlertHelper.class);
+        service = APP_CONFIG.getControllerService();
+        alertHelper = APP_CONFIG.getAlertHelper();
     }
 
     private void addAccelerators() {
@@ -129,6 +131,9 @@ public class NoteEntryController implements Initializable {
         keyField.setText(noteEntry.getKey());
         valueField.setText(noteEntry.getValue());
         infoField.setText(noteEntry.getInfo());
+        if ("Y".equals(noteEntry.getPasswordFlag())) {
+            passwordFlagField.setSelected(true);
+        }
     }
 
     public void setMode(String mode) {
@@ -141,6 +146,11 @@ public class NoteEntryController implements Initializable {
             noteEntry.setKey(keyField.getText());
             noteEntry.setValue(valueField.getText());
             noteEntry.setInfo(infoField.getText());
+            if (passwordFlagField.isSelected()) {
+                noteEntry.setPasswordFlag("Y");
+            } else {
+                noteEntry.setPasswordFlag("N");
+            }
             try {
                 if (MODE_ADD.equals(mode)) {
                     service.addNoteEntry(noteEntry);

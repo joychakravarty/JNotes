@@ -1,5 +1,7 @@
 package com.jc.jnotes.service;
 
+import static com.jc.jnotes.AppConfig.APP_CONFIG;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -8,14 +10,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.index.IndexNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
 
 import com.jc.jnotes.UserPreferences;
 import com.jc.jnotes.dao.local.LocalNoteEntryDao;
@@ -25,42 +23,34 @@ import com.jc.jnotes.model.NoteEntry;
 
 /**
  * 
- * Controllers interact with DAO layer via this class.
+ * ViewControllers interact with DAO layer via this class.
  * 
  * @author Joy C
  *
  */
-@Component
 public class ControllerService {
 
-    @Autowired
-    private UserPreferences userPreferences;
+    private final UserPreferences userPreferences;
 
-    @Autowired
-    @Qualifier("localNoteEntryDaoFactory")
-    private BiFunction<String, String, LocalNoteEntryDao> localNoteEntryDaoFactory;
+    private final BiConsumer<String, String> localDaoInvalidator;
 
-    @Autowired
-    @Qualifier("remoteNoteEntryDaoFactory")
-    private BiFunction<String, String, RemoteNoteEntryDao> remoteNoteEntryDaoFactory;
+    private final BiConsumer<String, String> remoteDaoInvalidator;
 
-    @Autowired
-    @Qualifier("localDaoInvalidator")
-    private BiConsumer<String, String> localDaoInvalidator;
+    private final IOHelper ioHelper;
 
-    @Autowired
-    @Qualifier("remoteDaoInvalidator")
-    private BiConsumer<String, String> remoteDaoInvalidator;
-
-    @Autowired
-    private IOHelper ioHelper;
+    public ControllerService(UserPreferences userPreferences, BiConsumer<String, String> localDaoInvalidator, BiConsumer<String, String> remoteDaoInvalidator, IOHelper ioHelper) {
+        this.userPreferences = userPreferences;
+        this.localDaoInvalidator = localDaoInvalidator;
+        this.remoteDaoInvalidator = remoteDaoInvalidator;
+        this.ioHelper = ioHelper;
+    }
 
     public LocalNoteEntryDao getLocalNoteEntryDao(String notebook) {
-        return localNoteEntryDaoFactory.apply(userPreferences.getBasePath(), notebook);
+        return APP_CONFIG.getLocalNoteEntryDao(userPreferences.getBasePath(), notebook);
     }
 
     public RemoteNoteEntryDao getRemoteNoteEntryDao(String userId, String userSecret) {
-        return remoteNoteEntryDaoFactory.apply(userId, userSecret);
+        return APP_CONFIG.getRemoteNoteEntryDao(userId, userSecret);
     }
 
     public void invalidateLocalDao(String notebook) {

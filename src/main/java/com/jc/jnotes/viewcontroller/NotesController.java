@@ -18,9 +18,9 @@
  */
 package com.jc.jnotes.viewcontroller;
 
+import static com.jc.jnotes.AppConfig.APP_CONFIG;
 import static com.jc.jnotes.JNotesConstants.DATETIME_DISPLAY_FORMAT;
 import static com.jc.jnotes.model.NoteEntry.KEY_COL_NAME;
-import static com.jc.jnotes.model.NoteEntry.VALUE_COL_NAME;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,7 +33,6 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.ApplicationContext;
 
 import com.jc.jnotes.JNotesApplication;
 import com.jc.jnotes.UserPreferences;
@@ -81,6 +80,8 @@ import javafx.stage.Stage;
 
 /**
  *
+ * This is the main view controller for JNotes.
+ * 
  * @author Joy C
  *
  */
@@ -192,11 +193,10 @@ public class NotesController {
     }
 
     private void prepareDependencies() {
-        ApplicationContext applicationContext = JNotesApplication.getAppicationContext();
-        userPreferences = applicationContext.getBean(UserPreferences.class);
-        service = applicationContext.getBean(ControllerService.class);
-        alertHelper = applicationContext.getBean(AlertHelper.class);
-        ioHelper = applicationContext.getBean(IOHelper.class);
+        userPreferences = APP_CONFIG.getUserPreferences();
+        service = APP_CONFIG.getControllerService();
+        alertHelper = APP_CONFIG.getAlertHelper();
+        ioHelper = APP_CONFIG.getIOHelper();
         notebookActions = new NotebookActions(service, alertHelper, parentStage, notebookComboBox, notificationText);
     }
 
@@ -324,7 +324,7 @@ public class NotesController {
         keyColumn.setCellValueFactory(new PropertyValueFactory<>(KEY_COL_NAME));
         keyColumn.setCellFactory((tabCol) -> new SaveEnabledTableCell(saveOnEditBiConsumer, 0));
 
-        valueColumn.setCellValueFactory(new PropertyValueFactory<>(VALUE_COL_NAME));
+        valueColumn.setCellValueFactory(new PropertyValueFactory<>("displayValue"));
         valueColumn.setCellFactory((tabCol) -> new SaveEnabledTableCell(saveOnEditBiConsumer, 1));
     }
 
@@ -387,12 +387,15 @@ public class NotesController {
                 if (tablePositions != null && tablePositions.size() > 0) {
                     @SuppressWarnings("unchecked")
                     TablePosition<NoteEntry, ?> tablePosition = tablePositions.get(0);
-                    Object cellData = tablePosition.getTableColumn().getCellData(tablePosition.getRow());
-                    if (cellData != null) {
-                        final ClipboardContent clipboardContent = new ClipboardContent();
-                        clipboardContent.putString(cellData.toString());
-                        Clipboard.getSystemClipboard().setContent(clipboardContent);
+                    String textToBeCopied;
+                    if (tablePosition.getColumn() == 0) {
+                        textToBeCopied = selectedNoteEntry.getKey();
+                    } else {
+                        textToBeCopied = selectedNoteEntry.getValue();
                     }
+                    final ClipboardContent clipboardContent = new ClipboardContent();
+                    clipboardContent.putString(textToBeCopied);
+                    Clipboard.getSystemClipboard().setContent(clipboardContent);
                 }
             }
         });
@@ -477,7 +480,7 @@ public class NotesController {
 
     @FXML
     protected void addNewNoteEntry() {
-        NoteEntry newNoteEntry = new NoteEntry(NoteEntry.generateID(), "", "", "");
+        NoteEntry newNoteEntry = new NoteEntry(NoteEntry.generateID(), "", "", "", "N");
         try {
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(JNotesApplication.getResource("viewcontroller/NoteEntry.fxml"));
