@@ -24,6 +24,7 @@ import static com.jc.jnotes.model.NoteEntry.INFO_COL_NAME;
 import static com.jc.jnotes.model.NoteEntry.KEY_COL_NAME;
 import static com.jc.jnotes.model.NoteEntry.LAST_MODIFIED_TIME_COL_NAME;
 import static com.jc.jnotes.model.NoteEntry.VALUE_COL_NAME;
+import static com.jc.jnotes.model.NoteEntry.PASSWORD_FLAG_COL_NAME;
 
 import java.io.File;
 import java.io.IOException;
@@ -58,7 +59,6 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.springframework.stereotype.Component;
 
 import com.jc.jnotes.dao.local.LocalNoteEntryDao;
 import com.jc.jnotes.model.NoteEntry;
@@ -70,7 +70,6 @@ import com.jc.jnotes.model.NoteEntry;
  * @author Joy C
  *
  */
-@Component
 public class LuceneNoteEntryDao implements LocalNoteEntryDao {
 
     private final Directory indexDir;
@@ -204,7 +203,7 @@ public class LuceneNoteEntryDao implements LocalNoteEntryDao {
         ScoreDoc[] sDocs = topDocs.scoreDocs;
         for (ScoreDoc scoreDoc : sDocs) {
             Document dd = searcher.doc(scoreDoc.doc);
-            NoteEntry noteEntry = new NoteEntry(dd.get(ID_COL_NAME), dd.get(KEY_COL_NAME), dd.get(VALUE_COL_NAME), dd.get(INFO_COL_NAME));
+            NoteEntry noteEntry = new NoteEntry(dd.get(ID_COL_NAME), dd.get(KEY_COL_NAME), dd.get(VALUE_COL_NAME), dd.get(INFO_COL_NAME), dd.get(PASSWORD_FLAG_COL_NAME));
             noteEntry.setLastModifiedTime(LocalDateTime.parse(dd.get(LAST_MODIFIED_TIME_COL_NAME), DATETIME_DISPLAY_FORMAT));
             noteEntries.add(noteEntry);
         }
@@ -217,6 +216,7 @@ public class LuceneNoteEntryDao implements LocalNoteEntryDao {
         document.add(new TextField(KEY_COL_NAME, noteEntry.getKey(), Field.Store.YES));
         document.add(new TextField(VALUE_COL_NAME, noteEntry.getValue(), Field.Store.YES));
         document.add(new TextField(INFO_COL_NAME, noteEntry.getInfo(), Field.Store.YES));
+        document.add(new TextField(PASSWORD_FLAG_COL_NAME, noteEntry.getPasswordFlag(), Field.Store.YES));
         document.add(new StringField(LAST_MODIFIED_TIME_COL_NAME, noteEntry.getLastModifiedTime().format(DATETIME_DISPLAY_FORMAT),
                 Field.Store.YES));
         return document;

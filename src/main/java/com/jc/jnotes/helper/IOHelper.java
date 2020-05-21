@@ -42,8 +42,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import com.jc.jnotes.UserPreferences;
 import com.jc.jnotes.model.NoteEntry;
@@ -52,14 +50,18 @@ import javafx.collections.ObservableList;
 
 /**
  * 
+ * Does file related operations
+ * 
  * @author Joy C
  *
  */
-@Component
 public class IOHelper {
-
-    @Autowired
+    
     private UserPreferences userPreferences;
+    
+    public IOHelper(UserPreferences userPreferences) {
+        this.userPreferences = userPreferences;
+    }
 
     /**
      * 
@@ -88,8 +90,8 @@ public class IOHelper {
     }
 
     private Path getExportFilePath() {
-        return Paths.get(userPreferences.getBasePath(), APP_NAME,
-                userPreferences.getCurrentNotebook() + "_" + LocalDateTime.now().format(DATETIME_EXPORT_FORMAT) + EXPORT_FILE_SUFFIX);
+        return Paths.get(userPreferences.getBasePath(), APP_NAME, userPreferences.getCurrentNotebook() + "_"
+                + LocalDateTime.now().format(DATETIME_EXPORT_FORMAT) + EXPORT_FILE_SUFFIX);
     }
 
     private String escapeSpecialCharacters(String str) {
@@ -130,7 +132,7 @@ public class IOHelper {
             properties.load(new FileReader(importFile));
             noteEntries = properties.entrySet().stream()
                     .map(entry -> new NoteEntry(NoteEntry.generateID(), entry.getKey() == null ? "" : entry.getKey().toString(),
-                            entry.getValue() == null ? "" : entry.getValue().toString(), ""))
+                            entry.getValue() == null ? "" : entry.getValue().toString(), "", "N"))
                     .collect(Collectors.toList());
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -149,7 +151,8 @@ public class IOHelper {
                 String key = record.get(0);
                 String value = record.get(1);
                 String info = record.get(2);
-                NoteEntry noteEntry = new NoteEntry(NoteEntry.generateID(), key, value, info);
+                String passwordFlag = record.get(3);
+                NoteEntry noteEntry = new NoteEntry(NoteEntry.generateID(), key, value, info, passwordFlag);
                 noteEntries.add(noteEntry);
 
             }

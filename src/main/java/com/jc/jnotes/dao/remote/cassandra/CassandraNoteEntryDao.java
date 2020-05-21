@@ -30,8 +30,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import com.datastax.oss.driver.api.core.ConsistencyLevel;
 import com.datastax.oss.driver.api.core.cql.BatchStatement;
@@ -53,7 +51,7 @@ import com.jc.jnotes.util.EncryptionUtil;
 
 /**
  * 
- * This class uses (DataStax-Astra) CassandraDB as the Remote DataStore.<br>
+ * This class uses Cassandra DB as the Remote DataStore.<br>
  * As this desktop application interacts directly with the DB (without a indirection of a web service), the credentials
  * to connect are shipped with JNotes.<br>
  * So it is tricky but vital to ensure data-privacy (Challenge Accepted). The aim is to be as much hacker-proof as
@@ -65,21 +63,25 @@ import com.jc.jnotes.util.EncryptionUtil;
  * @author Joy C
  *
  */
-@Component
 public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
 
-    @Autowired
-    private CassandraSessionManager sessionManager;
+    private final CassandraSessionManager sessionManager;
+    private final String userId;
+    private final String userEncryptionKey;
 
-    private String userId;
-    private String userEncryptionKey;
+    public CassandraNoteEntryDao(CassandraSessionManager sessionManager, String userId, String userEncKey) {
+        System.out.println("Creating CassandraNoteEntryDao : " + userId + "-" + userEncKey);
+        this.sessionManager = sessionManager;
+        this.userId = userId;
+        this.userEncryptionKey = userEncKey;
+    }
 
     private static final String GET_ALL_NOTES_FOR_NOTEBOOK = "SELECT * FROM %s WHERE notebook = ?";
     private static final String GET_ALL_NOTES_FOR_USER = "SELECT * FROM %s";
-    private static final String ADD_NOTE_ENTRY = "INSERT INTO %s (notebook, noteid, key, value, info, lastModifiedTime) VALUES (?,?,?,?,?,?)";
-    private static final String EDIT_NOTE_ENTRY = "UPDATE %s SET key = ?, value = ?, info = ?, lastModifiedTime = ? where notebook = ? and noteid = ?";
+    private static final String ADD_NOTE_ENTRY = "INSERT INTO %s (notebook, noteid, key, value, info, passwordFlag, lastModifiedTime) VALUES (?,?,?,?,?,?,?)";
+    private static final String EDIT_NOTE_ENTRY = "UPDATE %s SET key = ?, value = ?, info = ?, passwordFlag = ?, lastModifiedTime = ? where notebook = ? and noteid = ?";
     private static final String DELETE_NOTE_ENTRIES = "DELETE FROM %s WHERE notebook = ? and noteid IN ?";
-    
+
     private static final String DELETE_NOTEBOOK = "DELETE FROM %s WHERE notebook = ?";
 
     private static final String ADD_USERSCRET_VALIDATION_ROW = "INSERT INTO %s_secret_validation (userid, encrypted_validation_text) VALUES (?, ?)";
@@ -89,25 +91,21 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
 
     private PreparedStatement preparedAddNoteEntry;
 
-    public CassandraNoteEntryDao(String userId, String userEncKey) {
-        System.out.println("Creating CassandraNoteEntryDao : " + userId + "-" + userEncKey);
-        this.userId = userId;
-        this.userEncryptionKey = userEncKey;
-    }
-
     /**
      * 1. Create userId table which will store the notes for this user. - a user's userId also acts as his password, without
-     * knowing the userId no one can access/modify its content. 2. Create userId_secret_validation table which will store
-     * the validation text in an encrypted form using user's secret-key - this is to ensure that user doesn't accidentally
-     * connect using a wrong secret. Note: secret itself is not stored! 3. Store the secret-validation-text in an encrypted
-     * form. 4. Create prepared statement for Add Note Entry. (TODO: create prepared statement for Edit and Delete as well)
+     * knowing the userId no one can access/modify its content.<br>
+     * 2. Create userId_secret_validation table which will store the validation text in an encrypted form using user's
+     * secret-key - this is to ensure that user doesn't accidentally connect using a wrong secret. Note: secret itself is
+     * not stored!<br>
+     * 3. Store the secret-validation-text in an encrypted form.<br>
+     * 4. Create prepared statement for Add Note Entry. (TODO: create prepared statement for Edit and Delete as well)<br>
      */
     @Override
     public boolean setupUser(String userId) {
         try {
             CreateTable createUserTable = createTable(userId).withPartitionKey("notebook", DataTypes.TEXT)
                     .withClusteringColumn("noteid", DataTypes.TEXT).withColumn("key", DataTypes.TEXT).withColumn("value", DataTypes.TEXT)
-                    .withColumn("info", DataTypes.TEXT).withColumn("lastModifiedTime", DataTypes.TIMESTAMP);
+                    .withColumn("info", DataTypes.TEXT).withColumn("passwordFlag", DataTypes.TEXT).withColumn("lastModifiedTime", DataTypes.TIMESTAMP);
 
             sessionManager.getClientSession().execute(createUserTable.build());
 
@@ -152,7 +150,7 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
     private NoteEntry toNoteEntry(Row row) {
         NoteEntry noteEntry = new NoteEntry(row.getString("noteid"), EncryptionUtil.decrypt(userEncryptionKey, row.getString("key")),
                 EncryptionUtil.decrypt(userEncryptionKey, row.getString("value")),
-                EncryptionUtil.decrypt(userEncryptionKey, row.getString("info")),
+                EncryptionUtil.decrypt(userEncryptionKey, row.getString("info")), row.getString("passwordFlag"),
                 LocalDateTime.ofInstant(row.getInstant("lastModifiedTime"), ZoneOffset.UTC));
         noteEntry.setNotebook(row.getString("notebook"));
         return noteEntry;
@@ -177,7 +175,7 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
     private BoundStatement getBoundStatementForAddNoteEntry(String notebook, NoteEntry noteEntry) {
         return preparedAddNoteEntry.bind(notebook, noteEntry.getId(), EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getKey()),
                 EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getValue()),
-                EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getInfo()), noteEntry.getLastModifiedTime().toInstant(ZoneOffset.UTC));
+                EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getInfo()), noteEntry.getPasswordFlag(), noteEntry.getLastModifiedTime().toInstant(ZoneOffset.UTC));
     }
 
     @Override
@@ -189,6 +187,7 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
                         .addPositionalValues(EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getKey()),
                                 EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getValue()),
                                 EncryptionUtil.encrypt(userEncryptionKey, noteEntry.getInfo()),
+                                noteEntry.getPasswordFlag(),
                                 noteEntry.getLastModifiedTime().toInstant(ZoneOffset.UTC), notebook, noteEntry.getId())
                         .build());
 
@@ -209,7 +208,7 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
         String cqlStr = String.format(DELETE_NOTE_ENTRIES, userId);
         sessionManager.getClientSession().execute(SimpleStatement.builder(cqlStr).addPositionalValues(notebook, noteIds).build());
     }
-    
+
     @Override
     public void deleteNotebook(String notebookToBeDeleted) {
         String cqlStr = String.format(DELETE_NOTEBOOK, userId);
@@ -240,9 +239,8 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
         List<Row> rows = results.all();
         Map<String, List<NoteEntry>> notebookMap = new HashMap<>();
         if (rows != null && !rows.isEmpty()) {
-            rows.stream()
-            .map(row -> toNoteEntry(row))
-            .forEach((noteEntry) -> notebookMap.computeIfAbsent(noteEntry.getNotebook(), (k) -> new ArrayList<NoteEntry>()).add(noteEntry));
+            rows.stream().map(row -> toNoteEntry(row)).forEach(
+                    (noteEntry) -> notebookMap.computeIfAbsent(noteEntry.getNotebook(), (k) -> new ArrayList<NoteEntry>()).add(noteEntry));
         }
         return notebookMap;
     }
@@ -262,7 +260,7 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
             return 1;
         } else {
             String encryptedValidationText = row.getString("encrypted_validation_text");
-            if(VALIDATION_TEXT.equals(encryptedValidationText) && StringUtils.isNotBlank(userEncryptionKey)) {
+            if (VALIDATION_TEXT.equals(encryptedValidationText) && StringUtils.isNotBlank(userEncryptionKey)) {
                 return 2;
             }
             if (VALIDATION_TEXT.equals(EncryptionUtil.decrypt(userEncryptionKey, encryptedValidationText))) {

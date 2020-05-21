@@ -18,43 +18,135 @@
  */
 package com.jc.jnotes;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
+import static com.jc.jnotes.JNotesConstants.APP_NAME;
 
-import com.jc.jnotes.dao.DaoConfig;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.BiConsumer;
+
+import com.jc.jnotes.dao.local.LocalNoteEntryDao;
+import com.jc.jnotes.dao.local.lucene.LuceneNoteEntryDao;
+import com.jc.jnotes.dao.remote.RemoteNoteEntryDao;
+import com.jc.jnotes.dao.remote.cassandra.CassandraNoteEntryDao;
+import com.jc.jnotes.dao.remote.cassandra.CassandraSessionManager;
 import com.jc.jnotes.helper.AlertHelper;
 import com.jc.jnotes.helper.IOHelper;
 import com.jc.jnotes.service.ControllerService;
 
-@Configuration
-@Import({ DaoConfig.class })
 /**
- * The main Spring Application Configuration file.
+ * Custom Application Configuration file.
  * 
  * @author Joy C
  *
  */
-public class AppConfig {
+public final class AppConfig {
 
-    @Bean
+    public static final AppConfig APP_CONFIG = new AppConfig();
+
+    // Flyweight - Cached Prototype Beans
+    // Local Dao's per basePath-notebook
+    private final static Map<String, LocalNoteEntryDao> LOCAL_DAO_CACHE = new HashMap<>();
+    // Remote Dao's per user-secret
+    private final static Map<String, RemoteNoteEntryDao> REMOTE_DAO_CACHE = new HashMap<>();
+
+    // Singleton beans
+    private final UserPreferences userPreferences;
+    private final AlertHelper alertHelper;
+    private final IOHelper ioHelper;
+    private final ControllerService controllerService;
+    private final CassandraSessionManager cassandraSessionManager;
+    private final BiConsumer<String, String> localDaoInvalidator;
+    private final BiConsumer<String, String> remoteDaoInvalidator;
+
+    private AppConfig() {
+        try {
+            userPreferences = new UserPreferences();
+            alertHelper = new AlertHelper();
+            ioHelper = new IOHelper(userPreferences);
+            localDaoInvalidator = (basePath, notebook) -> {
+                String cacheKey = generateDaoCacheKey(basePath, notebook);
+                LOCAL_DAO_CACHE.remove(cacheKey);
+            };
+            remoteDaoInvalidator = (userId, userSecret) -> {
+                String cacheKey = generateDaoCacheKey(userId, userSecret);
+                REMOTE_DAO_CACHE.remove(cacheKey);
+            };
+            controllerService = new ControllerService(userPreferences, localDaoInvalidator, remoteDaoInvalidator, ioHelper);
+            cassandraSessionManager = new CassandraSessionManager(JNotesApplication.getResourceAsStream("/cassandra/connection.properties"));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            throw new RuntimeException("Failed to load up AppConfig for JNotes : " + ex.getMessage());
+        }
+    }
+
+    private String generateDaoCacheKey(String... keys) {
+        return String.join("-", keys);
+    }
+
     public UserPreferences getUserPreferences() {
-        return new UserPreferences();
+        return userPreferences;
     }
 
-    @Bean
     public AlertHelper getAlertHelper() {
-        return new AlertHelper();
+        return alertHelper;
     }
 
-    @Bean
     public IOHelper getIOHelper() {
-        return new IOHelper();
+        return ioHelper;
     }
 
-    @Bean
     public ControllerService getControllerService() {
-        return new ControllerService();
+        return controllerService;
+    }
+
+    // Cached Prototype bean
+    public LocalNoteEntryDao getLocalNoteEntryDao(String basePath, String notebook) {
+        String cacheKey = generateDaoCacheKey(basePath, notebook);
+        if (LOCAL_DAO_CACHE.get(cacheKey) != null) {
+            return LOCAL_DAO_CACHE.get(cacheKey);
+        } else {
+            LocalNoteEntryDao noteEntryDao;
+            try {
+                noteEntryDao = new LuceneNoteEntryDao(basePath, APP_NAME, notebook);
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+            LOCAL_DAO_CACHE.put(cacheKey, noteEntryDao);
+            return noteEntryDao;
+        }
+    }
+
+    // Cached Prototype bean
+    public RemoteNoteEntryDao getRemoteNoteEntryDao(String userId, String userSecret) {
+        String cacheKey = generateDaoCacheKey(userId, userSecret);
+        if (REMOTE_DAO_CACHE.get(cacheKey) != null) {
+            return REMOTE_DAO_CACHE.get(cacheKey);
+        } else {
+            RemoteNoteEntryDao noteEntryDao = new CassandraNoteEntryDao(cassandraSessionManager, userId, userSecret);
+            REMOTE_DAO_CACHE.put(cacheKey, noteEntryDao);
+            return noteEntryDao;
+        }
+    }
+
+    public BiConsumer<String, String> getLocalDaoInvalidator() {
+        return localDaoInvalidator;
+    }
+
+    public BiConsumer<String, String> getRemoteDaoInvalidator() {
+        return remoteDaoInvalidator;
+    }
+
+    public CassandraSessionManager getCassandraSessionManager() {
+        return cassandraSessionManager;
+    }
+
+    /**
+     * Do all cleanup activity here
+     */
+    public void close() {
+        cassandraSessionManager.cleanup();
     }
 
 }

@@ -34,7 +34,6 @@ import org.junit.jupiter.api.Test;
 
 import com.jc.jnotes.UserPreferences;
 import com.jc.jnotes.dao.local.LocalNoteEntryDao;
-import com.jc.jnotes.dao.local.lucene.LuceneNoteEntryDao;
 import com.jc.jnotes.model.NoteEntry;
 
 public class LuceneNoteEntryDaoTest {
@@ -64,8 +63,8 @@ public class LuceneNoteEntryDaoTest {
     void addEntryNoteTest() throws IOException {
         String id1 = UUID.randomUUID().toString();
         String id2 = UUID.randomUUID().toString();
-        NoteEntry noteEntry1 = new NoteEntry(id1, "key1", "value1", "info1");
-        NoteEntry noteEntry2 = new NoteEntry(id2, "key2", "value2", "info2");
+        NoteEntry noteEntry1 = new NoteEntry(id1, "key1", "value1", "info1", "N");
+        NoteEntry noteEntry2 = new NoteEntry(id2, "key2", "value2", "info2", "Y");
         dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry1);
         dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry2);
         
@@ -87,8 +86,8 @@ public class LuceneNoteEntryDaoTest {
     void deleteNoteEntryTest() throws IOException {
         String id1 = UUID.randomUUID().toString();
         String id2 = UUID.randomUUID().toString();
-        NoteEntry noteEntry1 = new NoteEntry(id1, "key1", "value1", "info1");
-        NoteEntry noteEntry2 = new NoteEntry(id2, "key2", "value2", "info2");
+        NoteEntry noteEntry1 = new NoteEntry(id1, "key1", "value1", "info1", "N");
+        NoteEntry noteEntry2 = new NoteEntry(id2, "key2", "value2", "info2", "Y");
         dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry1);
         dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry2);
         
@@ -113,8 +112,8 @@ public class LuceneNoteEntryDaoTest {
     void editEntryNoteTest() throws IOException {
         String id1 = UUID.randomUUID().toString();
         String id2 = UUID.randomUUID().toString();
-        NoteEntry noteEntry1 = new NoteEntry(id1, "key1", "value1", "info1");
-        NoteEntry noteEntry2 = new NoteEntry(id2, "key2", "value2", "info2");
+        NoteEntry noteEntry1 = new NoteEntry(id1, "key1", "value1", "info1", "N");
+        NoteEntry noteEntry2 = new NoteEntry(id2, "key2", "value2", "info2", "Y");
         dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry1);
         dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry2);
         
@@ -144,9 +143,9 @@ public class LuceneNoteEntryDaoTest {
         String id1 = UUID.randomUUID().toString();
         String id2 = UUID.randomUUID().toString();
         String id3 = UUID.randomUUID().toString();
-        NoteEntry noteEntry1 = new NoteEntry(id1, "key1", "value1", "infoy3");//has - e1, y3-info
-        NoteEntry noteEntry2 = new NoteEntry(id2, "key2", "value2", "infoe1");//has - e1-info
-        NoteEntry noteEntry3 = new NoteEntry(id3, "key3", "value3", "info3");//has - y3
+        NoteEntry noteEntry1 = new NoteEntry(id1, "key1", "value1", "infoy3", "N");//has - e1, y3-info
+        NoteEntry noteEntry2 = new NoteEntry(id2, "key2", "value2", "infoe1", "Y");//has - e1-info
+        NoteEntry noteEntry3 = new NoteEntry(id3, "key3", "value3", "info3", "N");//has - y3
         dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry1);
         dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry2);
         dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry3);

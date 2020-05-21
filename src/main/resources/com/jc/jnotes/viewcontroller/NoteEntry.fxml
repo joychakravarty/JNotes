@@ -1,16 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.control.Tooltip?>
 
 <AnchorPane id="AnchorPane" prefHeight="402.0" prefWidth="413.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.jc.jnotes.viewcontroller.NoteEntryController">
    <children>
-      <TextField fx:id="keyField" layoutX="6.0" layoutY="14.0" prefHeight="27.0" prefWidth="403.0" />
-      <TextField fx:id="valueField" layoutX="6.0" layoutY="52.0" prefHeight="27.0" prefWidth="403.0" />
-      <TextArea fx:id="infoField" layoutX="11.0" layoutY="93.0" prefHeight="259.0" prefWidth="392.0" />
-      <Button fx:id="saveButton" layoutX="286.0" layoutY="362.0" mnemonicParsing="false" onAction="#saveNoteEntry" text="Save" />
-      <Button fx:id="cancelButton" layoutX="342.0" layoutY="362.0" mnemonicParsing="false" onAction="#cancel" text="Cancel" />
+      <TextField fx:id="keyField" layoutX="6.0" layoutY="14.0" prefHeight="27.0" prefWidth="403.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="5.0" />
+      <TextField fx:id="valueField" layoutX="6.0" layoutY="52.0" prefHeight="27.0" prefWidth="375.0" AnchorPane.leftAnchor="5.0" />
+      <CheckBox fx:id="passwordFlagField" layoutX="387.0" layoutY="57.0" mnemonicParsing="false" AnchorPane.leftAnchor="387.0" AnchorPane.rightAnchor="2.0" >
+          <tooltip>
+              <Tooltip text="Mask text?" />
+          </tooltip>
+      </CheckBox>
+      <TextArea fx:id="infoField" layoutX="11.0" layoutY="93.0" prefHeight="259.0" prefWidth="392.0" AnchorPane.leftAnchor="5.0" AnchorPane.rightAnchor="5.0" />
+      <Button fx:id="saveButton" defaultButton="true" layoutX="293.0" layoutY="362.0" mnemonicParsing="false" onAction="#saveNoteEntry" text="Save" />
+      <Button fx:id="cancelButton" layoutX="342.0" layoutY="362.0" mnemonicParsing="false" onAction="#cancel" text="Cancel" AnchorPane.rightAnchor="5.0" />
    </children>
 </AnchorPane>
