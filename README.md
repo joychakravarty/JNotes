@@ -26,8 +26,16 @@
  ## Run JNotes
   - Install Java 11 or above (verify using java -version)  
   - Download the uber jar JNotes-YourOS.jar from the milestone folder based on your OS.  
-  - Simply double click the jar or Run "java -jar JNotes-YourOS.jar"  
-   
+  - Run "java -jar JNotes-YourOS.jar" or simply double click the Jar
+  
+  Detailed instructions for Windows users:  
+    - Download Java from https://download.java.net/java/GA/jdk14.0.1/664493ef4a6946b186ff29eb326336a2/7/GPL/openjdk-14.0.1_windows-x64_bin.zip  
+    - Move the downloaded zip from your Downloads folder to C:\Users\yourUserName\ and Unzip it there.  
+    - Download https://github.com/joychakravarty/JNotes/blob/master/milestone/JNotes-windows.jar and also place it in C:\Users\yourUserName\  
+    - On your desktop create a txt file called startJNotes.txt, edit and write:  
+        C:\Users\yourUserName\jdk-14.0.1\bin\java -jar C:\Users\yourUserName\JNotes-windows.jar   
+    - Rename startJNotes.txt to startJNotes.bat and double click the .bat file.  
+ 
  ## Build and run (for Developers)
     mvn clean install  
     java -jar JNotes.jar   
