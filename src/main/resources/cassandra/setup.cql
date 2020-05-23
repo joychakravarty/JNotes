@@ -1,3 +1,4 @@
+CREATE KEYSPACE IF NOT EXISTS jnotes WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
 use jnotes;
 
 DROP ROLE IF EXISTS jnotes_client;
