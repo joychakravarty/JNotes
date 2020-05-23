@@ -2,14 +2,13 @@
 
 ## Description:
   JNotes is a desktop application which allows quick-access/lookup to your key-value-info type of data.  
-  Example:  
-  Its perfect for day-to-day loopup notes at work  
+  Its perfect for day-to-day loopup notes at work:  
   Key: "shared drive location to success"  Value: "\\Some\impossible\to\remember\path" Info: "release the files when done!" 
     
-  Or you have a notebook for learning Dutch and you can store something like word-meaning-setences  
+  Or you have a notebook for learning Dutch and you can store something like word-meaning-setences:  
   Key: "snel"  Value: "fast"  Info: "JNotes is snel -> JNotes is fast"  
     
-  As a developer I even have a notebook for my favourite GIT commands and a notebook for my favourite DB queries 
+  As a developer I even have a notebook for my favourite GIT commands and a notebook for my favourite DB queries:  
   Key: "squash"  Value: "git rebase -i HEAD~X"  Info: "use fixup instead of squash". 
 
 ## Purpose:
