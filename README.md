@@ -28,7 +28,7 @@
   - Download the uber jar JNotes-YourOS.jar from the milestone folder based on your OS.  
   - Run "java -jar JNotes-YourOS.jar" or simply double click the Jar
   
-  Detailed instructions for Windows users:  
+  ###### Detailed instructions for Windows users:  
     - Download Java from https://download.java.net/java/GA/jdk14.0.1/664493ef4a6946b186ff29eb326336a2/7/GPL/openjdk-14.0.1_windows-x64_bin.zip  
     - Move the downloaded zip from your Downloads folder to C:\Users\yourUserName\ and Unzip it there.  
     - Download https://github.com/joychakravarty/JNotes/blob/master/milestone/JNotes-windows.jar and also place it in C:\Users\yourUserName\  
