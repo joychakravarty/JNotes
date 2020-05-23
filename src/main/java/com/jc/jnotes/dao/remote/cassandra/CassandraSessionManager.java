@@ -20,11 +20,15 @@ package com.jc.jnotes.dao.remote.cassandra;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetSocketAddress;
 import java.util.Properties;
 
 import javax.annotation.PreDestroy;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.datastax.oss.driver.api.core.CqlSession;
+import com.datastax.oss.driver.shaded.guava.common.net.HostAndPort;
 import com.jc.jnotes.JNotesApplication;
 import com.jc.jnotes.util.EncryptionUtil;
 
@@ -38,6 +42,11 @@ public class CassandraSessionManager {
     private String clientPassword;
 
     private CqlSession clientCqlSession;
+    
+    //Only for Testing with local
+    private static final String LOCALHOST = "127.0.0.1";
+    private static final int DEFAULT_LOCAL_CASSANDRA_PORT = 9042;
+    private static final String DEFAULT_LOCAL_DC = "datacenter1";
 
     public CassandraSessionManager(InputStream resourceAsStream) throws IOException {
         Properties prop = new Properties();
@@ -57,8 +66,15 @@ public class CassandraSessionManager {
 
     public CqlSession getClientSession() {
         if (clientCqlSession == null) {
-            clientCqlSession = CqlSession.builder().withCloudSecureConnectBundle(JNotesApplication.getResource(securityBundle))
-                    .withKeyspace(keyspace).withAuthCredentials(clientUserName, EncryptionUtil.locallyDecrypt(clientPassword)).build();
+            if (StringUtils.isBlank(securityBundle)) {
+                HostAndPort parsed = HostAndPort.fromString(LOCALHOST);
+                InetSocketAddress inetSocketAddress = new InetSocketAddress(parsed.getHost(), parsed.getPortOrDefault(DEFAULT_LOCAL_CASSANDRA_PORT));
+                clientCqlSession = CqlSession.builder().addContactPoint(inetSocketAddress).withLocalDatacenter(DEFAULT_LOCAL_DC)
+                        .withAuthCredentials(clientUserName, EncryptionUtil.locallyDecrypt(clientPassword)).build();
+            } else {
+                clientCqlSession = CqlSession.builder().withCloudSecureConnectBundle(JNotesApplication.getResource(securityBundle))
+                        .withKeyspace(keyspace).withAuthCredentials(clientUserName, EncryptionUtil.locallyDecrypt(clientPassword)).build();
+            }
         }
         return clientCqlSession;
     }

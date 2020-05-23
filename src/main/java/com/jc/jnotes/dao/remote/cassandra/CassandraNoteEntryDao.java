@@ -76,16 +76,16 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
         this.userEncryptionKey = userEncKey;
     }
 
-    private static final String GET_ALL_NOTES_FOR_NOTEBOOK = "SELECT * FROM %s WHERE notebook = ?";
-    private static final String GET_ALL_NOTES_FOR_USER = "SELECT * FROM %s";
-    private static final String ADD_NOTE_ENTRY = "INSERT INTO %s (notebook, noteid, key, value, info, passwordFlag, lastModifiedTime) VALUES (?,?,?,?,?,?,?)";
-    private static final String EDIT_NOTE_ENTRY = "UPDATE %s SET key = ?, value = ?, info = ?, passwordFlag = ?, lastModifiedTime = ? where notebook = ? and noteid = ?";
-    private static final String DELETE_NOTE_ENTRIES = "DELETE FROM %s WHERE notebook = ? and noteid IN ?";
+    private static final String GET_ALL_NOTES_FOR_NOTEBOOK = "SELECT * FROM %s.%s WHERE notebook = ?";
+    private static final String GET_ALL_NOTES_FOR_USER = "SELECT * FROM %s.%s";
+    private static final String ADD_NOTE_ENTRY = "INSERT INTO %s.%s (notebook, noteid, key, value, info, passwordFlag, lastModifiedTime) VALUES (?,?,?,?,?,?,?)";
+    private static final String EDIT_NOTE_ENTRY = "UPDATE %s.%s SET key = ?, value = ?, info = ?, passwordFlag = ?, lastModifiedTime = ? where notebook = ? and noteid = ?";
+    private static final String DELETE_NOTE_ENTRIES = "DELETE FROM %s.%s WHERE notebook = ? and noteid IN ?";
 
-    private static final String DELETE_NOTEBOOK = "DELETE FROM %s WHERE notebook = ?";
+    private static final String DELETE_NOTEBOOK = "DELETE FROM %s.%s WHERE notebook = ?";
 
-    private static final String ADD_USERSCRET_VALIDATION_ROW = "INSERT INTO %s_secret_validation (userid, encrypted_validation_text) VALUES (?, ?)";
-    private static final String GET_USERSCRET_VALIDATION_ROW = "SELECT * FROM %s_secret_validation WHERE userid = ?";
+    private static final String ADD_USERSCRET_VALIDATION_ROW = "INSERT INTO %s.%s_secret_validation (userid, encrypted_validation_text) VALUES (?, ?)";
+    private static final String GET_USERSCRET_VALIDATION_ROW = "SELECT * FROM %s.%s_secret_validation WHERE userid = ?";
 
     private static final String VALIDATION_TEXT = "CheckSecret123";
 
@@ -103,13 +103,13 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
     @Override
     public boolean setupUser(String userId) {
         try {
-            CreateTable createUserTable = createTable(userId).withPartitionKey("notebook", DataTypes.TEXT)
+            CreateTable createUserTable = createTable(sessionManager.getKeyspace(), userId).withPartitionKey("notebook", DataTypes.TEXT)
                     .withClusteringColumn("noteid", DataTypes.TEXT).withColumn("key", DataTypes.TEXT).withColumn("value", DataTypes.TEXT)
                     .withColumn("info", DataTypes.TEXT).withColumn("passwordFlag", DataTypes.TEXT).withColumn("lastModifiedTime", DataTypes.TIMESTAMP);
 
             sessionManager.getClientSession().execute(createUserTable.build());
 
-            CreateTable createUserSecretValidationTable = createTable(userId + "_secret_validation")
+            CreateTable createUserSecretValidationTable = createTable(sessionManager.getKeyspace(), userId + "_secret_validation")
                     .withPartitionKey("userid", DataTypes.TEXT).withColumn("encrypted_validation_text", DataTypes.TEXT);
 
             sessionManager.getClientSession().execute(createUserSecretValidationTable.build());
@@ -119,10 +119,10 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
             return false;
         }
 
-        sessionManager.getClientSession().execute(SimpleStatement.builder(String.format(ADD_USERSCRET_VALIDATION_ROW, userId))
+        sessionManager.getClientSession().execute(SimpleStatement.builder(String.format(ADD_USERSCRET_VALIDATION_ROW, sessionManager.getKeyspace(), userId))
                 .addPositionalValues(userId, EncryptionUtil.encrypt(userEncryptionKey, VALIDATION_TEXT)).build());
 
-        String addNoteEntryCQL = String.format(ADD_NOTE_ENTRY, userId);
+        String addNoteEntryCQL = String.format(ADD_NOTE_ENTRY, sessionManager.getKeyspace(), userId);
         preparedAddNoteEntry = sessionManager.getClientSession().prepare(addNoteEntryCQL);
 
         return true;
@@ -131,7 +131,7 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
     @Override
     public List<NoteEntry> getAll(String notebook) {
 
-        String cqlStr = String.format(GET_ALL_NOTES_FOR_NOTEBOOK, userId);
+        String cqlStr = String.format(GET_ALL_NOTES_FOR_NOTEBOOK, sessionManager.getKeyspace(), userId);
         ResultSet results;
         try {
             results = sessionManager.getClientSession().execute(SimpleStatement.builder(cqlStr).addPositionalValues(notebook).build());
@@ -180,7 +180,7 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
 
     @Override
     public long editNoteEntry(String notebook, NoteEntry noteEntry) {
-        String cqlStr = String.format(EDIT_NOTE_ENTRY, userId);
+        String cqlStr = String.format(EDIT_NOTE_ENTRY, sessionManager.getKeyspace(), userId);
 
         sessionManager.getClientSession()
                 .execute(SimpleStatement.builder(cqlStr)
@@ -205,13 +205,13 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
     @Override
     public void deleteNoteEntries(String notebook, List<NoteEntry> noteEntries) {
         List<String> noteIds = noteEntries.stream().map((noteEntry) -> noteEntry.getId()).collect(Collectors.toList());
-        String cqlStr = String.format(DELETE_NOTE_ENTRIES, userId);
+        String cqlStr = String.format(DELETE_NOTE_ENTRIES, sessionManager.getKeyspace(), userId);
         sessionManager.getClientSession().execute(SimpleStatement.builder(cqlStr).addPositionalValues(notebook, noteIds).build());
     }
 
     @Override
     public void deleteNotebook(String notebookToBeDeleted) {
-        String cqlStr = String.format(DELETE_NOTEBOOK, userId);
+        String cqlStr = String.format(DELETE_NOTEBOOK, sessionManager.getKeyspace(), userId);
         sessionManager.getClientSession().execute(SimpleStatement.builder(cqlStr).addPositionalValues(notebookToBeDeleted).build());
     }
 
@@ -219,7 +219,7 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
     public boolean backup(String notebook, List<NoteEntry> notes) {
         Iterable<BatchableStatement<?>> statements = notes.stream()
                 .map((noteEntry) -> getBoundStatementForAddNoteEntry(notebook, noteEntry)).collect(Collectors.toList());
-        BatchStatement batch = new BatchStatementBuilder(BatchType.UNLOGGED).setKeyspace(sessionManager.getKeyspace())
+        BatchStatement batch = new BatchStatementBuilder(BatchType.UNLOGGED)
                 .setConsistencyLevel(ConsistencyLevel.LOCAL_QUORUM).addStatements(statements).build();
         sessionManager.getClientSession().execute(batch);
         return true;
@@ -228,7 +228,7 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
     @Override
     public Map<String, List<NoteEntry>> restore() {
 
-        String cqlStr = String.format(GET_ALL_NOTES_FOR_USER, userId);
+        String cqlStr = String.format(GET_ALL_NOTES_FOR_USER, sessionManager.getKeyspace(), userId);
         ResultSet results;
         try {
             results = sessionManager.getClientSession().execute(SimpleStatement.builder(cqlStr).build());
@@ -254,7 +254,7 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
     public int validateUserSecret() {
         ResultSet results;
         results = sessionManager.getClientSession()
-                .execute(SimpleStatement.builder(String.format(GET_USERSCRET_VALIDATION_ROW, userId)).addPositionalValues(userId).build());
+                .execute(SimpleStatement.builder(String.format(GET_USERSCRET_VALIDATION_ROW, sessionManager.getKeyspace(), userId)).addPositionalValues(userId).build());
         Row row = results.one();
         if (row == null) {
             return 1;
@@ -264,7 +264,7 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
                 return 2;
             }
             if (VALIDATION_TEXT.equals(EncryptionUtil.decrypt(userEncryptionKey, encryptedValidationText))) {
-                String addNoteEntryCQL = String.format(ADD_NOTE_ENTRY, userId);
+                String addNoteEntryCQL = String.format(ADD_NOTE_ENTRY, sessionManager.getKeyspace(), userId);
                 preparedAddNoteEntry = sessionManager.getClientSession().prepare(addNoteEntryCQL);
                 return 0;
             } else {

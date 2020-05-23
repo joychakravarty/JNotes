@@ -23,11 +23,15 @@ import static com.jc.jnotes.JNotesConstants.DEFAULT_NOTEBOOK;
 import static com.jc.jnotes.JNotesConstants.ONLINE_SYNC_CONF_FILE;
 import static com.jc.jnotes.JNotesConstants.USER_HOME_PATH;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.prefs.Preferences;
+
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * 
@@ -47,6 +51,11 @@ public class UserPreferences {
 
     private final Preferences userPreferences = Preferences.userNodeForPackage(UserPreferences.class);
 
+    public void clearUserIdAndUserSecret() {
+        userPreferences.remove(JNOTES_USER_ID);
+        userPreferences.remove(JNOTES_USER_SECRET);
+    }
+
     public String getBasePath() {
         return userPreferences.get(KEY_BASEPATH, USER_HOME_PATH);
     }
@@ -64,6 +73,12 @@ public class UserPreferences {
     }
 
     public void setUserIdAndSecretForOnlineSync(String userId, String secret) {
+        if (StringUtils.isBlank(userId)) {
+            throw new IllegalArgumentException("UserId cannot be null or blank");
+        }
+        if (secret == null) {
+            return;
+        }
         userPreferences.put(JNOTES_USER_ID, userId);
         userPreferences.put(JNOTES_USER_SECRET, secret);
 
@@ -81,15 +96,17 @@ public class UserPreferences {
 
     public String getUserId() {
         String userName = userPreferences.get(JNOTES_USER_ID, null);
-        if (userName == null) {// attempt to get userName from sync_conf file
+        if (StringUtils.isBlank(userName)) {// attempt to get userName from sync_conf file
             try {
-                Path path = Paths.get(getBasePath(), APP_NAME, ONLINE_SYNC_CONF_FILE);
-                String jnSyncStr = Files.readAllLines(path).get(0);
-
-                if (jnSyncStr != null && jnSyncStr.contains("|")) {
-                    userName = (jnSyncStr.split("\\|"))[0];
-                    if (userName != null) {
-                        userPreferences.put(JNOTES_USER_ID, userName);
+                Path path = getOnlineSyncConfFile();
+                List<String> allLines = Files.readAllLines(path);
+                if (allLines != null && !allLines.isEmpty()) {
+                    String jnSyncStr = Files.readAllLines(path).get(0);
+                    if (jnSyncStr != null && jnSyncStr.contains("|")) {
+                        userName = (jnSyncStr.split("\\|"))[0];
+                        if (userName != null) {
+                            userPreferences.put(JNOTES_USER_ID, userName);
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -99,17 +116,26 @@ public class UserPreferences {
         return userName;
     }
 
+    private Path getOnlineSyncConfFile() throws IOException {
+        Path path = Paths.get(getBasePath(), APP_NAME, ONLINE_SYNC_CONF_FILE);
+        File onlineSyncConfFile = path.toFile();
+        onlineSyncConfFile.createNewFile();
+        return path;
+    }
+
     public String getUserSecret() {
         String userSecret = userPreferences.get(JNOTES_USER_SECRET, null);
         if (userSecret == null) {// attempt to get userSecret from sync_conf file
             try {
-                Path path = Paths.get(getBasePath(), APP_NAME, ONLINE_SYNC_CONF_FILE);
-                String jnSyncStr = Files.readAllLines(path).get(0);
-
-                if (jnSyncStr != null && jnSyncStr.contains("|")) {
-                    userSecret = (jnSyncStr.split("\\|"))[1];
-                    if (userSecret != null) {
-                        userPreferences.put(JNOTES_USER_SECRET, userSecret);
+                Path path = getOnlineSyncConfFile();
+                List<String> allLines = Files.readAllLines(path);
+                if (allLines != null && !allLines.isEmpty()) {
+                    String jnSyncStr = Files.readAllLines(path).get(0);
+                    if (jnSyncStr != null && jnSyncStr.contains("|")) {
+                        userSecret = (jnSyncStr.split("\\|"))[1];
+                        if (userSecret != null) {
+                            userPreferences.put(JNOTES_USER_SECRET, userSecret);
+                        }
                     }
                 }
             } catch (Exception e) {
