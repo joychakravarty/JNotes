@@ -13,7 +13,11 @@
 
 ## Purpose:
   There are several application to store Notes but they are more like "title-body" or "content-multiple tags". JNotes offers one of a kind: "key-value-content".  
-  Usually I used to use OneNote and have a table to store this kind of data but I use OneNote for other daily activity as well like jotting down my analysis of a Prod Issue, during this time I do not wish to move away from that page just to find some frequently used password, this is why I built JNotes, its my lookup table!   
+  Usually I used to use OneNote and have a table to store this kind of data but I had the following issues:
+  1. I have tons of pages in multiple sections of OneNote, and to access my frequent notes I had to switch from my working page to another page and it was always difficult to return to where I was.           
+  2. When I shared my screen my passwords were visible.  
+  3. It was difficult to share my notes with others or other devices.  
+  *But most importantly I wished to build a dedicated lookup table.  *
   
 ## Why JNotes:
   - It's keyboard friendly. TIP: Use shortcuts as much as possible, I built it for Keyboard poeple like me. 
@@ -22,12 +26,12 @@
   - You can store your notes in cloud for free and forever. You can choose to encrypt your notes while storing in cloud, ensuring your data privacy.      
   - Its open source - https://github.com/joychakravarty/JNotes/edit/master/README.md - so fork it and customize it.  
  
- ## Run JNotes
+## Run JNotes
   - Install Java 11 or above (verify using java -version)  
   - Download the uber jar JNotes-YourOS.jar from the milestone folder based on your OS.  
   - Run "java -jar JNotes-YourOS.jar" or simply double click the Jar
   
-  ###### Detailed instructions for Windows users:  
+#### Detailed instructions for Windows users:  
     - Download Java from https://download.java.net/java/GA/jdk14.0.1/664493ef4a6946b186ff29eb326336a2/7/GPL/openjdk-14.0.1_windows-x64_bin.zip  
     - Move the downloaded zip from your Downloads folder to C:\Users\yourUserName\ and Unzip it there.  
     - Download https://github.com/joychakravarty/JNotes/blob/master/milestone/JNotes-windows.jar and also place it in C:\Users\yourUserName\  
@@ -35,13 +39,13 @@
         C:\Users\yourUserName\jdk-14.0.1\bin\java -jar C:\Users\yourUserName\JNotes-windows.jar   
     - Rename startJNotes.txt to startJNotes.bat and double click the .bat file.  
  
- ## Build and run (for Developers)
+## Build and run (for Developers)
     mvn clean install  
     java -jar JNotes.jar   
     OR  
     mvn clean javafx:run (For this, its good to have javafx sdk installed)
      
- ## Shortcuts: 
+## Shortcuts: 
     Ctrl+N - New note  
     Ctrl+E - Edit note  
     Ctrl+S - Save note changes. (also for in-line edits)  
@@ -54,7 +58,7 @@
     ESC    - Closes diaglogs/popups, clears search  
     Ctrl+Q - Quit JNotes  
   
- ## Tech Details:
+## Tech Details:
   - Java 11.0.6  
   - JavaFX (openjfx) + FXML 13 (GUI controls)  
   - Lucene 8.5.0 (Data Access - data is written on your disk)  
@@ -66,7 +70,7 @@
   - Eclipse Oxygen 4.7.3a (IDE)  
   - macOS Mojave 10.14.6 (Dev OS - also tested on Windows 10)  
   
- ## Features in progress
+## Features in progress
   - Notebook switching (done)  
   - Display info at the bottom (done)
   - Import/Export notebooks from/to csv  (done)
@@ -78,10 +82,10 @@
   - Add flashcard feature (Pending)  
   - Feel free to email me to request more features.
   
- ## Developer: Joy Chakravarty  
+## Developer: Joy Chakravarty  
     joy.chakravarty84@gmail.com | https://www.linkedin.com/in/joychak/ 
  
- ## License:
+## License:
     Copyright (C) 2020  Joy Chakravarty [joy.chakravarty84@gmail.com]  
 
     JNotes is free software: you can redistribute it and/or modify

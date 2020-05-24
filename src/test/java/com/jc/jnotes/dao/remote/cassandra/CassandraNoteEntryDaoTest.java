@@ -19,79 +19,137 @@
 package com.jc.jnotes.dao.remote.cassandra;
 
 import static com.jc.jnotes.AppConfig.APP_CONFIG;
+import static com.jc.jnotes.dao.remote.cassandra.CassandraNoteEntryDao.VALIDATION_NOTEBOOK;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.jupiter.api.Disabled;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
+import org.junit.jupiter.api.TestMethodOrder;
 
 import com.datastax.oss.driver.api.core.cql.ResultSet;
 import com.datastax.oss.driver.api.core.cql.Row;
 import com.datastax.oss.driver.api.core.cql.SimpleStatement;
 import com.jc.jnotes.AppConfig;
+import com.jc.jnotes.dao.remote.RemoteNoteEntryDao;
+import com.jc.jnotes.model.NoteEntry;
 
 /**
  * 
  * @author Joy C
  *
  */
+@TestInstance(Lifecycle.PER_CLASS)
+@TestMethodOrder(OrderAnnotation.class)
 public class CassandraNoteEntryDaoTest {
-    
-    private CassandraSessionManager sessionManager = AppConfig.APP_CONFIG.getCassandraSessionManager();
-    
+
     private static final String TEST_USER_ID = "jnotes_testuser";
     private static final String TEST_USER_SECRET = "jnotes_testsecret";
-   
-    /**
-     * First run this has privileged user:
-     * drop table if exists jnotes_testuser;
-     * drop table if exists jnotes_testuser_secret_validation;
-     */
-    @Disabled("Enable only after dropping the test tables")
+
+    private CassandraSessionManager sessionManager = AppConfig.APP_CONFIG.getCassandraSessionManager();
+    private RemoteNoteEntryDao cassandraNoteEntryDao = APP_CONFIG.getRemoteNoteEntryDao(TEST_USER_ID, TEST_USER_SECRET);
+
+    @BeforeAll
+    public void beforeAll() {
+        sessionManager.getClientSession().execute(SimpleStatement.builder("DROP TABLE IF EXISTS jnotes_testuser").build());
+    }
+
     @Test
+    @Order(1)
     public void testSetupUser_NewUser() {
-        boolean returnStatus = APP_CONFIG.getRemoteNoteEntryDao(TEST_USER_ID, TEST_USER_SECRET).setupUser(TEST_USER_ID);
-        
+        boolean returnStatus = cassandraNoteEntryDao.setupUser(TEST_USER_ID);
+
         assertTrue(returnStatus, "Setup new user should have been successful");
-        
-        
-        ResultSet results = sessionManager.getClientSession()
-                .execute(SimpleStatement.builder("SELECT * from "+ TEST_USER_ID).build());
+
+        ResultSet results = sessionManager.getClientSession().execute(SimpleStatement.builder("SELECT * from " + TEST_USER_ID).build());
 
         assertNotNull(results, TEST_USER_ID + " table should have been created");
         Row row = results.one();
-        assertNull(row, "There shouldnt be any data in this newly created user table");
-        
-        results = sessionManager.getClientSession()
-                .execute(SimpleStatement.builder("SELECT * from "+ TEST_USER_ID+"_secret_validation").build());
-        assertNotNull(results, TEST_USER_ID+"_secret_validation" + " table should have been created");
-        row = results.one();
-        assertNotNull(row, "There should be 1 record in the table with encrypted validationText");
-        
-        int status = APP_CONFIG.getRemoteNoteEntryDao(TEST_USER_ID, TEST_USER_SECRET).validateUserSecret();
+        String notebook = row.getString("notebook");
+        assertEquals(VALIDATION_NOTEBOOK, notebook);
+
+        int status = cassandraNoteEntryDao.validateUserSecret();
         assertEquals(0, status, "Secret should have matched");
     }
-    
+
     @Test
+    @Order(2)
     public void testSetupUser_ExistingUser() {
         boolean returnStatus = APP_CONFIG.getRemoteNoteEntryDao(TEST_USER_ID, TEST_USER_SECRET).setupUser(TEST_USER_ID);
-        assertFalse(returnStatus, "Setup new user should have been successful");
+        assertFalse(returnStatus, "Setup new user should return false for existing user");
     }
-    
 
-//
-//    @Test
-//    public void testSelectAllFromAdminCreatedTable() {
-//
-//        assertThrows(UnauthorizedException.class, () -> {
-//            sessionManager.getClientSession().execute(SimpleStatement.builder("SELECT * from usersecret_validation").build());
-//        });
-//
-//    }
-    
-  
+    @Test
+    @Order(3)
+    public void testAddNoteEntry() throws IOException {
+        String testNotebook = "nb1";
+        NoteEntry noteEntry = new NoteEntry("ididid", "kkk", "vvv", "iii", "N", LocalDateTime.now());
+        cassandraNoteEntryDao.addNoteEntry(testNotebook, noteEntry);
+
+        List<NoteEntry> notes = cassandraNoteEntryDao.getAll(testNotebook);
+
+        assertEquals(1, notes.size());
+        assertEquals("kkk", notes.get(0).getKey());
+    }
+
+    @Test
+    @Order(4)
+    public void testEditNoteEntry() throws IOException {
+        String testNotebook = "nb1";
+        NoteEntry noteEntry = new NoteEntry("ididid", "kkk222", "vvv", "iii", "N", LocalDateTime.now());
+        cassandraNoteEntryDao.editNoteEntry(testNotebook, noteEntry);
+
+        List<NoteEntry> notes = cassandraNoteEntryDao.getAll(testNotebook);
+
+        assertEquals(1, notes.size());
+        assertEquals("kkk222", notes.get(0).getKey());
+    }
+
+    @Test
+    @Order(4)
+    public void testBackup() throws IOException {
+        String testNotebook1 = "nbX";
+        String testNotebook2 = "nbY";
+        NoteEntry noteEntry1 = new NoteEntry("id1", "kkk111", "vvv", "iii", "N", LocalDateTime.now());
+        NoteEntry noteEntry2 = new NoteEntry("id2", "kkk222", "vvv", "iii", "N", LocalDateTime.now());
+        List<NoteEntry> list1 = new ArrayList<>();
+        list1.add(noteEntry1);
+        list1.add(noteEntry2);
+        NoteEntry noteEntry3 = new NoteEntry("id3", "kkk333", "vvv", "iii", "N", LocalDateTime.now());
+        List<NoteEntry> list2 = new ArrayList<>();
+        list2.add(noteEntry3);
+
+        cassandraNoteEntryDao.backup(testNotebook1, list1);
+        cassandraNoteEntryDao.backup(testNotebook2, list2);
+
+        List<NoteEntry> notes = cassandraNoteEntryDao.getAll(testNotebook1);
+        assertEquals(2, notes.size());
+
+        notes = cassandraNoteEntryDao.getAll(testNotebook2);
+        assertEquals(1, notes.size());
+        assertEquals("kkk333", notes.get(0).getKey());
+    }
+
+    @Test
+    @Order(5)
+    public void testRestore() throws IOException {
+        Map<String, List<NoteEntry>> noteEntries = cassandraNoteEntryDao.restore();
+        assertNull(noteEntries.get(VALIDATION_NOTEBOOK));
+        assertEquals(noteEntries.get("nbX").size(), 2);
+        assertEquals(noteEntries.get("nbY").size(), 1);
+    }
 
 }
