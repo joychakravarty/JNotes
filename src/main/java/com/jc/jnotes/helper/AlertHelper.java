@@ -154,7 +154,7 @@ public class AlertHelper {
         alert.setTitle("About " + APP_NAME);
         alert.getDialogPane().setMinWidth(500);
         alert.setWidth(500);
-        String headerText = "JNotes is a desktop application which allows quick-access/lookup to your key-value-info type of data.\nDeveloped by: Joy Chakravarty";
+        String headerText = "JNotes - your quick-access lookup notes.";
         if (StringUtils.isNotBlank(CURRENT_VERSION)) {
             headerText = headerText + "\n" + APP_NAME + " Version: " + CURRENT_VERSION;
         }
