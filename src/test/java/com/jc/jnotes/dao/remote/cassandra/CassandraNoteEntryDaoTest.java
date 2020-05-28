@@ -64,7 +64,15 @@ public class CassandraNoteEntryDaoTest {
 
     @BeforeAll
     public void beforeAll() {
-        sessionManager.getClientSession().execute(SimpleStatement.builder("DROP TABLE IF EXISTS jnotes_testuser").build());
+        ResultSet results = null;
+        try {
+            results = sessionManager.getClientSession().execute(SimpleStatement.builder("SELECT * from " + TEST_USER_ID).build());
+        } catch (Exception ex) {
+            System.out.println("Test table doest seem to exist");
+        }
+        if (results != null) {
+            sessionManager.getClientSession().execute(SimpleStatement.builder("DROP TABLE IF EXISTS jnotes_testuser").build());
+        }
     }
 
     @Test

@@ -245,4 +245,25 @@ public class ControllerService {
 
     }
 
+    public void moveNotes(List<NoteEntry> noteEntriesToBeMoved, String selectedNotebook, String destinationNotebook) throws IOException {
+        LocalNoteEntryDao localDestinationDao = this.getLocalNoteEntryDao(destinationNotebook);
+        for(NoteEntry noteEntry : noteEntriesToBeMoved) {
+            localDestinationDao.addNoteEntry(destinationNotebook, noteEntry);
+        }
+        LocalNoteEntryDao localSourceDao = this.getLocalNoteEntryDao(selectedNotebook);
+        localSourceDao.deleteNoteEntries(selectedNotebook, noteEntriesToBeMoved);
+        if (userPreferences.isConnected()) {
+            RemoteNoteEntryDao remoteDao = this.getRemoteNoteEntryDao(userPreferences.getUserId(), userPreferences.getUserSecret());
+            
+            remoteDao.deleteNotebook(destinationNotebook);
+            List<NoteEntry> destinationNotes = this.getLocalNoteEntryDao(destinationNotebook).getAll(destinationNotebook);
+            remoteDao.backup(destinationNotebook, destinationNotes);
+            
+            remoteDao.deleteNotebook(selectedNotebook);
+            List<NoteEntry> sourceNotes = this.getLocalNoteEntryDao(selectedNotebook).getAll(selectedNotebook);
+            remoteDao.backup(selectedNotebook, sourceNotes);
+        }
+        
+    }
+
 }

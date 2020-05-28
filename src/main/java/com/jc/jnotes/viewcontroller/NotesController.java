@@ -52,7 +52,10 @@ import javafx.scene.Scene;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuButton;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TablePosition;
@@ -89,7 +92,8 @@ public class NotesController {
 
     private static final String ADD_STATUS_NOTIFICATION = "Success: Note Added.";
     private static final String EDIT_STATUS_NOTIFICATION = "Success: Note Saved.";
-    private static final String DELETE_STATUS_NOTIFICATION = "Success: Note Deleted.";
+    private static final String DELETE_STATUS_NOTIFICATION = "Success: Note(s) Deleted.";
+    private static final String MOVE_STATUS_NOTIFICATION = "Success: Note(s) Moved.";
 
     private static final String DELETE_NOTES_CONFIRMATION_HEADER = "Delete selected notes?";
     private static final String DELETE_NOTES_CONFIRMATION_CONTENT = "%d note(s) will be deleted.";
@@ -330,19 +334,22 @@ public class NotesController {
 
     private void initializeNotesTable() {
         notesTable.setEditable(true);
+
         notesTable.getSelectionModel().cellSelectionEnabledProperty().set(true);
         notesTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
+        
         // When the selected NoteEntry in notesTable we set its info in the infoField
         notesTable.getSelectionModel().selectedItemProperty().addListener((obs, prevNoteEntry, selectedNoteEntry) -> {
             // CRITICAL: most of the code relies on selectedNoteEntry. On losing focus, it also sets selectedNoteEntry to null.
             this.selectedNoteEntry = selectedNoteEntry;
             // END CRITICAL
-            if (selectedNoteEntry != null) { // When the JNotes start no NoteEntry is selected. This is to handle that
+            if (selectedNoteEntry != null) { // When the JNotes starts NO NoteEntry is selected. This is to handle that.
                 infoField.setText(selectedNoteEntry.getInfo());
                 notificationText.setText("Last modified on: " + selectedNoteEntry.getLastModifiedTime().format(DATETIME_DISPLAY_FORMAT));
+                initializeContextMenuOnRowSelect();
             } else {
                 infoField.clear();
+                notesTable.setContextMenu(null);
             }
         });
 
@@ -399,6 +406,48 @@ public class NotesController {
                 }
             }
         });
+    }
+    
+    /*
+     * This sets up menu on right click.
+     * To be called when at least one note is selected.
+     */
+    private void initializeContextMenuOnRowSelect() {
+        ContextMenu contextMenu = new ContextMenu();
+        //Add move menu to ContextMenu
+        //Moving to another notebook is only possible when there is more than one notebook
+        if (notebookComboBox.getItems().size() > 1) {
+            Menu moveMenu = new Menu("Move to");
+            String selectedNotebook = notebookComboBox.getSelectionModel().getSelectedItem();
+            for (String notebook : notebookComboBox.getItems()) {
+                if (!selectedNotebook.equals(notebook)) {
+                    MenuItem menuItem = new MenuItem(notebook);
+                    menuItem.setOnAction((event) -> {
+                        String destinationNotebook = ((MenuItem) event.getSource()).getText();
+                        System.out.println("Moving to " + destinationNotebook);
+                        List<NoteEntry> noteEntriesToBeMoved = notesTable.getSelectionModel().getSelectedItems();
+                        try {
+                            service.moveNotes(noteEntriesToBeMoved, selectedNotebook, destinationNotebook);
+                            observableNoteEntryList.removeAll(noteEntriesToBeMoved);
+                            notificationText.setText(MOVE_STATUS_NOTIFICATION);
+                        } catch (IOException ex) {
+                            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to move Notes", "");
+                        }
+                        notesTable.refresh();
+                    });
+                    moveMenu.getItems().add(menuItem);
+                }
+            }
+            contextMenu.getItems().add(moveMenu);
+        }
+        //Add delete notes to context menu
+        MenuItem deleteMenuItem = new MenuItem("Delete");
+        deleteMenuItem.setOnAction((event) -> {
+            this.deleteNoteEntries();
+        });
+        contextMenu.getItems().add(deleteMenuItem);
+        notesTable.setContextMenu(contextMenu);
+        
     }
 
     private void updateConnectionImageBasedOnFlag(boolean isConnectedFLag) {

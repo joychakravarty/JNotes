@@ -114,8 +114,8 @@
                </tooltip>
             </ToggleButton>
             <Pane HBox.hgrow="ALWAYS" />
-            <TextField fx:id="searchField" prefHeight="28.0" prefWidth="364.0" />
-            <CheckBox fx:id="searchAllCheckBox" mnemonicParsing="false" />
+            <TextField fx:id="searchField" prefHeight="28.0" prefWidth="364.0" promptText="Search" />
+            <CheckBox fx:id="searchAllCheckBox" mnemonicParsing="false" selected="true" />
         </items>
       </ToolBar>
    </top>
