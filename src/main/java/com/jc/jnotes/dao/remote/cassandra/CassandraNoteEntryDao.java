@@ -295,8 +295,9 @@ public class CassandraNoteEntryDao implements RemoteNoteEntryDao {
                     .execute(SimpleStatement.builder(String.format(GET_USERSCRET_VALIDATION_ROW, sessionManager.getKeyspace(), userId))
                             .addPositionalValues(VALIDATION_NOTEBOOK).build());
         } catch (Exception ex) {
+            ex.printStackTrace();
             System.err.println("Exception in validateUserSecret (can't do much here) : " + ex.getMessage());
-            return 1;
+            return 3;
         }
         Row row = results.one();
         if (row == null) { // Validation notebook is not found.
