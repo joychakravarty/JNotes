@@ -1,7 +1,7 @@
 # JNotes
 
 ## Description:
-  **JNotes is a desktop application which is built for quick-access lookup notes.**  
+  **JNotes is a free desktop application which is built for quick-access lookup notes.**  
   Its perfect for day-to-day lookup notes at work:  
   Key: "shared drive location to success"  Value: "\\Some\impossible\to\remember\path" Content: "release the files when done!" 
     
