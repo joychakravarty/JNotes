@@ -1,9 +1,9 @@
 # JNotes
 
 ## Run JNotes
-  - Download JNotes
-     For Windows: {{ site.github.windows_zip_url }}  
-     For Mac: {{ site.github.mac_zip_url }}  
+  - Download JNotes  
+     For Windows: [JNotes-windows.zip]({{ site.github.windows_zip_url }})  
+     For Mac: [JNotes-mac.zip]({{ site.github.mac_zip_url }})  
   - Unzip the .zip file.
   - Double click the "startJNotes" file.  
 
