@@ -8,22 +8,22 @@
   - Double click the "startJNotes" file.  
 
 ## Description:
-  **JNotes is a free desktop application which is built for quick-access lookup notes.**  
+  **JNotes is a free desktop application which is built for lookup (quick & frequent access) notes.**  
   Its perfect for day-to-day lookup notes at work:  
-  Key: "shared drive location to success"  Value: "\\Some\impossible\to\remember\path" Content: "release the files when done!" 
+  Title: "shared drive location to success"  Value: "\\Some\impossible\to\remember\path" Content: "release the files when done!" 
     
   Or you can have a notebook for learning Dutch where you store something like word-meaning-setences:  
-  Key: "snel"  Value: "fast"  Content: "JNotes is snel -> JNotes is fast"  
+  Title: "snel"  Value: "fast"  Content: "JNotes is snel -> JNotes is fast"  
     
   As a developer I even have a notebook for my favourite GIT commands and a notebook for my favourite DB queries:  
-  Key: "squash"  Value: "git rebase -i HEAD~X"  Content: "use fixup instead of squash". 
+  Title: "squash"  Value: "git rebase -i HEAD~X"  Content: "use fixup instead of squash". 
 
 ## Purpose:
-  There are several application to store Notes but they are more like "title with body" or "content with multiple tags". JNotes offers one of a kind: "key-value-content".  
+  There are several applications to store Notes but they are more like "title with body" or "content with multiple tags". JNotes offers one of a kind: "title with value and with content".  
   Usually I used to use OneNote and have a table with 3 columns to store this kind of data but I had the following issues:
   1. I have tons of pages in multiple sections of OneNote, and to access my frequent notes I had to switch from my working page to another page and it was always difficult to return to where I was.           
-  2. When I shared my screen my passwords were visible.  
-  3. It was difficult to share my notes with others or other devices.  
+  2. When sharing my screen my passwords were visible.  
+  3. It was difficult to share my notes with others or other devices, or simply export to xls.  
   *But most importantly I wished to build a customizable and dedicated notes application for lookup data.*  
   
 ## Why JNotes:
