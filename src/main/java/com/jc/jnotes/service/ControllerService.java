@@ -138,6 +138,8 @@ public class ControllerService {
                     returnString = "UserId does not exist";
                 } else if (outcome == 2) {
                     returnString = "Secret could not decrypt your data correctly. Please enter correct secret.";
+                } else if (outcome == 3) {
+                    returnString = "Failed to connect";
                 }
             }
         } catch (Exception ex) {

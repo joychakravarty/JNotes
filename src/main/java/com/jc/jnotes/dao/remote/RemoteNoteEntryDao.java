@@ -46,6 +46,7 @@ public interface RemoteNoteEntryDao extends NoteEntryDao {
      * @return 0 - success
      *  <br/>1 - userId does not exist 
      *  <br/>2 - userSecret is not correct
+     *  <br/> - failed to connect due to some unknown issue
      */
     int validateUserSecret();
 
