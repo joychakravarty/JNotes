@@ -33,7 +33,7 @@
   - You can **store your notes in cloud for free and forever**. You can choose to encrypt your notes while storing in cloud, ensuring your data privacy.      
   - It's **open source** - https://github.com/joychakravarty/JNotes/edit/master/README.md - so fork it and customize it.  
 
-![JNotes Windows](https://github.com/joychakravarty/JNotes/edit/master/WindowsExample.png?raw=true)
+![JNotes Windows](https://github.com/joychakravarty/JNotes/edit/master/WindowsExample.PNG?raw=true)
 
 ## Build and run (for Developers)
     ensure JAVA_HOME points to Java verion >=11
