@@ -1,5 +1,12 @@
 # JNotes
 
+## Run JNotes
+  - Download JNotes
+     For Windows: {{ site.github.windows_zip_url }}  
+     For Mac: {{ site.github.mac_zip_url }}  
+  - Unzip the .zip file.
+  - Double click the "startJNotes" file.  
+
 ## Description:
   **JNotes is a free desktop application which is built for quick-access lookup notes.**  
   Its perfect for day-to-day lookup notes at work:  
@@ -25,11 +32,6 @@
   - It's a Java based application (and shipped with lightweight JRE) so you can **run it without any installation**.  
   - You can **store your notes in cloud for free and forever**. You can choose to encrypt your notes while storing in cloud, ensuring your data privacy.      
   - It's **open source** - https://github.com/joychakravarty/JNotes/edit/master/README.md - so fork it and customize it.  
- 
-## Run JNotes
-  - Download the JNotes-yourOS.zip file from https://github.com/joychakravarty/JNotes/blob/master/milestone/ 
-  - Unzip the .zip file.
-  - Double click the "startJNotes" file.
  
 ## Build and run (for Developers)
     ensure JAVA_HOME points to Java verion >=11
