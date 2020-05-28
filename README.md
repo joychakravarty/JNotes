@@ -1,7 +1,7 @@
 # JNotes
 
 ## Description:
-  JNotes is a desktop application which is built for quick-access lookup notes.  
+  **JNotes is a desktop application which is built for quick-access lookup notes.**  
   Its perfect for day-to-day lookup notes at work:  
   Key: "shared drive location to success"  Value: "\\Some\impossible\to\remember\path" Content: "release the files when done!" 
     
@@ -17,14 +17,14 @@
   1. I have tons of pages in multiple sections of OneNote, and to access my frequent notes I had to switch from my working page to another page and it was always difficult to return to where I was.           
   2. When I shared my screen my passwords were visible.  
   3. It was difficult to share my notes with others or other devices.  
-  *But most importantly I wished to build a customizable and dedicated notes application for lookup data.  *
+  *But most importantly I wished to build a customizable and dedicated notes application for lookup data.*  
   
 ## Why JNotes:
-  - It's *keyboard friendly*. TIP: Use shortcuts as much as possible, I built it for Keyboard poeple like me. 
-  - Lookup table without fast search is no fun, so *JNotes is fast*. Try it.  
-  - It's a Java based application (and shipped with lightweight JRE) so you can *run it without any installation*.  
-  - You can *store your notes in cloud for free and forever*. You can choose to encrypt your notes while storing in cloud, ensuring your data privacy.      
-  - It's *open source* - https://github.com/joychakravarty/JNotes/edit/master/README.md - so fork it and customize it.  
+  - It's **keyboard friendly**. TIP: Use shortcuts as much as possible, I built it for Keyboard poeple like me. 
+  - Lookup table without fast search is no fun, so **JNotes is fast**. Try it.  
+  - It's a Java based application (and shipped with lightweight JRE) so you can **run it without any installation**.  
+  - You can **store your notes in cloud for free and forever**. You can choose to encrypt your notes while storing in cloud, ensuring your data privacy.      
+  - It's **open source** - https://github.com/joychakravarty/JNotes/edit/master/README.md - so fork it and customize it.  
  
 ## Run JNotes
   - Download the JNotes-yourOS.zip file from https://github.com/joychakravarty/JNotes/blob/master/milestone/ 
