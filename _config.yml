@@ -1,4 +1,4 @@
-theme: jekyll-theme-slate
+theme: jekyll-theme-minimal
 show_downloads: true
 github:
   windows_zip_url: https://github.com/joychakravarty/JNotes/blob/master/milestone/JNotes-windows.zip
