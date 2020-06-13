@@ -23,8 +23,8 @@ import static com.jc.jnotes.model.NoteEntry.ID_COL_NAME;
 import static com.jc.jnotes.model.NoteEntry.INFO_COL_NAME;
 import static com.jc.jnotes.model.NoteEntry.KEY_COL_NAME;
 import static com.jc.jnotes.model.NoteEntry.LAST_MODIFIED_TIME_COL_NAME;
-import static com.jc.jnotes.model.NoteEntry.VALUE_COL_NAME;
 import static com.jc.jnotes.model.NoteEntry.PASSWORD_FLAG_COL_NAME;
+import static com.jc.jnotes.model.NoteEntry.VALUE_COL_NAME;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,6 +60,7 @@ import org.apache.lucene.search.WildcardQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
+import com.jc.jnotes.dao.DaoRuntimeException;
 import com.jc.jnotes.dao.local.LocalNoteEntryDao;
 import com.jc.jnotes.model.NoteEntry;
 
@@ -75,11 +76,14 @@ public class LuceneNoteEntryDao implements LocalNoteEntryDao {
     private final Directory indexDir;
     private final Query getAllQuery = new MatchAllDocsQuery();
     private final StandardAnalyzer analyzer = new StandardAnalyzer();
+    private final String notebook;
+    private static final int DAO_TYPE = DaoRuntimeException.LOCAL;
     // private final MultiFieldQueryParser multiFieldQueryParser = new MultiFieldQueryParser(new String[]{"key", "value",
     // "info"}, analyzer);
 
     public LuceneNoteEntryDao(String basePath, String pathAppender, String notebook) throws IOException {
         System.out.println("Creating LuceneNoteEntryDao : notebook :" + notebook);
+        this.notebook = notebook;
         Path indexPath = Paths.get(basePath, pathAppender, notebook);
         File file = indexPath.toFile();
         if (!file.exists()) {
@@ -89,111 +93,132 @@ public class LuceneNoteEntryDao implements LocalNoteEntryDao {
     }
 
     @Override
-    public List<NoteEntry> getAll(String notebook) throws IOException {
+    public List<NoteEntry> getAll(String notebook) {
         List<NoteEntry> noteEntries;
         IndexReader indexReader;
         try {
-            indexReader = DirectoryReader.open(indexDir);
-        } catch (IndexNotFoundException ex) {
-            return Collections.emptyList();
-        }
-        try {
-            IndexSearcher searcher = new IndexSearcher(indexReader);
-            Sort sort = new Sort(new SortField[] { new SortField(null, Type.DOC, true) });// Sort based on order of last modified
-            TopDocs topDocs = searcher.search(getAllQuery, 10000, sort);
-            noteEntries = getNoteEntries(topDocs, searcher);
-        } finally {
-            indexReader.close();
+            try {
+                indexReader = DirectoryReader.open(indexDir);
+            } catch (IndexNotFoundException ex) {
+                return Collections.emptyList();
+            }
+            try {
+                IndexSearcher searcher = new IndexSearcher(indexReader);
+                Sort sort = new Sort(new SortField[] { new SortField(null, Type.DOC, true) });// Sort based on order of last modified
+                TopDocs topDocs = searcher.search(getAllQuery, 10000, sort);
+                noteEntries = getNoteEntries(topDocs, searcher);
+            } finally {
+                indexReader.close();
+            }
+        } catch (Exception ex) {
+            throw new DaoRuntimeException(DAO_TYPE, ex);
         }
         return noteEntries;
     }
 
     @Override
-    public long addNoteEntry(String notebook, NoteEntry noteEntry) throws IOException {
-        IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
-        IndexWriter writer = new IndexWriter(indexDir, indexWriterConfig);
-        Document document = fromNoteEntry(noteEntry);
-        long seqNo = writer.addDocument(document);
-        writer.commit();
-        writer.close();
-        return seqNo;
+    public void addNoteEntry(NoteEntry noteEntry) {
+        try {
+            IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
+            IndexWriter writer = new IndexWriter(indexDir, indexWriterConfig);
+            Document document = fromNoteEntry(noteEntry);
+            writer.addDocument(document);
+            writer.commit();
+            writer.close();
+        } catch (Exception ex) {
+            throw new DaoRuntimeException(DAO_TYPE, ex);
+        }
     }
 
     @Override
-    public long editNoteEntry(String notebook, NoteEntry noteEntry) throws IOException {
-        IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
-        IndexWriter writer = new IndexWriter(indexDir, indexWriterConfig);
-        Document document = fromNoteEntry(noteEntry);
-        Term idTerm = new Term(ID_COL_NAME, noteEntry.getId());
-        long seqNo = writer.updateDocument(idTerm, document);
-        writer.commit();
-        writer.close();
-        return seqNo;
+    public void editNoteEntry(NoteEntry noteEntry) {
+        try {
+            IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
+            IndexWriter writer = new IndexWriter(indexDir, indexWriterConfig);
+            Document document = fromNoteEntry(noteEntry);
+            Term idTerm = new Term(ID_COL_NAME, noteEntry.getId());
+            writer.updateDocument(idTerm, document);
+            writer.commit();
+            writer.close();
+        } catch (Exception ex) {
+            throw new DaoRuntimeException(DAO_TYPE, ex);
+        }
     }
 
     @Override
-    public void deleteNoteEntry(String notebook, NoteEntry noteEntry) throws IOException {
-        IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
-        IndexWriter writer = new IndexWriter(indexDir, indexWriterConfig);
-        writer.deleteDocuments(new Term(ID_COL_NAME, noteEntry.getId()));
-        writer.flush();
-        // writer.forceMergeDeletes();
-        writer.commit();
-        writer.close();
+    public void deleteNoteEntry(NoteEntry noteEntry) {
+        try {
+            IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
+            IndexWriter writer = new IndexWriter(indexDir, indexWriterConfig);
+            writer.deleteDocuments(new Term(ID_COL_NAME, noteEntry.getId()));
+            writer.flush();
+            // writer.forceMergeDeletes();
+            writer.commit();
+            writer.close();
+        } catch (Exception ex) {
+            throw new DaoRuntimeException(DAO_TYPE, ex);
+        }
     }
 
     @Override
-    public void deleteNoteEntries(String notebook, List<NoteEntry> noteEntries) throws IOException {
+    public void deleteNoteEntries(List<NoteEntry> noteEntries) {
         if (noteEntries == null) {
             throw new IllegalArgumentException("deleteNoteEntries: Cannot pass null as argument.");
         }
-        IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
-        IndexWriter writer = new IndexWriter(indexDir, indexWriterConfig);
-        // final int noteEntriesToBeDeleted = noteEntries.size();
-        // Term[] terms = new Term[noteEntriesToBeDeleted];
-        // for (int i=0; i<noteEntriesToBeDeleted; i++) {
-        // Term term = new Term(ID_COL_NAME, noteEntries.get(i).getId());
-        // terms[i] = term;
-        // }
-        Term[] terms = noteEntries.stream().map((noteEntry) -> {
-            Term term = new Term(ID_COL_NAME, noteEntry.getId());
-            return term;
-        }).toArray(Term[]::new);
+        try {
+            IndexWriterConfig indexWriterConfig = new IndexWriterConfig(analyzer);
+            IndexWriter writer = new IndexWriter(indexDir, indexWriterConfig);
+            // final int noteEntriesToBeDeleted = noteEntries.size();
+            // Term[] terms = new Term[noteEntriesToBeDeleted];
+            // for (int i=0; i<noteEntriesToBeDeleted; i++) {
+            // Term term = new Term(ID_COL_NAME, noteEntries.get(i).getId());
+            // terms[i] = term;
+            // }
+            Term[] terms = noteEntries.stream().map((noteEntry) -> {
+                Term term = new Term(ID_COL_NAME, noteEntry.getId());
+                return term;
+            }).toArray(Term[]::new);
 
-        writer.deleteDocuments(terms);
-        writer.flush();
-        // writer.forceMergeDeletes();
-        writer.commit();
-        writer.close();
+            writer.deleteDocuments(terms);
+            writer.flush();
+            // writer.forceMergeDeletes();
+            writer.commit();
+            writer.close();
+        } catch (Exception ex) {
+            throw new DaoRuntimeException(DAO_TYPE, ex);
+        }
     }
 
     @Override
-    public List<NoteEntry> searchNotes(String searchParam, boolean searchInfo) throws IOException {
-        searchParam = searchParam.toLowerCase();
-        IndexReader indexReader = DirectoryReader.open(indexDir);
-        IndexSearcher searcher = new IndexSearcher(indexReader);
-        Set<NoteEntry> searchedEntries = new LinkedHashSet<>();
-
-        Term keyTerm = new Term(KEY_COL_NAME, "*" + searchParam + "*");
-        Query keyQuery = new WildcardQuery(keyTerm);
-        TopDocs keyTopDocs = searcher.search(keyQuery, 10000);
-        searchedEntries.addAll(getNoteEntries(keyTopDocs, searcher));
-
-        Term valueTerm = new Term(VALUE_COL_NAME, "*" + searchParam + "*");
-        Query valueQuery = new WildcardQuery(valueTerm);
-        TopDocs valueTopDocs = searcher.search(valueQuery, 10000);
-        searchedEntries.addAll(getNoteEntries(valueTopDocs, searcher));
-
-        if (searchInfo) {
-            Term infoTerm = new Term(INFO_COL_NAME, "*" + searchParam + "*");
-            Query infoQuery = new WildcardQuery(infoTerm);
-            TopDocs infoTopDocs = searcher.search(infoQuery, 10000);
-            searchedEntries.addAll(getNoteEntries(infoTopDocs, searcher));
-        }
-
+    public List<NoteEntry> searchNotes(String searchParam, boolean searchInfo) {
         List<NoteEntry> noteEntries = new ArrayList<>();
-        noteEntries.addAll(searchedEntries);
-        indexReader.close();
+        try {
+            searchParam = searchParam.toLowerCase();
+            IndexReader indexReader = DirectoryReader.open(indexDir);
+            IndexSearcher searcher = new IndexSearcher(indexReader);
+            Set<NoteEntry> searchedEntries = new LinkedHashSet<>();
+
+            Term keyTerm = new Term(KEY_COL_NAME, "*" + searchParam + "*");
+            Query keyQuery = new WildcardQuery(keyTerm);
+            TopDocs keyTopDocs = searcher.search(keyQuery, 10000);
+            searchedEntries.addAll(getNoteEntries(keyTopDocs, searcher));
+
+            Term valueTerm = new Term(VALUE_COL_NAME, "*" + searchParam + "*");
+            Query valueQuery = new WildcardQuery(valueTerm);
+            TopDocs valueTopDocs = searcher.search(valueQuery, 10000);
+            searchedEntries.addAll(getNoteEntries(valueTopDocs, searcher));
+
+            if (searchInfo) {
+                Term infoTerm = new Term(INFO_COL_NAME, "*" + searchParam + "*");
+                Query infoQuery = new WildcardQuery(infoTerm);
+                TopDocs infoTopDocs = searcher.search(infoQuery, 10000);
+                searchedEntries.addAll(getNoteEntries(infoTopDocs, searcher));
+            }
+            noteEntries.addAll(searchedEntries);
+            indexReader.close();
+        } catch (Exception ex) {
+            throw new DaoRuntimeException(DAO_TYPE, ex);
+        }
         return noteEntries;
 
     }
@@ -203,7 +228,8 @@ public class LuceneNoteEntryDao implements LocalNoteEntryDao {
         ScoreDoc[] sDocs = topDocs.scoreDocs;
         for (ScoreDoc scoreDoc : sDocs) {
             Document dd = searcher.doc(scoreDoc.doc);
-            NoteEntry noteEntry = new NoteEntry(dd.get(ID_COL_NAME), dd.get(KEY_COL_NAME), dd.get(VALUE_COL_NAME), dd.get(INFO_COL_NAME), dd.get(PASSWORD_FLAG_COL_NAME));
+            NoteEntry noteEntry = new NoteEntry(notebook, dd.get(ID_COL_NAME), dd.get(KEY_COL_NAME), dd.get(VALUE_COL_NAME),
+                    dd.get(INFO_COL_NAME), dd.get(PASSWORD_FLAG_COL_NAME));
             noteEntry.setLastModifiedTime(LocalDateTime.parse(dd.get(LAST_MODIFIED_TIME_COL_NAME), DATETIME_DISPLAY_FORMAT));
             noteEntries.add(noteEntry);
         }

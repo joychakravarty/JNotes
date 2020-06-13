@@ -24,6 +24,8 @@ import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -36,6 +38,7 @@ import javafx.beans.property.StringProperty;
  * @author Joy C
  *
  */
+@JsonPropertyOrder({ "notebook", "id", "key", "value", "info", "isPassword", "lastModifiedTime" })
 public class NoteEntry implements Comparable<NoteEntry> {
 
     public static final String ID_COL_NAME = "id";
@@ -49,42 +52,39 @@ public class NoteEntry implements Comparable<NoteEntry> {
 
     private static Comparator<NoteEntry> keyComparator = Comparator.comparing(NoteEntry::getKey, nullSafeStringComparator);
 
-    private final String id;
+    private String id;
     private StringProperty key;
     private StringProperty value;
     private StringProperty info;
     private StringProperty passwordFlag;
     private ObjectProperty<LocalDateTime> lastModifiedTime;
-
-    // Only for Remote Dao
+    // These are not persisted in Local store, only persisted in Remote store
     private String notebook;
-
-    public String getNotebook() {
-        return notebook;
-    }
-
-    public void setNotebook(String notebook) {
-        this.notebook = notebook;
-    }
+    private boolean isPassword;
 
     public static String generateID() {
         return UUID.randomUUID().toString();
     }
 
-    public NoteEntry(String id, String key, String value, String info, String passwordFlag) {
-        this(id, key, value, info, passwordFlag, LocalDateTime.now());
+    // For JSON conversions
+    public NoteEntry() {
+        this(null, null, null, null, null, null, null);
     }
 
-    public NoteEntry(String id, String key, String value, String info, String passwordFlag, LocalDateTime lastModifiedTime) {
-        if (id == null) {
-            throw new IllegalArgumentException("NoteEntry id cannot be null");
-        }
+    public NoteEntry(String notebook, String id, String key, String value, String info, String passwordFlag) {
+        this(notebook, id, key, value, info, passwordFlag, LocalDateTime.now());
+    }
+
+    public NoteEntry(String notebook, String id, String key, String value, String info, String passwordFlag,
+            LocalDateTime lastModifiedTime) {
         this.id = id;
         this.key = new SimpleStringProperty(key == null ? StringUtils.EMPTY : key);
         this.value = new SimpleStringProperty(value == null ? StringUtils.EMPTY : value);
         this.info = new SimpleStringProperty(info == null ? StringUtils.EMPTY : info);
         this.passwordFlag = new SimpleStringProperty(passwordFlag == null ? "N" : passwordFlag);
         this.lastModifiedTime = new SimpleObjectProperty<LocalDateTime>(lastModifiedTime);
+        this.isPassword = "N".equals(passwordFlag) ? false : true;
+        this.notebook = notebook;
     }
 
     public String getId() {
@@ -96,6 +96,9 @@ public class NoteEntry implements Comparable<NoteEntry> {
     }
 
     public void setKey(String key) {
+        if (key == null) {
+            key = "";
+        }
         this.key.set(key);
         this.lastModifiedTime.set(LocalDateTime.now());
     }
@@ -107,15 +110,18 @@ public class NoteEntry implements Comparable<NoteEntry> {
     public String getValue() {
         return value.get();
     }
-    
+
     public String getDisplayValue() {
-        if("Y".equals(passwordFlag.get())) {
+        if ("Y".equals(passwordFlag.get())) {
             return "*".repeat(value.get().length());
         }
         return value.get();
     }
 
     public void setValue(String value) {
+        if (value == null) {
+            value = "";
+        }
         this.value.set(value);
         this.lastModifiedTime.set(LocalDateTime.now());
     }
@@ -129,6 +135,9 @@ public class NoteEntry implements Comparable<NoteEntry> {
     }
 
     public void setInfo(String info) {
+        if (info == null) {
+            info = "";
+        }
         this.info.set(info);
         this.lastModifiedTime.set(LocalDateTime.now());
     }
@@ -143,6 +152,11 @@ public class NoteEntry implements Comparable<NoteEntry> {
 
     public void setPasswordFlag(String passwordFlag) {
         this.passwordFlag.set(passwordFlag);
+        if ("Y".equalsIgnoreCase(passwordFlag)) {
+            this.isPassword = true;
+        } else {
+            this.isPassword = false;
+        }
         this.lastModifiedTime.set(LocalDateTime.now());
     }
 
@@ -160,6 +174,27 @@ public class NoteEntry implements Comparable<NoteEntry> {
 
     public void setLastModifiedTime(LocalDateTime lastModifiedTime) {
         this.lastModifiedTime.set(lastModifiedTime);
+    }
+
+    public String getNotebook() {
+        return notebook;
+    }
+
+    public void setNotebook(String notebook) {
+        this.notebook = notebook;
+    }
+
+    public boolean isPassword() {
+        return isPassword;
+    }
+
+    public void setPassword(boolean isPassword) {
+        if (isPassword) {
+            this.passwordFlag.set("Y");
+        } else {
+            this.passwordFlag.set("N");
+        }
+        this.isPassword = isPassword;
     }
 
     @Override

@@ -18,14 +18,13 @@
  */
 package com.jc.jnotes.viewcontroller;
 
-import java.io.IOException;
-import java.nio.file.InvalidPathException;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.jc.jnotes.helper.AlertHelper;
 import com.jc.jnotes.service.ControllerService;
+import com.jc.jnotes.service.ControllerServiceException;
 
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
@@ -37,8 +36,8 @@ import javafx.stage.Stage;
  *
  * @author Joy C
  * 
- *  To make NotesController less monolithic, this class takes away the functionality 
- *  of Add/Rename/Delete Notebooks from NotesController.
+ *         To make NotesController less monolithic, this class takes away the functionality of Add/Rename/Delete
+ *         Notebooks from NotesController.
  * 
  *
  */
@@ -78,7 +77,7 @@ public class NotebookActions {
                     notificationText.setText(NOTEBOOK_DELETE_STATUS_NOTIFICATION);
                 }
             }
-        } catch (IOException ex) {
+        } catch (ControllerServiceException ex) {
             ex.printStackTrace();
             alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to delete Notebook", "");
         }
@@ -93,7 +92,7 @@ public class NotebookActions {
             if (StringUtils.isNotBlank(newNotebookName) && notebookComboBox.getItems().indexOf(newNotebookName) == -1) {
                 try {
                     service.renameNotebook(notebookToBeRenamed, newNotebookName);
-                } catch (IOException ex) {
+                } catch (ControllerServiceException ex) {
                     ex.printStackTrace();
                     alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to Rename Notebook", "");
                     return;
@@ -118,7 +117,7 @@ public class NotebookActions {
             if (StringUtils.isNotBlank(newNotebookName) && notebookComboBox.getItems().indexOf(newNotebookName) == -1) {
                 try {
                     service.addNotebook(newNotebookName);
-                } catch (InvalidPathException ex) {
+                } catch (ControllerServiceException ex) {
                     ex.printStackTrace();
                     alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to Add Notebook", "");
                     return;

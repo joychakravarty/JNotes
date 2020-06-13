@@ -18,7 +18,6 @@
  */
 package com.jc.jnotes.dao;
 
-import java.io.IOException;
 import java.util.List;
 
 import com.jc.jnotes.model.NoteEntry;
@@ -26,7 +25,7 @@ import com.jc.jnotes.model.NoteEntry;
 /**
  *
  * This is the base interface with the basic CRUD functionality for NoteEntries of a notebook.
- * 
+ * All method implementations throw DaoRuntimeException wrapping the underlying exception.
  * @author Joy C
  *
  */
@@ -35,16 +34,16 @@ public interface NoteEntryDao {
     /**
      * 
      * @return lists all entries with latest modified on top (ls -lt)
-     * @throws IOException
+     * 
      */
-    List<NoteEntry> getAll(String notebook) throws IOException;
+    List<NoteEntry> getAll(String notebook);
 
-    long addNoteEntry(String notebook, NoteEntry noteEntry) throws IOException;
+    void addNoteEntry(NoteEntry noteEntry);
 
-    long editNoteEntry(String notebook, NoteEntry noteEntry) throws IOException;
+    void editNoteEntry(NoteEntry noteEntry);
 
-    void deleteNoteEntry(String notebook, NoteEntry noteEntry) throws IOException;
+    void deleteNoteEntry(NoteEntry noteEntry);
 
-    void deleteNoteEntries(String notebook, List<NoteEntry> noteEntries) throws IOException;
+    void deleteNoteEntries(List<NoteEntry> noteEntries);
 
 }

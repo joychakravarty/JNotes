@@ -63,10 +63,10 @@ public class LuceneNoteEntryDaoTest {
     void addEntryNoteTest() throws IOException {
         String id1 = UUID.randomUUID().toString();
         String id2 = UUID.randomUUID().toString();
-        NoteEntry noteEntry1 = new NoteEntry(id1, "key1", "value1", "info1", "N");
-        NoteEntry noteEntry2 = new NoteEntry(id2, "key2", "value2", "info2", "Y");
-        dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry1);
-        dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry2);
+        NoteEntry noteEntry1 = new NoteEntry(userPreferences.getCurrentNotebook(), id1, "key1", "value1", "info1", "N");
+        NoteEntry noteEntry2 = new NoteEntry(userPreferences.getCurrentNotebook(), id2, "key2", "value2", "info2", "Y");
+        dao.addNoteEntry(noteEntry1);
+        dao.addNoteEntry(noteEntry2);
         
         dao.getAll(userPreferences.getCurrentNotebook()).stream().forEach((ne) -> System.out.println("addEntrNoteTest: "+ne));
         
@@ -86,14 +86,14 @@ public class LuceneNoteEntryDaoTest {
     void deleteNoteEntryTest() throws IOException {
         String id1 = UUID.randomUUID().toString();
         String id2 = UUID.randomUUID().toString();
-        NoteEntry noteEntry1 = new NoteEntry(id1, "key1", "value1", "info1", "N");
-        NoteEntry noteEntry2 = new NoteEntry(id2, "key2", "value2", "info2", "Y");
-        dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry1);
-        dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry2);
+        NoteEntry noteEntry1 = new NoteEntry(userPreferences.getCurrentNotebook(), id1, "key1", "value1", "info1", "N");
+        NoteEntry noteEntry2 = new NoteEntry(userPreferences.getCurrentNotebook(), id2, "key2", "value2", "info2", "Y");
+        dao.addNoteEntry(noteEntry1);
+        dao.addNoteEntry(noteEntry2);
         
         dao.getAll(userPreferences.getCurrentNotebook()).stream().forEach((ne) -> System.out.println("deleteNoteEntryTest before: "+ne));
         
-        dao.deleteNoteEntry(userPreferences.getCurrentNotebook(), noteEntry1);
+        dao.deleteNoteEntry(noteEntry1);
         
         dao.getAll(userPreferences.getCurrentNotebook()).stream().forEach((ne) -> System.out.println("deleteNoteEntryTest after: "+ne));
         
@@ -112,15 +112,15 @@ public class LuceneNoteEntryDaoTest {
     void editEntryNoteTest() throws IOException {
         String id1 = UUID.randomUUID().toString();
         String id2 = UUID.randomUUID().toString();
-        NoteEntry noteEntry1 = new NoteEntry(id1, "key1", "value1", "info1", "N");
-        NoteEntry noteEntry2 = new NoteEntry(id2, "key2", "value2", "info2", "Y");
-        dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry1);
-        dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry2);
+        NoteEntry noteEntry1 = new NoteEntry(userPreferences.getCurrentNotebook(), id1, "key1", "value1", "info1", "N");
+        NoteEntry noteEntry2 = new NoteEntry(userPreferences.getCurrentNotebook(), id2, "key2", "value2", "info2", "Y");
+        dao.addNoteEntry(noteEntry1);
+        dao.addNoteEntry(noteEntry2);
         
         dao.getAll(userPreferences.getCurrentNotebook()).stream().forEach((ne) -> System.out.println("editEntryNoteTest before: "+ne));
         
         noteEntry2.setKey("key3");
-        dao.editNoteEntry(userPreferences.getCurrentNotebook(), noteEntry2);
+        dao.editNoteEntry(noteEntry2);
         
         dao.getAll(userPreferences.getCurrentNotebook()).stream().forEach((ne) -> System.out.println("editEntryNoteTest after: "+ne));
         
@@ -143,12 +143,12 @@ public class LuceneNoteEntryDaoTest {
         String id1 = UUID.randomUUID().toString();
         String id2 = UUID.randomUUID().toString();
         String id3 = UUID.randomUUID().toString();
-        NoteEntry noteEntry1 = new NoteEntry(id1, "key1", "value1", "infoy3", "N");//has - e1, y3-info
-        NoteEntry noteEntry2 = new NoteEntry(id2, "key2", "value2", "infoe1", "Y");//has - e1-info
-        NoteEntry noteEntry3 = new NoteEntry(id3, "key3", "value3", "info3", "N");//has - y3
-        dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry1);
-        dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry2);
-        dao.addNoteEntry(userPreferences.getCurrentNotebook(), noteEntry3);
+        NoteEntry noteEntry1 = new NoteEntry(userPreferences.getCurrentNotebook(), id1, "key1", "value1", "infoy3", "N");//has - e1, y3-info
+        NoteEntry noteEntry2 = new NoteEntry(userPreferences.getCurrentNotebook(), id2, "key2", "value2", "infoe1", "Y");//has - e1-info
+        NoteEntry noteEntry3 = new NoteEntry(userPreferences.getCurrentNotebook(), id3, "key3", "value3", "info3", "N");//has - y3
+        dao.addNoteEntry(noteEntry1);
+        dao.addNoteEntry(noteEntry2);
+        dao.addNoteEntry(noteEntry3);
         
         List<NoteEntry> noteEntries = dao.getAll(userPreferences.getCurrentNotebook());
         assertEquals(3, noteEntries.size());

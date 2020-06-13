@@ -25,7 +25,6 @@ import static com.jc.jnotes.model.NoteEntry.KEY_COL_NAME;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -279,6 +278,7 @@ public class NotesController {
     }
 
     private void initializeInfoField() {
+        infoField.setWrapText(true);
         infoField.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
             if (event.getCode() == KeyCode.TAB) {
                 event.consume();
@@ -316,13 +316,16 @@ public class NotesController {
                 selectedNoteEntry.setValue(editedText);
             }
             try {
+                selectedNoteEntry.setInfo(infoField.getText());
                 service.editNoteEntry(selectedNoteEntry);
             } catch (ControllerServiceException ex) {
                 alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to save NoteEntry Dialog", "");
             }
+            int row = notesTable.getSelectionModel().getSelectedIndex();
             notesTable.getSelectionModel().clearSelection();
-            notificationText.setText(EDIT_STATUS_NOTIFICATION);
             notesTable.refresh();
+            notesTable.getSelectionModel().select(row);
+            notificationText.setText(EDIT_STATUS_NOTIFICATION);
         };
 
         keyColumn.setCellValueFactory(new PropertyValueFactory<>(KEY_COL_NAME));
@@ -337,7 +340,7 @@ public class NotesController {
 
         notesTable.getSelectionModel().cellSelectionEnabledProperty().set(true);
         notesTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        
+
         // When the selected NoteEntry in notesTable we set its info in the infoField
         notesTable.getSelectionModel().selectedItemProperty().addListener((obs, prevNoteEntry, selectedNoteEntry) -> {
             // CRITICAL: most of the code relies on selectedNoteEntry. On losing focus, it also sets selectedNoteEntry to null.
@@ -362,6 +365,16 @@ public class NotesController {
                 } else {
                     searchField.requestFocus();
                     searchField.end();
+                }
+            }
+            if (event.getCode() == KeyCode.S && event.isShortcutDown()) {
+                event.consume();
+                selectedNoteEntry.setInfo(infoField.getText());
+                try {
+                    service.editNoteEntry(selectedNoteEntry);
+                    notificationText.setText(EDIT_STATUS_NOTIFICATION);
+                } catch (ControllerServiceException ex) {
+                    alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to save NoteEntry Dialog", "");
                 }
             }
         });
@@ -407,15 +420,14 @@ public class NotesController {
             }
         });
     }
-    
+
     /*
-     * This sets up menu on right click.
-     * To be called when at least one note is selected.
+     * This sets up menu on right click. To be called when at least one note is selected.
      */
     private void initializeContextMenuOnRowSelect() {
         ContextMenu contextMenu = new ContextMenu();
-        //Add move menu to ContextMenu
-        //Moving to another notebook is only possible when there is more than one notebook
+        // Add move menu to ContextMenu
+        // Moving to another notebook is only possible when there is more than one notebook
         if (notebookComboBox.getItems().size() > 1) {
             Menu moveMenu = new Menu("Move to");
             String selectedNotebook = notebookComboBox.getSelectionModel().getSelectedItem();
@@ -430,7 +442,7 @@ public class NotesController {
                             service.moveNotes(noteEntriesToBeMoved, selectedNotebook, destinationNotebook);
                             observableNoteEntryList.removeAll(noteEntriesToBeMoved);
                             notificationText.setText(MOVE_STATUS_NOTIFICATION);
-                        } catch (IOException ex) {
+                        } catch (ControllerServiceException ex) {
                             alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to move Notes", "");
                         }
                         notesTable.refresh();
@@ -440,14 +452,14 @@ public class NotesController {
             }
             contextMenu.getItems().add(moveMenu);
         }
-        //Add delete notes to context menu
+        // Add delete notes to context menu
         MenuItem deleteMenuItem = new MenuItem("Delete");
         deleteMenuItem.setOnAction((event) -> {
             this.deleteNoteEntries();
         });
         contextMenu.getItems().add(deleteMenuItem);
         notesTable.setContextMenu(contextMenu);
-        
+
     }
 
     private void updateConnectionImageBasedOnFlag(boolean isConnectedFLag) {
@@ -477,12 +489,7 @@ public class NotesController {
 
     protected void loadAllNoteEntries() {
         List<NoteEntry> allNoteEntries;
-        try {
-            allNoteEntries = service.getAll();
-        } catch (ControllerServiceException ex) {
-            allNoteEntries = new ArrayList<>();
-            alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to get all Notes", "");
-        }
+        allNoteEntries = service.getAll();
         loadNoteEntries(allNoteEntries);
     }
 
@@ -504,14 +511,16 @@ public class NotesController {
     @FXML
     protected void deleteNoteEntries() {
         try {
-            // NoteEntry toBeDeletedNoteEntry = notesTable.getSelectionModel().getSelectedItem();
             List<NoteEntry> noteEntriesToBeDeleted = notesTable.getSelectionModel().getSelectedItems();
-            // System.out.println(listofEntriesToBeDeleted);
-            // System.out.println(toBeDeletedNoteEntry);
             if (noteEntriesToBeDeleted != null) {
-
+                String contentText;
+                if (noteEntriesToBeDeleted.size() == 1) {
+                    contentText = "Note with key: [" + noteEntriesToBeDeleted.get(0).getKey() + "] will be deleted.";
+                } else {
+                    contentText = String.format(DELETE_NOTES_CONFIRMATION_CONTENT, noteEntriesToBeDeleted.size());
+                }
                 Optional<ButtonType> result = alertHelper.showDefaultConfirmation(parentStage, DELETE_NOTES_CONFIRMATION_HEADER,
-                        String.format(DELETE_NOTES_CONFIRMATION_CONTENT, noteEntriesToBeDeleted.size()));
+                        contentText);
                 if (result.get() == ButtonType.OK) {
                     service.deleteNoteEntries(noteEntriesToBeDeleted);
                     observableNoteEntryList.removeAll(noteEntriesToBeDeleted);
@@ -521,7 +530,7 @@ public class NotesController {
                     notificationText.setText(DELETE_STATUS_NOTIFICATION);
                 }
             }
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
             alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to delete Notes", "");
         }
@@ -529,7 +538,7 @@ public class NotesController {
 
     @FXML
     protected void addNewNoteEntry() {
-        NoteEntry newNoteEntry = new NoteEntry(NoteEntry.generateID(), "", "", "", "N");
+        NoteEntry newNoteEntry = new NoteEntry(userPreferences.getCurrentNotebook(), NoteEntry.generateID(), "", "", "", "N");
         try {
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(JNotesApplication.getResource("viewcontroller/NoteEntry.fxml"));
@@ -559,7 +568,7 @@ public class NotesController {
             }
 
             noteEntryStage.show();
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
             alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to open NoteEntry Dialog", "");
         }
@@ -663,6 +672,8 @@ public class NotesController {
     @FXML
     protected void renameNotebook() {
         notebookActions.renameNotebook();
+        String notebookNewName = notebookComboBox.getSelectionModel().getSelectedItem();
+        observableNoteEntryList.forEach((noteEntry) -> noteEntry.setNotebook(notebookNewName));
     }
 
     @FXML
