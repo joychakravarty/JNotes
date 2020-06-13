@@ -56,9 +56,9 @@ import javafx.collections.ObservableList;
  *
  */
 public class IOHelper {
-    
+
     private UserPreferences userPreferences;
-    
+
     public IOHelper(UserPreferences userPreferences) {
         this.userPreferences = userPreferences;
     }
@@ -90,8 +90,8 @@ public class IOHelper {
     }
 
     private Path getExportFilePath() {
-        return Paths.get(userPreferences.getBasePath(), APP_NAME, userPreferences.getCurrentNotebook() + "_"
-                + LocalDateTime.now().format(DATETIME_EXPORT_FORMAT) + EXPORT_FILE_SUFFIX);
+        return Paths.get(userPreferences.getBasePath(), APP_NAME,
+                userPreferences.getCurrentNotebook() + "_" + LocalDateTime.now().format(DATETIME_EXPORT_FORMAT) + EXPORT_FILE_SUFFIX);
     }
 
     private String escapeSpecialCharacters(String str) {
@@ -131,7 +131,8 @@ public class IOHelper {
             Properties properties = new Properties();
             properties.load(new FileReader(importFile));
             noteEntries = properties.entrySet().stream()
-                    .map(entry -> new NoteEntry(NoteEntry.generateID(), entry.getKey() == null ? "" : entry.getKey().toString(),
+                    .map(entry -> new NoteEntry(userPreferences.getCurrentNotebook(), NoteEntry.generateID(),
+                            entry.getKey() == null ? "" : entry.getKey().toString(),
                             entry.getValue() == null ? "" : entry.getValue().toString(), "", "N"))
                     .collect(Collectors.toList());
         } catch (IOException ex) {
@@ -152,7 +153,8 @@ public class IOHelper {
                 String value = record.get(1);
                 String info = record.get(2);
                 String passwordFlag = record.get(3);
-                NoteEntry noteEntry = new NoteEntry(NoteEntry.generateID(), key, value, info, passwordFlag);
+                NoteEntry noteEntry = new NoteEntry(userPreferences.getCurrentNotebook(), NoteEntry.generateID(), key, value, info,
+                        passwordFlag);
                 noteEntries.add(noteEntry);
 
             }

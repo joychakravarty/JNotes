@@ -35,11 +35,10 @@ public interface RemoteNoteEntryDao extends NoteEntryDao {
     
     boolean setupUser(String userId);
 
-    boolean backup(String notebook, List<NoteEntry> notes);
+    void backup(List<NoteEntry> noteEntries);
 
-    void disconnect();
-    
     void deleteNotebook(String notebookToBeDeleted);
+    void renameNotebook(String notebookToBeRenamed, String notebookNewName);
 
     /**
      * 

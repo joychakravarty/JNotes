@@ -27,9 +27,8 @@ import java.util.function.BiConsumer;
 
 import com.jc.jnotes.dao.local.LocalNoteEntryDao;
 import com.jc.jnotes.dao.local.lucene.LuceneNoteEntryDao;
+import com.jc.jnotes.dao.remote.DefaultRemoteNoteEntryDao;
 import com.jc.jnotes.dao.remote.RemoteNoteEntryDao;
-import com.jc.jnotes.dao.remote.cassandra.CassandraNoteEntryDao;
-import com.jc.jnotes.dao.remote.cassandra.CassandraSessionManager;
 import com.jc.jnotes.helper.AlertHelper;
 import com.jc.jnotes.helper.IOHelper;
 import com.jc.jnotes.service.ControllerService;
@@ -55,7 +54,6 @@ public final class AppConfig {
     private final AlertHelper alertHelper;
     private final IOHelper ioHelper;
     private final ControllerService controllerService;
-    private final CassandraSessionManager cassandraSessionManager;
     private final BiConsumer<String, String> localDaoInvalidator;
     private final BiConsumer<String, String> remoteDaoInvalidator;
 
@@ -73,7 +71,6 @@ public final class AppConfig {
                 REMOTE_DAO_CACHE.remove(cacheKey);
             };
             controllerService = new ControllerService(userPreferences, localDaoInvalidator, remoteDaoInvalidator, ioHelper);
-            cassandraSessionManager = new CassandraSessionManager(JNotesApplication.getResourceAsStream("/cassandra/connection.properties"));
         } catch (Exception ex) {
             ex.printStackTrace();
             throw new RuntimeException("Failed to load up AppConfig for JNotes : " + ex.getMessage());
@@ -117,14 +114,14 @@ public final class AppConfig {
             return noteEntryDao;
         }
     }
-
+    
     // Cached Prototype bean
     public RemoteNoteEntryDao getRemoteNoteEntryDao(String userId, String userSecret) {
         String cacheKey = generateDaoCacheKey(userId, userSecret);
         if (REMOTE_DAO_CACHE.get(cacheKey) != null) {
             return REMOTE_DAO_CACHE.get(cacheKey);
         } else {
-            RemoteNoteEntryDao noteEntryDao = new CassandraNoteEntryDao(cassandraSessionManager, userId, userSecret);
+            RemoteNoteEntryDao noteEntryDao = new DefaultRemoteNoteEntryDao(userId, userSecret);
             REMOTE_DAO_CACHE.put(cacheKey, noteEntryDao);
             return noteEntryDao;
         }
@@ -133,20 +130,16 @@ public final class AppConfig {
     public BiConsumer<String, String> getLocalDaoInvalidator() {
         return localDaoInvalidator;
     }
-
+    
     public BiConsumer<String, String> getRemoteDaoInvalidator() {
         return remoteDaoInvalidator;
-    }
-
-    public CassandraSessionManager getCassandraSessionManager() {
-        return cassandraSessionManager;
     }
 
     /**
      * Do all cleanup activity here
      */
     public void close() {
-        cassandraSessionManager.cleanup();
+        
     }
 
 }

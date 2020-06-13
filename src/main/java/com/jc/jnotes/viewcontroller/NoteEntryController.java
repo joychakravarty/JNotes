@@ -87,6 +87,7 @@ public class NoteEntryController implements Initializable {
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
+        infoField.setWrapText(true);
         prepareDependencies();
         addAccelerators();
     }

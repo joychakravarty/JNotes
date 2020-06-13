@@ -87,7 +87,7 @@ public class SaveEnabledTableCell extends TableCell<NoteEntry, String> {
         textField.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
             if (event.getCode() == KeyCode.S && event.isShortcutDown()) {
                 event.consume();
-                System.out.println("origStr = " + getString() + "  new string" + textField.getText());
+                //System.out.println("origStr = " + getString() + "  new string" + textField.getText());
                 // if(!getString().equals(textField.getText())) {
                 saveOnEditBiConsumer.accept(textField.getText(), colIndex);
                 // }

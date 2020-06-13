@@ -18,6 +18,8 @@
  */
 package com.jc.jnotes.viewcontroller;
 
+import static com.jc.jnotes.AppConfig.APP_CONFIG;
+
 import java.net.URL;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -26,8 +28,7 @@ import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
-import static com.jc.jnotes.AppConfig.APP_CONFIG;
-import com.jc.jnotes.JNotesApplication;
+
 import com.jc.jnotes.UserPreferences;
 import com.jc.jnotes.helper.AlertHelper;
 import com.jc.jnotes.service.ControllerService;
@@ -235,31 +236,10 @@ public class SyncController implements Initializable {
     }
 
     public void disconnect() {
-        Task<Void> task = new Task<Void>() {
-            @Override
-            public Void call() throws ControllerServiceException {
-                service.disconnect();
-                return null;
-            }
-        };
-        prepareProgressBarForTask(task);
-        task.setOnRunning((e) -> progressStage.show());
-        task.setOnSucceeded((e) -> {
-            progressStage.hide();
-            userPreferences.setConnected(false);
-            connectButton.setText("Connect");
-            backupButton.setDisable(true);
-            restoreButton.setDisable(true);
-            runAfter.run();
-        });
-        task.setOnFailed((e) -> {
-            task.getException().printStackTrace();
-            progressStage.hide();
-            // connectButton.setText("Disconnect");
-            alertHelper.showAlertWithExceptionDetails(parentStage, task.getException(), "Failed to disconnect", "");
-            // userPreferences.setConnected(true);
-        });
-        new Thread(task).start();
+        userPreferences.setConnected(false);
+        connectButton.setText("Connect");
+        backupButton.setDisable(true);
+        restoreButton.setDisable(true);
     }
 
     private void prepareProgressBarForTask(Task<?> task) {
@@ -333,18 +313,16 @@ public class SyncController implements Initializable {
             alertHelper.showErrorAlert(parentStage, null, "UserId cannot be blank");
             return false;
         }
-        String userIdWarningTxt = "UserId should be between 10-20 characters long. \nUserId should be alpha-numeric and contain atleast 1 number.";
-        if (userId.length() < 10 || userId.length() > 20 || !StringUtils.isAlphanumeric(userId)
+        String userIdWarningTxt = "UserId should be between 7-15 characters long. \nUserId should be alpha-numeric and contain atleast 1 number.";
+        if (userId.length() < 7 || userId.length() > 15 || !StringUtils.isAlphanumeric(userId)
                 || !Pattern.compile("[0-9]").matcher(userId).find()) {
             alertHelper.showErrorAlert(parentStage, null, userIdWarningTxt);
             return false;
         }
 
         if (StringUtils.isBlank(userSecret)) {
-            if (newUserRadioButton.isSelected()) {
-                alertHelper.showWarningDialog(parentStage, "Your data will not be encrypted!", null);
-            }
-            return true;
+            alertHelper.showWarningDialog(parentStage, "Secret cannot be blank", null);
+            return false;
         }
         if (!StringUtils.isAlphanumeric(userSecret)) {
             alertHelper.showErrorAlert(parentStage, null, "Please use an alpha-numeric Secret.");

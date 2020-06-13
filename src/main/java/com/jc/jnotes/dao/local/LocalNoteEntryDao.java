@@ -18,7 +18,6 @@
  */
 package com.jc.jnotes.dao.local;
 
-import java.io.IOException;
 import java.util.List;
 
 import com.jc.jnotes.dao.NoteEntryDao;
@@ -32,6 +31,6 @@ import com.jc.jnotes.model.NoteEntry;
  */
 public interface LocalNoteEntryDao  extends NoteEntryDao {
 
-    List<NoteEntry> searchNotes(String searchParam, boolean searchInfo) throws IOException;
+    List<NoteEntry> searchNotes(String searchParam, boolean searchInfo);
 
 }
