@@ -22,14 +22,12 @@ import static com.jc.jnotes.JNotesConstants.APP_NAME;
 import static com.jc.jnotes.JNotesConstants.DATETIME_EXPORT_FORMAT;
 import static com.jc.jnotes.JNotesConstants.DEFAULT_NOTEBOOK;
 import static com.jc.jnotes.JNotesConstants.EXPORT_FILE_SUFFIX;
-import static com.jc.jnotes.JNotesConstants.FIELD_SEPARATOR;
-import static com.jc.jnotes.JNotesConstants.LINE_SEPARATOR;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -39,12 +37,12 @@ import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FileUtils;
 
 import com.jc.jnotes.UserPreferences;
 import com.jc.jnotes.model.NoteEntry;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVWriter;
 
 import javafx.collections.ObservableList;
 
@@ -71,19 +69,21 @@ public class IOHelper {
     public String exportNotebook(final ObservableList<NoteEntry> observableNoteEntryList) {
         final Path exportPath = getExportFilePath();
         String exportPathStr = exportPath.toString();
-        final File csvOutputFile = exportPath.toFile();
-        FileUtils.deleteQuietly(csvOutputFile); // If file already exists delete it
         try {
-            observableNoteEntryList.stream().map((noteEntry) -> String.join(FIELD_SEPARATOR, escapeSpecialCharacters(noteEntry.getKey()),
-                    escapeSpecialCharacters(noteEntry.getValue()), escapeSpecialCharacters(noteEntry.getInfo()), noteEntry.getPasswordFlag())).forEach((str) -> {
-                        try {
-                            FileUtils.writeStringToFile(csvOutputFile, str + LINE_SEPARATOR, StandardCharsets.UTF_8, true);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            throw new RuntimeException(e);
-                        }
-                    });
-        } catch (RuntimeException re) {
+        CSVWriter writer = new CSVWriter(new FileWriter(exportPath.toString()));
+        List<String[]> exportVals = new ArrayList<>();
+        for (NoteEntry noteEntry : observableNoteEntryList) {
+            String[] row = new String[4];
+            row[0] = noteEntry.getKey();
+            row[1] = noteEntry.getValue();
+            row[2] = noteEntry.getInfo();
+            row[3] = noteEntry.getPasswordFlag();
+            exportVals.add(row);
+        }
+        writer.writeAll(exportVals);
+        writer.close();
+        } catch (Exception ex) {
+            ex.printStackTrace();
             exportPathStr = null;
         }
         return exportPathStr;
@@ -92,14 +92,6 @@ public class IOHelper {
     private Path getExportFilePath() {
         return Paths.get(userPreferences.getBasePath(), APP_NAME,
                 userPreferences.getCurrentNotebook() + "_" + LocalDateTime.now().format(DATETIME_EXPORT_FORMAT) + EXPORT_FILE_SUFFIX);
-    }
-
-    private String escapeSpecialCharacters(String str) {
-        if (str.contains(FIELD_SEPARATOR) || str.contains("\"") || str.contains("'") || str.contains(LINE_SEPARATOR)) {
-            str = str.replace("\"", "\"\"");
-            str = "\"" + str + "\"";
-        }
-        return str;
     }
 
     /**
@@ -145,30 +137,20 @@ public class IOHelper {
     private List<NoteEntry> csvToNoteEntries(File file) {
         List<NoteEntry> noteEntries = new ArrayList<>();
         try {
-            Reader in = new FileReader(file);
-
-            Iterable<CSVRecord> records = CSVFormat.DEFAULT.parse(in);
-            for (CSVRecord record : records) {
-                String key = record.get(0);
-                String value = record.get(1);
-                String info = record.get(2);
-                String passwordFlag;
-                if(record.size()>3) {
-                    passwordFlag = record.get(3);
-                }else {
-                    passwordFlag = "N";
-                }
-                NoteEntry noteEntry = new NoteEntry(userPreferences.getCurrentNotebook(), NoteEntry.generateID(), key, value, info,
-                        passwordFlag);
+            Reader reader = new FileReader(file);
+            CSVReader csvReader = new CSVReader(reader);
+            List<String[]> rows = csvReader.readAll();
+            for (String[] row : rows) {
+                NoteEntry noteEntry = new NoteEntry(userPreferences.getCurrentNotebook(), NoteEntry.generateID(), row[0], row[1], row[2], row[3]);
                 noteEntries.add(noteEntry);
-
             }
+            reader.close();
+            csvReader.close();
         } catch (IOException ex) {
             ex.printStackTrace();
             noteEntries = null;
         }
-        return noteEntries;
-
+        return noteEntries;    
     }
 
     public void moveNotebook(String notebookToBeRenamed, String newNotebookName) throws IOException {
