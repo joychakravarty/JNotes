@@ -8,7 +8,8 @@
   - Double click the "startJNotes" file.  
 
 ## Description:
-  **JNotes is a free desktop application which is built for lookup (quick & frequent access) notes.**  
+  **JNotes is a free desktop application which is built for lookup (quick & frequent access) notes.**
+  *Now you can view your synced notes directly here: https://jnotes-web.herokuapp.com/*
   Its perfect for day-to-day lookup notes at work:  
   Title: "shared drive location to success"  Value: "\\Some\impossible\to\remember\path" Content: "release the files when done!" 
     
