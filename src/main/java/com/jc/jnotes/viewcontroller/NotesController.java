@@ -367,16 +367,6 @@ public class NotesController {
                     searchField.end();
                 }
             }
-            if (event.getCode() == KeyCode.S && event.isShortcutDown()) {
-                event.consume();
-                selectedNoteEntry.setInfo(infoField.getText());
-                try {
-                    service.editNoteEntry(selectedNoteEntry);
-                    notificationText.setText(EDIT_STATUS_NOTIFICATION);
-                } catch (ControllerServiceException ex) {
-                    alertHelper.showAlertWithExceptionDetails(parentStage, ex, "Failed to save NoteEntry Dialog", "");
-                }
-            }
         });
 
         // Double click on empty area to open AddNewNoteEntry

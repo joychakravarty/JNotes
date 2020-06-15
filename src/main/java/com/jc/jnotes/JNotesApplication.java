@@ -27,6 +27,7 @@ import java.net.URL;
 import com.jc.jnotes.viewcontroller.NotesController;
 
 import javafx.application.Application;
+import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -41,7 +42,7 @@ import javafx.stage.Stage;
  */
 public class JNotesApplication extends Application {
 
-
+    private static HostServices hostServices;
     @Override
     public void start(Stage stage) {
         System.out.println("Starting JNotes...");
@@ -50,7 +51,7 @@ public class JNotesApplication extends Application {
         if (iconInputStream != null) {
             stage.getIcons().add(new Image(iconInputStream));
         }
-
+        hostServices = getHostServices();
         loadNotes(stage);
     }
 
@@ -92,6 +93,10 @@ public class JNotesApplication extends Application {
 
     public static URL getResource(String resouceName) {
         return JNotesApplication.class.getResource(resouceName);
+    }
+    
+    public static void openLink(String link) {
+        hostServices.showDocument(link);
     }
 
 

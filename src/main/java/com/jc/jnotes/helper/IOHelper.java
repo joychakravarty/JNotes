@@ -29,7 +29,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -75,9 +75,9 @@ public class IOHelper {
         FileUtils.deleteQuietly(csvOutputFile); // If file already exists delete it
         try {
             observableNoteEntryList.stream().map((noteEntry) -> String.join(FIELD_SEPARATOR, escapeSpecialCharacters(noteEntry.getKey()),
-                    escapeSpecialCharacters(noteEntry.getValue()), escapeSpecialCharacters(noteEntry.getInfo()))).forEach((str) -> {
+                    escapeSpecialCharacters(noteEntry.getValue()), escapeSpecialCharacters(noteEntry.getInfo()), noteEntry.getPasswordFlag())).forEach((str) -> {
                         try {
-                            FileUtils.writeStringToFile(csvOutputFile, str + LINE_SEPARATOR, Charset.defaultCharset(), true);
+                            FileUtils.writeStringToFile(csvOutputFile, str + LINE_SEPARATOR, StandardCharsets.UTF_8, true);
                         } catch (IOException e) {
                             e.printStackTrace();
                             throw new RuntimeException(e);
@@ -152,7 +152,12 @@ public class IOHelper {
                 String key = record.get(0);
                 String value = record.get(1);
                 String info = record.get(2);
-                String passwordFlag = record.get(3);
+                String passwordFlag;
+                if(record.size()>3) {
+                    passwordFlag = record.get(3);
+                }else {
+                    passwordFlag = "N";
+                }
                 NoteEntry noteEntry = new NoteEntry(userPreferences.getCurrentNotebook(), NoteEntry.generateID(), key, value, info,
                         passwordFlag);
                 noteEntries.add(noteEntry);
