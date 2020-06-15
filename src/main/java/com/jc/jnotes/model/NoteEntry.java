@@ -81,7 +81,12 @@ public class NoteEntry implements Comparable<NoteEntry> {
         this.key = new SimpleStringProperty(key == null ? StringUtils.EMPTY : key);
         this.value = new SimpleStringProperty(value == null ? StringUtils.EMPTY : value);
         this.info = new SimpleStringProperty(info == null ? StringUtils.EMPTY : info);
-        this.passwordFlag = new SimpleStringProperty(passwordFlag == null ? "N" : passwordFlag);
+        if(StringUtils.isBlank(passwordFlag) || "N".equalsIgnoreCase(passwordFlag.trim())) {
+            passwordFlag = "N";
+        } else {
+            passwordFlag = "Y";
+        }
+        this.passwordFlag = new SimpleStringProperty(passwordFlag);
         this.lastModifiedTime = new SimpleObjectProperty<LocalDateTime>(lastModifiedTime);
         this.isPassword = "N".equals(passwordFlag) ? false : true;
         this.notebook = notebook;

@@ -29,11 +29,15 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.jc.jnotes.JNotesApplication;
+import com.jc.jnotes.JNotesConstants;
 import com.jc.jnotes.UserPreferences;
 import com.jc.jnotes.helper.AlertHelper;
 import com.jc.jnotes.service.ControllerService;
 import com.jc.jnotes.service.ControllerServiceException;
+import com.sun.javafx.application.HostServicesDelegate;
 
+import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.event.EventHandler;
@@ -43,6 +47,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
@@ -90,6 +95,8 @@ public class SyncController implements Initializable {
     private Button backupButton;
     @FXML
     private Button restoreButton;
+    @FXML
+    private Hyperlink hyperlink;
 
     /**
      * Initializes the controller class.
@@ -233,6 +240,11 @@ public class SyncController implements Initializable {
             alertHelper.showAlertWithExceptionDetails(parentStage, task.getException(), "Failed to restore.", "");
         });
         new Thread(task).start();
+    }
+    
+    @FXML
+    public void openJNotesWeb() {
+        JNotesApplication.openLink(JNotesConstants.REMOTE_URL);
     }
 
     public void disconnect() {
