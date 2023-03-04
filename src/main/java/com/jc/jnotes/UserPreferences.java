@@ -51,6 +51,14 @@ public class UserPreferences {
 
     private final Preferences userPreferences = Preferences.userNodeForPackage(UserPreferences.class);
 
+    public UserPreferences() {
+        try {
+            getOnlineSyncConfFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void clearUserIdAndUserSecret() {
         userPreferences.remove(JNOTES_USER_ID);
         userPreferences.remove(JNOTES_USER_SECRET);
