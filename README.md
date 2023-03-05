@@ -48,8 +48,8 @@
     Ctrl+E - Edit note  
     Ctrl+S - Save note changes. (also for in-line edits)  
     Ctrl+D - Delete selected notes  
-    Ctrl+X - Export Notebook to CSV  
-    Ctrl+I - Import CSV/Properties to current Notebook  
+    Ctrl+X - Export Notebook to file  
+    Ctrl+I - Import file to current Notebook  
     Ctrl+F - Takes you to search field  
     Ctrl+C - Copies the selected cell value  
     Ctrl+Y - Sync settings (with Cloud)  
@@ -71,7 +71,7 @@
 ## Features in progress
   - Notebook switching (done)  
   - Display info at the bottom (done)
-  - Import/Export notebooks from/to csv  (done)
+  - Import/Export notebooks from/to file  (done)
   - Option to store notes in cloud (done)  
   - Delete multiple notes (Done)
   - Edit and save in-line (Done)  

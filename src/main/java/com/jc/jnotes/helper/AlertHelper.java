@@ -1,6 +1,6 @@
 /*
  * This file is part of JNotes. Copyright (C) 2020  Joy Chakravarty
- * 
+ *
  * JNotes is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -13,25 +13,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with JNotes.  If not, see <https://www.gnu.org/licenses/>.
- * 
- * 
+ *
+ *
  */
 package com.jc.jnotes.helper;
 
-import static com.jc.jnotes.JNotesConstants.APP_NAME;
-import static com.jc.jnotes.JNotesConstants.CURRENT_VERSION;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-import org.apache.commons.lang3.StringUtils;
-
 import com.jc.jnotes.JNotesApplication;
-
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
@@ -40,20 +27,31 @@ import javafx.scene.control.TextArea;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.stage.Stage;
+import org.apache.commons.lang3.StringUtils;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static com.jc.jnotes.JNotesConstants.APP_NAME;
+import static com.jc.jnotes.JNotesConstants.CURRENT_VERSION;
 
 /**
- * 
  * Helper class to display Alert Dialogs
- * 
- * @author Joy C
  *
+ * @author Joy C
  */
 public class AlertHelper {
+
+    private static final String INFO_HEADER = "JNotes %s - your quick-access lookup notes.\n%s - %s";
 
     /**
      * Displays Error Alert Dialog with the exception details. Intended for displaying Exception details to the user. Not
      * intended for user errors, like validation error.
-     * 
+     *
      * @param parentStage
      * @param ex
      * @param headerText
@@ -95,9 +93,8 @@ public class AlertHelper {
     }
 
     /**
-     * 
      * Displays Error Alert Dialog for User errors or Validation Errors not meant to be used in ExceptionHandling.
-     * 
+     *
      * @param parentStage
      * @param headerText
      * @param contentText
@@ -114,7 +111,7 @@ public class AlertHelper {
 
     /**
      * Displays confirmation type alert dialog
-     * 
+     *
      * @param parentStage
      * @param headerText
      * @param contentText
@@ -138,7 +135,7 @@ public class AlertHelper {
 
         alert.showAndWait();
     }
-    
+
     public void showWarningDialog(Stage parentStage, String header, String message) {
         Alert alert = new Alert(AlertType.WARNING);
         // alert.initOwner(parentStage);
@@ -154,10 +151,12 @@ public class AlertHelper {
         alert.setTitle("About " + APP_NAME);
         alert.getDialogPane().setMinWidth(500);
         alert.setWidth(500);
-        String headerText = "JNotes - your quick-access lookup notes.";
-        if (StringUtils.isNotBlank(CURRENT_VERSION)) {
-            headerText = headerText + "\n" + APP_NAME + " Version: " + CURRENT_VERSION;
-        }
+
+        String javaVersion = System.getProperty("java.version");
+        String runtimeName = System.getProperty("java.runtime.name");
+        String version = StringUtils.isBlank(CURRENT_VERSION) ? "" : CURRENT_VERSION;
+
+        String headerText = String.format(INFO_HEADER, version, runtimeName, javaVersion);
         alert.setHeaderText(headerText);
 
         String contentText = new BufferedReader(new InputStreamReader(JNotesApplication.getResourceAsStream("/About.txt"))).lines()

@@ -30,7 +30,10 @@ public final class JNotesConstants {
     public static final DateTimeFormatter DATETIME_DISPLAY_FORMAT = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
     public static final DateTimeFormatter DATETIME_EXPORT_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
     public static final String LINE_SEPARATOR = System.getProperty("line.separator");
-    public static final String EXPORT_FILE_SUFFIX = "_export.csv";
+
+    public static final String EXTENSION_JSON = ".json";
+    public static final String EXTENSION_PROPERTIES = ".properties";
+    public static final String EXPORT_FILE_SUFFIX = "_export" + EXTENSION_JSON;
     public static final String FIELD_SEPARATOR = ",";
     public static final String EQUALS_FIELD_SEPARATOR = "=";
     public static final String CURRENT_VERSION = JNotesConstants.class.getPackage().getImplementationVersion();

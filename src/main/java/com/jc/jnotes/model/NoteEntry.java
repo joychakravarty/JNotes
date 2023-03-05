@@ -38,7 +38,7 @@ import javafx.beans.property.StringProperty;
  * @author Joy C
  *
  */
-@JsonPropertyOrder({ "notebook", "id", "key", "value", "info", "isPassword", "lastModifiedTime" })
+@JsonPropertyOrder({ "notebook", "id", "key", "value", "info", "isPassword", "passwordFlag", "lastModifiedTime" })
 public class NoteEntry implements Comparable<NoteEntry> {
 
     public static final String ID_COL_NAME = "id";

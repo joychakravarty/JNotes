@@ -1,6 +1,6 @@
 /*
  * This file is part of JNotes. Copyright (C) 2020  Joy Chakravarty
- * 
+ *
  * JNotes is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -13,25 +13,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with JNotes.  If not, see <https://www.gnu.org/licenses/>.
- * 
- * 
+ *
+ *
  */
 package com.jc.jnotes.viewcontroller;
-
-import static com.jc.jnotes.AppConfig.APP_CONFIG;
-import static com.jc.jnotes.JNotesConstants.DATETIME_DISPLAY_FORMAT;
-import static com.jc.jnotes.model.NoteEntry.KEY_COL_NAME;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.BiConsumer;
-
-import org.apache.commons.lang3.StringUtils;
 
 import com.jc.jnotes.JNotesApplication;
 import com.jc.jnotes.UserPreferences;
@@ -40,7 +25,6 @@ import com.jc.jnotes.helper.IOHelper;
 import com.jc.jnotes.model.NoteEntry;
 import com.jc.jnotes.service.ControllerService;
 import com.jc.jnotes.service.ControllerServiceException;
-
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -48,44 +32,38 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuButton;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.SelectionMode;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TablePosition;
-import javafx.scene.control.TableRow;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
-import javafx.scene.control.ToggleButton;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.KeyCombination;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.input.*;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import org.apache.commons.lang3.StringUtils;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import static com.jc.jnotes.AppConfig.APP_CONFIG;
+import static com.jc.jnotes.JNotesConstants.*;
+import static com.jc.jnotes.model.NoteEntry.KEY_COL_NAME;
 
 /**
- *
  * This is the main view controller for JNotes.
- * 
- * @author Joy C
  *
+ * @author Joy C
  */
 public class NotesController {
 
@@ -102,6 +80,8 @@ public class NotesController {
 
     private static final String IMPORT_SUCCESS_STATUS_NOTIFICATION = "Imported Notes count: %d";
     private static final String IMPORT_FAILURE_STATUS_NOTIFICATION = "Import failed.";
+
+    private static final String IMPORTING_STATUS_NOTIFICATION = "Importing...";
 
     // To Be Set By Caller
     private Stage parentStage;
@@ -686,26 +666,31 @@ public class NotesController {
         FileChooser fileChooser = new FileChooser();
         File selectedFile = fileChooser.showOpenDialog(parentStage);
         fileChooser.setInitialDirectory(ioHelper.getBaseDirectory());
-        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Text Files", "*.csv"),
-                new FileChooser.ExtensionFilter("Properties Files", "*.properties"));
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Text Files", "*" + EXTENSION_JSON),
+                new FileChooser.ExtensionFilter("Properties Files", "*" + EXTENSION_PROPERTIES));
         if (selectedFile == null) {
             return;
         }
-        List<NoteEntry> noteEntries = ioHelper.importNotebook(selectedFile);
-        if (noteEntries == null) {
-            notificationText.setText(IMPORT_FAILURE_STATUS_NOTIFICATION);
-        } else {
-            try {
-                for (NoteEntry note : noteEntries) {
-                    service.addNoteEntry(note);
-                    observableNoteEntryList.add(note);
-                }
-                notificationText.setText(String.format(IMPORT_SUCCESS_STATUS_NOTIFICATION, noteEntries.size()));
-                notesTable.refresh();
-            } catch (ControllerServiceException ex) {
+        notificationText.setText(IMPORTING_STATUS_NOTIFICATION);
+        Supplier<List<NoteEntry>> importNoteEntries = () -> ioHelper.importNotebook(selectedFile);
+        Function<List<NoteEntry>, String> processNoteEntries = (noteEntries) -> {
+            if (noteEntries == null) {
                 notificationText.setText(IMPORT_FAILURE_STATUS_NOTIFICATION);
+            } else {
+                try {
+                    for (NoteEntry note : noteEntries) {
+                        service.addNoteEntry(note);
+                        observableNoteEntryList.add(note);
+                    }
+                    notificationText.setText(String.format(IMPORT_SUCCESS_STATUS_NOTIFICATION, noteEntries.size()));
+                    notesTable.refresh();
+                } catch (ControllerServiceException ex) {
+                    notificationText.setText(IMPORT_FAILURE_STATUS_NOTIFICATION);
+                }
             }
-        }
+            return notificationText.getText();
+        };
+        CompletableFuture.supplyAsync(importNoteEntries).thenApply(processNoteEntries);
     }
 
     @FXML
