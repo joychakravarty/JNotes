@@ -19,13 +19,13 @@
 package com.jc.jnotes.helper;
 
 import com.jc.jnotes.JNotesApplication;
-import javafx.scene.control.Alert;
+import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.stage.Stage;
 import org.apache.commons.lang3.StringUtils;
 
@@ -59,6 +59,7 @@ public class AlertHelper {
      */
     public void showAlertWithExceptionDetails(Stage parentStage, Throwable ex, String headerText, String contextText) {
         Alert alert = new Alert(AlertType.ERROR);
+        setAlertFont(alert);
         alert.setTitle("Exception Dialog");
         alert.setHeaderText(headerText);
         alert.setContentText(contextText);
@@ -92,6 +93,13 @@ public class AlertHelper {
         alert.showAndWait();
     }
 
+    private void setAlertFont(Alert alert) {
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.getStylesheets().add(
+                JNotesApplication.getResource("viewcontroller/notes.css").toExternalForm());
+        dialogPane.getStyleClass().add("root");
+    }
+
     /**
      * Displays Error Alert Dialog for User errors or Validation Errors not meant to be used in ExceptionHandling.
      *
@@ -101,6 +109,7 @@ public class AlertHelper {
      */
     public void showErrorAlert(Stage parentStage, String headerText, String contentText) {
         Alert alert = new Alert(AlertType.ERROR);
+        setAlertFont(alert);
         // alert.initOwner(parentStage);
         alert.setTitle("Error Dialog");
         alert.setHeaderText(headerText);
@@ -119,6 +128,7 @@ public class AlertHelper {
      */
     public Optional<ButtonType> showDefaultConfirmation(Stage parentStage, String headerText, String contentText) {
         Alert alert = new Alert(AlertType.CONFIRMATION);
+        setAlertFont(alert);
         alert.setTitle("Confirmation Dialog");
         alert.setHeaderText(headerText);
         alert.setContentText(contentText);
@@ -128,6 +138,7 @@ public class AlertHelper {
 
     public void showInfoDialog(Stage parentStage, String header, String message) {
         Alert alert = new Alert(AlertType.INFORMATION);
+        setAlertFont(alert);
         // alert.initOwner(parentStage);
         alert.setTitle("Information Dialog");
         alert.setHeaderText(header);
@@ -138,6 +149,7 @@ public class AlertHelper {
 
     public void showWarningDialog(Stage parentStage, String header, String message) {
         Alert alert = new Alert(AlertType.WARNING);
+        setAlertFont(alert);
         // alert.initOwner(parentStage);
         alert.setTitle("Warning Dialog");
         alert.setHeaderText(header);
@@ -148,8 +160,10 @@ public class AlertHelper {
 
     public void showAboutJNotesDialog() {
         Alert alert = new Alert(AlertType.INFORMATION);
+        setAlertFont(alert);
         alert.setTitle("About " + APP_NAME);
         alert.getDialogPane().setMinWidth(500);
+
         alert.setWidth(500);
 
         String javaVersion = System.getProperty("java.version");
@@ -162,7 +176,14 @@ public class AlertHelper {
         String contentText = new BufferedReader(new InputStreamReader(JNotesApplication.getResourceAsStream("/About.txt"))).lines()
                 .collect(Collectors.joining("\n"));
 
-        alert.setContentText(contentText);
+        Text text = new Text(contentText);
+        text.setFont(new Font("Verdana", 11));
+        TextFlow textFlow = new TextFlow();
+
+        textFlow.getChildren().addAll(text);
+
+        alert.getDialogPane().setContent(textFlow);
+
         alert.showAndWait();
     }
 

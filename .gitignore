@@ -35,6 +35,7 @@ bin/
 
 # Intellij #
 .idea
+*.iml
 
 # NetBeans #
 nb-configuration.xml
