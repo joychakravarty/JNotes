@@ -20,6 +20,7 @@ package com.jc.jnotes;
 
 import static com.jc.jnotes.AppConfig.APP_CONFIG;
 import static com.jc.jnotes.JNotesConstants.APP_NAME;
+import static com.jc.jnotes.JNotesConstants.CURRENT_VERSION;
 
 import java.io.InputStream;
 import java.net.URL;
@@ -34,6 +35,7 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * This class launches the JavaFX UI for JNotes
@@ -46,7 +48,8 @@ public class JNotesApplication extends Application {
     @Override
     public void start(Stage stage) {
         System.out.println("Starting JNotes...");
-        stage.setTitle(APP_NAME);
+        String version = StringUtils.isBlank(CURRENT_VERSION) ? "" : (" " +CURRENT_VERSION);
+        stage.setTitle(APP_NAME + version);
         InputStream iconInputStream = JNotesApplication.getResourceAsStream("/images/spiral-booklet.png");
         if (iconInputStream != null) {
             stage.getIcons().add(new Image(iconInputStream));
