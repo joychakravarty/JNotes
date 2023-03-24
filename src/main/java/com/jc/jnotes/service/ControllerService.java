@@ -118,7 +118,7 @@ public class ControllerService {
 
     // Do not use UserPreference inside this method as it will be updated after the connection is made/verified.
     public String connect(boolean isNewUser, String userId, String userSecret) throws ControllerServiceException {
-        System.out.println("Connecting to Cloud Datastore!");
+        System.out.println("Connecting to Cloud Datastore..");
         String returnString = null;
         try {
             if (isNewUser) {
@@ -135,11 +135,16 @@ public class ControllerService {
                     returnString = "Secret could not decrypt your data correctly. Please enter correct secret.";
                 } else if (outcome == 3) {
                     returnString = "Failed to connect";
+                } else {
+                    System.out.println("Connected successfully!");
                 }
             }
         } catch (Exception ex) {
             ex.printStackTrace();
             throw new ControllerServiceException("Exception while trying to connect", ex);
+        }
+        if(returnString!=null) {
+            System.err.println(returnString);
         }
         return returnString;
     }
