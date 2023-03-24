@@ -39,7 +39,7 @@ public final class JNotesConstants {
     public static final String CURRENT_VERSION = JNotesConstants.class.getPackage().getImplementationVersion();
     public static final String USER_HOME_PATH = System.getProperty("user.home");
     public static final String ONLINE_SYNC_CONF_FILE = "jn_sync_DO_NOT_TOUCH.txt";
-    public static final String REMOTE_URL = "https://jnotes-web.herokuapp.com/";
+    public static final String REMOTE_URL = "https://jnotes-api.azurewebsites.net/";
     //public static final String REMOTE_URL = "http://localhost:5000/";
     
 }

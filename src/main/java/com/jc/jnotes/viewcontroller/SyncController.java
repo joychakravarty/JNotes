@@ -1,6 +1,6 @@
 /*
  * This file is part of JNotes. Copyright (C) 2020  Joy Chakravarty
- * 
+ *
  * JNotes is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -13,8 +13,8 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with JNotes.  If not, see <https://www.gnu.org/licenses/>.
- * 
- * 
+ *
+ *
  */
 package com.jc.jnotes.viewcontroller;
 
@@ -35,9 +35,7 @@ import com.jc.jnotes.UserPreferences;
 import com.jc.jnotes.helper.AlertHelper;
 import com.jc.jnotes.service.ControllerService;
 import com.jc.jnotes.service.ControllerServiceException;
-import com.sun.javafx.application.HostServicesDelegate;
 
-import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.event.EventHandler;
@@ -58,7 +56,6 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
 /**
- * 
  * @author Joy C
  */
 public class SyncController implements Initializable {
@@ -182,6 +179,7 @@ public class SyncController implements Initializable {
         } else {
             connect();
         }
+        runAfter.run();
     }
 
     @FXML
@@ -241,7 +239,7 @@ public class SyncController implements Initializable {
         });
         new Thread(task).start();
     }
-    
+
     @FXML
     public void openJNotesWeb() {
         JNotesApplication.openLink(JNotesConstants.REMOTE_URL);

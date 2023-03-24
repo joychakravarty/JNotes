@@ -239,7 +239,7 @@ public class LuceneNoteEntryDao implements LocalNoteEntryDao {
     private Document fromNoteEntry(NoteEntry noteEntry) {
         Document document = new Document();
         document.add(new StringField(ID_COL_NAME, noteEntry.getId(), Field.Store.YES));// id is not to be tokenized
-        document.add(new StringField(KEY_COL_NAME, noteEntry.getKey(), Field.Store.YES));
+        document.add(new TextField(KEY_COL_NAME, noteEntry.getKey(), Field.Store.YES));
         document.add(new TextField(VALUE_COL_NAME, noteEntry.getValue(), Field.Store.YES));
         document.add(new TextField(INFO_COL_NAME, noteEntry.getInfo(), Field.Store.YES));
         document.add(new TextField(PASSWORD_FLAG_COL_NAME, noteEntry.getPasswordFlag(), Field.Store.YES));

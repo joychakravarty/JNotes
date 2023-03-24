@@ -125,6 +125,7 @@ public class UserPreferences {
     }
 
     private Path getOnlineSyncConfFile() throws IOException {
+        Files.createDirectories(Paths.get(getBasePath(), APP_NAME));
         Path path = Paths.get(getBasePath(), APP_NAME, ONLINE_SYNC_CONF_FILE);
         File onlineSyncConfFile = path.toFile();
         onlineSyncConfFile.createNewFile();
