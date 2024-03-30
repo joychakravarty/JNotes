@@ -18,11 +18,6 @@
  */
 package com.jc.jnotes;
 
-import static com.jc.jnotes.JNotesConstants.APP_NAME;
-import static com.jc.jnotes.JNotesConstants.DEFAULT_NOTEBOOK;
-import static com.jc.jnotes.JNotesConstants.ONLINE_SYNC_CONF_FILE;
-import static com.jc.jnotes.JNotesConstants.USER_HOME_PATH;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -33,6 +28,8 @@ import java.util.prefs.Preferences;
 
 import org.apache.commons.lang3.StringUtils;
 
+import static com.jc.jnotes.JNotesConstants.*;
+
 /**
  * 
  * This class stores the user preferences.
@@ -40,44 +37,45 @@ import org.apache.commons.lang3.StringUtils;
  * @author Joy C
  *
  */
-public class UserPreferences {
+public final class UserPreferences {
 
-    private static final String KEY_BASEPATH = "basePath";
     private static final String KEY_CURRENT_NOTEBOOK = "currentNotebook";
     private static final String JNOTES_USER_ID = "jnotes_userid";
     private static final String JNOTES_USER_SECRET = "jnotes_usersecret";
     private static final String JNOTES_IS_CONNECTED = "jnotes_isconnected";
     private static final String JNOTES_AUTOCONNECT = "jnotes_autoconnect";
 
-    private final Preferences userPreferences = Preferences.userNodeForPackage(UserPreferences.class);
+    private static final Preferences PREFERENCES = Preferences.userNodeForPackage(UserPreferences.class);
+    private final String basePath;
 
-    public UserPreferences() {
+    public UserPreferences(String basePath) {
+        if(StringUtils.isNotEmpty(basePath)) {
+            this.basePath = basePath;
+        } else {
+            this.basePath = USER_HOME_PATH;
+        }
         try {
-            getOnlineSyncConfFile();
+            this.getOnlineSyncConfFile();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public void clearUserIdAndUserSecret() {
-        userPreferences.remove(JNOTES_USER_ID);
-        userPreferences.remove(JNOTES_USER_SECRET);
+        PREFERENCES.remove(JNOTES_USER_ID);
+        PREFERENCES.remove(JNOTES_USER_SECRET);
     }
 
     public String getBasePath() {
-        return userPreferences.get(KEY_BASEPATH, USER_HOME_PATH);
-    }
-
-    public void setBasePath(String basePath) {
-        userPreferences.put(KEY_BASEPATH, basePath);
+        return this.basePath;
     }
 
     public String getCurrentNotebook() {
-        return userPreferences.get(KEY_CURRENT_NOTEBOOK, DEFAULT_NOTEBOOK);
+        return PREFERENCES.get(KEY_CURRENT_NOTEBOOK, DEFAULT_NOTEBOOK);
     }
 
     public void setCurrentNotebook(String currentNotebook) {
-        userPreferences.put(KEY_CURRENT_NOTEBOOK, currentNotebook);
+        PREFERENCES.put(KEY_CURRENT_NOTEBOOK, currentNotebook);
     }
 
     public void setUserIdAndSecretForOnlineSync(String userId, String secret) {
@@ -87,12 +85,12 @@ public class UserPreferences {
         if (secret == null) {
             return;
         }
-        userPreferences.put(JNOTES_USER_ID, userId);
-        userPreferences.put(JNOTES_USER_SECRET, secret);
+        PREFERENCES.put(JNOTES_USER_ID, userId);
+        PREFERENCES.put(JNOTES_USER_SECRET, secret);
 
         String jnSyncStr = userId + "|" + secret;
 
-        Path path = Paths.get(getBasePath(), APP_NAME, ONLINE_SYNC_CONF_FILE);
+        Path path = Paths.get(getBasePath(), LOCAL_STORE_NAME, ONLINE_SYNC_CONF_FILE);
         byte[] strToBytes = jnSyncStr.getBytes();
 
         try {
@@ -103,7 +101,7 @@ public class UserPreferences {
     }
 
     public String getUserId() {
-        String userName = userPreferences.get(JNOTES_USER_ID, null);
+        String userName = PREFERENCES.get(JNOTES_USER_ID, null);
         if (StringUtils.isBlank(userName)) {// attempt to get userName from sync_conf file
             try {
                 Path path = getOnlineSyncConfFile();
@@ -113,7 +111,7 @@ public class UserPreferences {
                     if (jnSyncStr != null && jnSyncStr.contains("|")) {
                         userName = (jnSyncStr.split("\\|"))[0];
                         if (userName != null) {
-                            userPreferences.put(JNOTES_USER_ID, userName);
+                            PREFERENCES.put(JNOTES_USER_ID, userName);
                         }
                     }
                 }
@@ -125,15 +123,15 @@ public class UserPreferences {
     }
 
     private Path getOnlineSyncConfFile() throws IOException {
-        Files.createDirectories(Paths.get(getBasePath(), APP_NAME));
-        Path path = Paths.get(getBasePath(), APP_NAME, ONLINE_SYNC_CONF_FILE);
+        Files.createDirectories(Paths.get(this.getBasePath(), LOCAL_STORE_NAME));
+        Path path = Paths.get(getBasePath(), LOCAL_STORE_NAME, ONLINE_SYNC_CONF_FILE);
         File onlineSyncConfFile = path.toFile();
         onlineSyncConfFile.createNewFile();
         return path;
     }
 
     public String getUserSecret() {
-        String userSecret = userPreferences.get(JNOTES_USER_SECRET, null);
+        String userSecret = PREFERENCES.get(JNOTES_USER_SECRET, null);
         if (userSecret == null) {// attempt to get userSecret from sync_conf file
             try {
                 Path path = getOnlineSyncConfFile();
@@ -143,7 +141,7 @@ public class UserPreferences {
                     if (jnSyncStr != null && jnSyncStr.contains("|")) {
                         userSecret = (jnSyncStr.split("\\|"))[1];
                         if (userSecret != null) {
-                            userPreferences.put(JNOTES_USER_SECRET, userSecret);
+                            PREFERENCES.put(JNOTES_USER_SECRET, userSecret);
                         }
                     }
                 }
@@ -155,20 +153,20 @@ public class UserPreferences {
     }
 
     public void setConnected(boolean isConnected) {
-        userPreferences.put(JNOTES_IS_CONNECTED, String.valueOf(isConnected));
+        PREFERENCES.put(JNOTES_IS_CONNECTED, String.valueOf(isConnected));
     }
 
     public boolean isConnected() {
-        String isConnectedStr = userPreferences.get(JNOTES_IS_CONNECTED, String.valueOf(false));
+        String isConnectedStr = PREFERENCES.get(JNOTES_IS_CONNECTED, String.valueOf(false));
         return Boolean.valueOf(isConnectedStr);
     }
 
     public void setAutoConnect(boolean autoConnect) {
-        userPreferences.put(JNOTES_AUTOCONNECT, String.valueOf(autoConnect));
+        PREFERENCES.put(JNOTES_AUTOCONNECT, String.valueOf(autoConnect));
     }
 
     public boolean getAutoConnect() {
-        String autoConnectStr = userPreferences.get(JNOTES_AUTOCONNECT, String.valueOf(false));
+        String autoConnectStr = PREFERENCES.get(JNOTES_AUTOCONNECT, String.valueOf(false));
         return Boolean.valueOf(autoConnectStr);
     }
 

@@ -26,6 +26,7 @@ public final class JNotesConstants {
     }
     
     public static final String APP_NAME = "JNotes";
+    public static final String LOCAL_STORE_NAME = "jnotesStorage";
     public static final String DEFAULT_NOTEBOOK = "default";
     public static final DateTimeFormatter DATETIME_DISPLAY_FORMAT = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
     public static final DateTimeFormatter DATETIME_EXPORT_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");

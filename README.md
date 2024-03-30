@@ -1,15 +1,15 @@
-# JNotes
+A# JNotes
 
 ## Run JNotes
   - Download JNotes  
-     For Windows: [JNotes-windows.zip]({{ site.github.windows_zip_url }})  
-     For Mac: [JNotes-mac.zip]({{ site.github.mac_zip_url }})  
+     For Windows: [JNotes-windows.zip](https://github.com/joychakravarty/JNotes/blob/master/milestone/JNotes-windows.zip)
+     For Mac: [JNotes-mac.zip](https://github.com/joychakravarty/JNotes/blob/master/milestone/JNotes-mac.zip)
   - Unzip the .zip file.
-  - Double click the "startJNotes" file.  
+  - Double-click the "startJNotes" file.  
 
 ## Description:
   **JNotes is a free desktop application which is built for lookup (quick & frequent access) notes.**  
-  Now you can view your synced notes here: [jnotes-web](https://jnotes-web.herokuapp.com/)  
+  Now you can view your synced notes here: [jnotes-web](https://jnotes-api.azurewebsites.net/notes)  
   Its perfect for day-to-day lookup notes at work:  
   Title: "shared drive location to success"  Value: "\\Some\impossible\to\remember\path" Content: "release the files when done!" 
     
@@ -20,7 +20,7 @@
   Title: "squash"  Value: "git rebase -i HEAD~X"  Content: "use fixup instead of squash". 
 
 ## Purpose:
-  There are several applications to store Notes but they are more like "title with body" or "content with multiple tags". JNotes offers one of a kind: "title with value and with content".  
+  There are several applications to store Notes, but they are more like "title with body" or "content with multiple tags". JNotes offers one of a kind: "title with value and with content".  
   Usually I used to use OneNote and have a table with 3 columns to store this kind of data but I had the following issues:
   1. I have tons of pages in multiple sections of OneNote, and to access my frequent notes I had to switch from my working page to another page and it was always difficult to return to where I was.           
   2. When sharing my screen my passwords were visible.  
@@ -30,7 +30,7 @@
 ## Why JNotes:
   - It's **keyboard friendly**. TIP: Use shortcuts as much as possible, I built it for Keyboard poeple like me. 
   - Lookup table without fast search is no fun, so **JNotes is fast**. Try it.  
-  - It's a Java based application (and shipped with lightweight JRE) so you can **run it without any installation**.  
+  - It's a Java based application (and shipped with lightweight JRE), so you can **run it without any installation**.  
   - You can **store your notes in cloud for free and forever**. You can choose to encrypt your notes while storing in cloud, ensuring your data privacy.      
   - It's **open source** - https://github.com/joychakravarty/JNotes/edit/master/README.md - so fork it and customize it.  
 
@@ -57,16 +57,15 @@
     Ctrl+Q - Quit JNotes  
   
 ## Tech Details:
-  - Java 11.0.6  
-  - JavaFX (openjfx) + FXML 13 (GUI controls)  
-  - Lucene 8.5.0 (Data Access - data is written on your disk)  
-  - Cassandra (Astra by Datastax - 6.8.0)  
-  - JUnit 5.5.1  
-  - Spring 5.2.2 [core removed - only used crypto module]
-  - SceneBuilder 8.5.0 (Design UI)  
-  - Maven 3.5.0 (Build)  
-  - Eclipse Oxygen 4.7.3a (IDE)  
-  - macOS Mojave 10.14.6 (Dev OS - also tested on Windows 10)  
+  - Java 17  
+  - JavaFX (openjfx) + FXML (GUI controls)  
+  - Lucene (Data Access - data is written on your disk)  
+  - CosmosDB(Cassandra)  
+  - JUnit 
+  - SpringWeb
+  - SceneBuilder (Design UI)  
+  - Maven (Build)
+  - macOS 12.1 (Dev OS - also tested on Windows 10)  
   
 ## Features in progress
   - Notebook switching (done)  
