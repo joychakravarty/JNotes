@@ -53,7 +53,7 @@ import static com.jc.jnotes.JNotesConstants.*;
  */
 public class IOHelper {
 
-    private UserPreferences userPreferences;
+    private final UserPreferences userPreferences;
 
     public IOHelper(UserPreferences userPreferences) {
         this.userPreferences = userPreferences;
@@ -85,7 +85,7 @@ public class IOHelper {
     }
 
     private Path getExportFilePath() {
-        return Paths.get(userPreferences.getBasePath(), APP_NAME,
+        return Paths.get(userPreferences.getBasePath(), LOCAL_STORE_NAME,
                 userPreferences.getCurrentNotebook() + "_" + LocalDateTime.now().format(DATETIME_EXPORT_FORMAT) + EXPORT_FILE_SUFFIX);
     }
 
@@ -114,7 +114,7 @@ public class IOHelper {
     }
 
     protected List<NoteEntry> propertiesToNoteEntries(File importFile) throws IOException {
-        List<NoteEntry> noteEntries = new ArrayList<>();
+        List<NoteEntry> noteEntries;
         try (FileReader fileReader = new FileReader(importFile)) {
             Properties properties = new Properties();
             properties.load(fileReader);
@@ -143,31 +143,30 @@ public class IOHelper {
 
         String importedJson = Files.readString(file.toPath(), StandardCharsets.UTF_8);
         ObjectMapper objectMapper = getObjectMapper();
-        List<NoteEntry> noteEntries = objectMapper.readValue(importedJson, new TypeReference<List<NoteEntry>>() {
-        });
+        List<NoteEntry> noteEntries = objectMapper.readValue(importedJson, new TypeReference<>() {});
         return noteEntries;
     }
 
     public void moveNotebook(String notebookToBeRenamed, String newNotebookName) throws IOException {
-        Path source = Paths.get(userPreferences.getBasePath(), APP_NAME, notebookToBeRenamed);
+        Path source = Paths.get(userPreferences.getBasePath(), LOCAL_STORE_NAME, notebookToBeRenamed);
         Files.move(source, source.resolveSibling(newNotebookName));
     }
 
     public void deleteNotebook(String notebookToBeDeleted) throws IOException {
-        Path pathToBeDeleted = Paths.get(userPreferences.getBasePath(), APP_NAME, notebookToBeDeleted);
+        Path pathToBeDeleted = Paths.get(userPreferences.getBasePath(), LOCAL_STORE_NAME, notebookToBeDeleted);
         FileUtils.deleteDirectory(pathToBeDeleted.toFile());
     }
 
     public void addNotebook(String newNotebookName) {
-        Paths.get(userPreferences.getBasePath(), APP_NAME, newNotebookName);
+        Paths.get(userPreferences.getBasePath(), LOCAL_STORE_NAME, newNotebookName);
     }
 
     public List<String> getAllNotebooks() {
-        Path directory = Paths.get(userPreferences.getBasePath(), APP_NAME);
+        Path directory = Paths.get(userPreferences.getBasePath(), LOCAL_STORE_NAME);
         List<String> directories;
         try {
             directories = Files.walk(directory).filter(Files::isDirectory).map((path) -> path.getFileName()).map(Path::toString)
-                    .filter((name) -> !name.equals(APP_NAME)).collect(Collectors.toList());
+                    .filter((name) -> !name.equals(LOCAL_STORE_NAME)).collect(Collectors.toList());
         } catch (IOException e) {
             directories = new ArrayList<>();
             directories.add(DEFAULT_NOTEBOOK);

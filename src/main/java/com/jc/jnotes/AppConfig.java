@@ -18,7 +18,7 @@
  */
 package com.jc.jnotes;
 
-import static com.jc.jnotes.JNotesConstants.APP_NAME;
+import static com.jc.jnotes.JNotesConstants.LOCAL_STORE_NAME;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -59,7 +59,7 @@ public final class AppConfig {
 
     private AppConfig() {
         try {
-            userPreferences = new UserPreferences();
+            userPreferences = JNotesApplication.getUserPreferences();
             alertHelper = new AlertHelper();
             ioHelper = new IOHelper(userPreferences);
             localDaoInvalidator = (basePath, notebook) -> {
@@ -105,7 +105,7 @@ public final class AppConfig {
         } else {
             LocalNoteEntryDao noteEntryDao;
             try {
-                noteEntryDao = new LuceneNoteEntryDao(basePath, APP_NAME, notebook);
+                noteEntryDao = new LuceneNoteEntryDao(basePath, LOCAL_STORE_NAME, notebook);
             } catch (IOException e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);

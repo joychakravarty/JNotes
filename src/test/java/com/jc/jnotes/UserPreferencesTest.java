@@ -1,7 +1,6 @@
 package com.jc.jnotes;
 
-import static com.jc.jnotes.JNotesConstants.APP_NAME;
-import static com.jc.jnotes.JNotesConstants.ONLINE_SYNC_CONF_FILE;
+import static com.jc.jnotes.JNotesConstants.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -15,16 +14,16 @@ import org.junit.jupiter.api.Test;
 
 public class UserPreferencesTest {
     
-    UserPreferences preferences = new UserPreferences();
+    UserPreferences userPreferences = new UserPreferences(null);
     
     @Test
     public void testGetUserDetails_NewUser() throws IOException {
-        preferences.clearUserIdAndUserSecret();
-        Path path = Paths.get(preferences.getBasePath(), APP_NAME, ONLINE_SYNC_CONF_FILE);
+        userPreferences.clearUserIdAndUserSecret();
+        Path path = Paths.get(userPreferences.getBasePath(), LOCAL_STORE_NAME, ONLINE_SYNC_CONF_FILE);
         Files.delete(path);
         
-        String userId = preferences.getUserId();
-        String userSecret = preferences.getUserSecret();
+        String userId = userPreferences.getUserId();
+        String userSecret = userPreferences.getUserSecret();
         assertNull(userId);
         assertNull(userSecret);
         
@@ -32,20 +31,20 @@ public class UserPreferencesTest {
     
     @Test
     public void testGetUserDetails_OldUser() throws IOException {
-        preferences.clearUserIdAndUserSecret();
-        Path path = Paths.get(preferences.getBasePath(), APP_NAME, ONLINE_SYNC_CONF_FILE);
+        userPreferences.clearUserIdAndUserSecret();
+        Path path = Paths.get(userPreferences.getBasePath(), LOCAL_STORE_NAME, ONLINE_SYNC_CONF_FILE);
         Files.delete(path);
         
-        String userId = preferences.getUserId();
-        String userSecret = preferences.getUserSecret();
+        String userId = userPreferences.getUserId();
+        String userSecret = userPreferences.getUserSecret();
         assertNull(userId);
         assertNull(userSecret);
         String testUserId = "testnotes99";
         String testUserSecret = "xxx";
-        preferences.setUserIdAndSecretForOnlineSync(testUserId, "xxx");
+        userPreferences.setUserIdAndSecretForOnlineSync(testUserId, "xxx");
         assertTrue(path.toFile().exists());
-        userId = preferences.getUserId();
-        userSecret = preferences.getUserSecret();
+        userId = userPreferences.getUserId();
+        userSecret = userPreferences.getUserSecret();
         assertEquals(testUserId, userId);
         assertEquals(testUserSecret, userSecret);
         

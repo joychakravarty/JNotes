@@ -41,7 +41,7 @@ public class LuceneNoteEntryDaoTest {
     private static final String TEST_INDX_DIR = "JNotesTest";
     private LocalNoteEntryDao dao;
 
-    private static UserPreferences userPreferences = new UserPreferences();
+    private static UserPreferences userPreferences = new UserPreferences(null);
 
     @BeforeEach
     void clearIndexes() throws IOException {

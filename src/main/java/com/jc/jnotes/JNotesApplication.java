@@ -44,6 +44,12 @@ import org.apache.commons.lang3.StringUtils;
  */
 public class JNotesApplication extends Application {
 
+    private static UserPreferences userPreferences = null;
+
+    public static UserPreferences getUserPreferences() {
+        return userPreferences;
+    }
+
     private static HostServices hostServices;
     @Override
     public void start(Stage stage) {
@@ -71,6 +77,14 @@ public class JNotesApplication extends Application {
      * @param args
      */
     public static void main(String[] args) {
+        final String basePath;
+        if(args != null && args.length > 0) {
+            basePath = args[0];
+        } else {
+            basePath = null; //UserPreferences will pick user home in this case as base path.
+        }
+        userPreferences = new UserPreferences(basePath);
+        System.out.println("UserPreferences is loaded with basePath: " + userPreferences.getBasePath());
         launch(args);
     }
 
